@@ -24,6 +24,12 @@
         <Projects Include="..\examples\08.Font\Font.dproj">
             <Dependencies/>
         </Projects>
+        <Projects Include="..\examples\09.Audio\Audio.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="..\examples\10.Elastic\Elastic.dproj">
+            <Dependencies/>
+        </Projects>
         <Projects Include="..\examples\99.Testbed\Testbed.dproj">
             <Dependencies/>
         </Projects>
@@ -98,6 +104,24 @@
     <Target Name="Font:Make">
         <MSBuild Projects="..\examples\08.Font\Font.dproj" Targets="Make"/>
     </Target>
+    <Target Name="Audio">
+        <MSBuild Projects="..\examples\09.Audio\Audio.dproj"/>
+    </Target>
+    <Target Name="Audio:Clean">
+        <MSBuild Projects="..\examples\09.Audio\Audio.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Audio:Make">
+        <MSBuild Projects="..\examples\09.Audio\Audio.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Elastic">
+        <MSBuild Projects="..\examples\10.Elastic\Elastic.dproj"/>
+    </Target>
+    <Target Name="Elastic:Clean">
+        <MSBuild Projects="..\examples\10.Elastic\Elastic.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Elastic:Make">
+        <MSBuild Projects="..\examples\10.Elastic\Elastic.dproj" Targets="Make"/>
+    </Target>
     <Target Name="Testbed">
         <MSBuild Projects="..\examples\99.Testbed\Testbed.dproj"/>
     </Target>
@@ -108,13 +132,13 @@
         <MSBuild Projects="..\examples\99.Testbed\Testbed.dproj" Targets="Make"/>
     </Target>
     <Target Name="Build">
-        <CallTarget Targets="ZipArc;HelloWorld;Starfield;Texture;Shader;Video;Font;Testbed"/>
+        <CallTarget Targets="ZipArc;HelloWorld;Starfield;Texture;Shader;Video;Font;Audio;Elastic;Testbed"/>
     </Target>
     <Target Name="Clean">
-        <CallTarget Targets="ZipArc:Clean;HelloWorld:Clean;Starfield:Clean;Texture:Clean;Shader:Clean;Video:Clean;Font:Clean;Testbed:Clean"/>
+        <CallTarget Targets="ZipArc:Clean;HelloWorld:Clean;Starfield:Clean;Texture:Clean;Shader:Clean;Video:Clean;Font:Clean;Audio:Clean;Elastic:Clean;Testbed:Clean"/>
     </Target>
     <Target Name="Make">
-        <CallTarget Targets="ZipArc:Make;HelloWorld:Make;Starfield:Make;Texture:Make;Shader:Make;Video:Make;Font:Make;Testbed:Make"/>
+        <CallTarget Targets="ZipArc:Make;HelloWorld:Make;Starfield:Make;Texture:Make;Shader:Make;Video:Make;Font:Make;Audio:Make;Elastic:Make;Testbed:Make"/>
     </Target>
     <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
 </Project>

@@ -2983,8 +2983,8 @@ type
   TStarfield = class(TBaseObject)
   protected
     type
-      { TStarfieldItem }
-      TStarfieldItem = record
+      { TItem }
+      TItem = record
         X, Y, Z, Speed: Single;
       end;
   protected
@@ -2994,7 +2994,7 @@ type
     FViewScaleRatio: Single;
     FViewScale: Single;
     FStarCount: Cardinal;
-    FStar: array of TStarfieldItem;
+    FStar: array of TItem;
     FSpeed: TVector;
     FVirtualPos: TVector;
     procedure TransformDrawPoint(aX, aY, aZ: Single; aVPX, aVPY, aVPW, aVPH: Integer);
@@ -3283,8 +3283,8 @@ type
     function  FormatStr(const aMsg: string; const aArgs: array of const): string;
     function  PadRightStr(aText: string; aTotalWidth: Integer; aPaddingChar: Char): string;
     function  ExtractStrings(Separators, WhiteSpace: TSysCharSet; Content: PChar; Strings: TStringList): Integer;
-
     procedure FreeNilObject(aObject: PObject);
+    function  GetFilename(const aPath: string): string;
 
     // --- Math -------------------------------------------------------------
     function  RandomRange(aMin, aMax: Integer): Integer; overload;
@@ -3370,10 +3370,9 @@ type
     procedure ClearWindow(aColor: TColor);
     procedure ShowWindow;
     procedure ResetWindowTransform;
-    procedure SaveWidow(const aFilename: string);
+    procedure SaveWindow(const aFilename: string);
     procedure GetWindowViewportSize(var aSize: TRectangle);
     procedure SetWindowRenderTarget(aRenderTarget: TRenderTarget);
-
 
     // --- Blending ---------------------------------------------------------
     procedure SetBlender(aOperation: Integer; aSource: Integer; aDestination: Integer);
@@ -7722,6 +7721,17 @@ begin
   aObject^ := nil;
 end;
 
+function  TGame.GetFilename(const aPath: string): string;
+var
+  LPath: PALLEGRO_PATH;
+begin
+  Result := '';
+  if aPath ='' then Exit;
+  LPath := al_create_path(PAnsiChar(AnsiString(aPath)));
+  Result := string(al_get_path_filename(LPath));
+  al_destroy_path(LPath);
+end;
+
 // --- Math -----------------------------------------------------------------
 function _RandomRange(const aFrom, aTo: Integer): Integer;
 var
@@ -8885,7 +8895,7 @@ begin
   al_flip_display;
 end;
 
-procedure TGame.SaveWidow(const aFilename: string);
+procedure TGame.SaveWindow(const aFilename: string);
 var
   LBackbuffer: PALLEGRO_BITMAP;
   LScreenshot: PALLEGRO_BITMAP;
