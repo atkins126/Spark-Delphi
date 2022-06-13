@@ -18,7 +18,7 @@ It's robust, designed for easy use and suitable for making all types of 2D games
 - Written in **Object Pascal**
 - Support Windows 64 bit platform
 - Hardware accelerated with **OpenGL**
-- You interact with GameVision via the global `GV` object and the various classes in the toolkit
+- You interact with Spark via your derived `TGame` class and the various classes and routines in the `Spark` unit.
 - **Archive** (custom archive format, password protection)
 - **Window** (OpenGL, anti-aliasing, vsync, viewports, primitives, blending)
 - **Input** (keyboard, mouse and joystick)
