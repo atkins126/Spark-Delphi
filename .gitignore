@@ -67,3 +67,12 @@ __recovery/
 
 # Boss dependency manager vendor folder https://github.com/HashLoad/boss
 modules/
+
+# Spark
+*.log
+*.zip
+*.arc
+examples/**/Win64
+bin/Screenshots
+bin/*.txt
+bin/*.ini
