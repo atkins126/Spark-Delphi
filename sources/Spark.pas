@@ -164,7 +164,6 @@ function  GetConsoleOutputCP: UINT; stdcall; external 'kernel32';
 function  SetConsoleOutputCP(wCodePageID: UINT): BOOL; stdcall; external 'kernel32';
 
 // user32
-function  GetDpiForWindow(hwnd: HWND): UINT; stdcall; external 'user32';
 function  GetSystemMetrics(nIndex: Integer): Integer; stdcall; external 'user32';
 function  SetWindowLongPtrW(hWnd: HWND; nIndex: Integer; dwNewLong: LONG_PTR): LONG_PTR; stdcall; external 'user32';
 function  GetWindowLongPtrW(hWnd: HWND; nIndex: Integer): LONG_PTR; stdcall; external 'user32';
@@ -8800,6 +8799,8 @@ function TGame.OpenWindow: Boolean;
 begin
   Result := False;
   if FWindow.Handle <> nil then Exit;
+  if al_get_num_video_adapters < 1 then Exit;
+  al_set_new_display_adapter(0);
   al_set_new_display_flags(ALLEGRO_OPENGL_3_0 or ALLEGRO_RESIZABLE or ALLEGRO_PROGRAMMABLE_PIPELINE);
   al_set_new_display_option(ALLEGRO_COMPATIBLE_DISPLAY, 1, ALLEGRO_REQUIRE);
   al_set_new_display_option(ALLEGRO_VSYNC, 2, ALLEGRO_SUGGEST);
@@ -8814,7 +8815,7 @@ begin
   FWindow.Width := FSettings.WindowWidth;
   FWindow.Height := FSettings.WindowHeight;
   FWindow.Scale := 1;
-  FWindow.Dpi := GetDpiForWindow(al_get_win_window_handle(FWindow.Handle));
+  FWindow.Dpi := al_get_monitor_dpi(al_get_new_display_adapter);
   FWindow.RenderTarget := nil;
   al_register_event_source(FQueue, al_get_display_event_source(FWindow.Handle));
   ScaleWindowToDPI;
@@ -8846,7 +8847,7 @@ begin
   al_use_transform(@FWindow.Transform);
   al_set_clipping_rectangle(0, 0, LDW, LDH);
 
-  LDpi:= GetDpiForWindow(al_get_win_window_handle(FWindow.Handle));
+  LDpi := al_get_monitor_dpi(al_get_new_display_adapter);
   LSX := MulDiv(Round(FWindow.Width), LDPI, DISPLAY_DEFAULT_DPI);
   LSY := MulDiv(Round(FWindow.Height), LDpi, DISPLAY_DEFAULT_DPI);
 
