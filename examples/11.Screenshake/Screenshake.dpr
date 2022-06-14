@@ -51,7 +51,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 ============================================================================= }
 
-program Font;
+program Screenshake;
 
 {$APPTYPE CONSOLE}
 
@@ -60,8 +60,8 @@ program Font;
 uses
   Spark in '..\..\sources\Spark.pas',
   uCommon in '..\Common\uCommon.pas',
-  uFont in 'uFont.pas';
+  uScreenshake in 'uScreenshake.pas';
 
 begin
-  RunGame(TFontEx);
+  RunGame(TScreenshakeEx);
 end.

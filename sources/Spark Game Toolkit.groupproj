@@ -30,6 +30,15 @@
         <Projects Include="..\examples\10.Elastic\Elastic.dproj">
             <Dependencies/>
         </Projects>
+        <Projects Include="..\examples\11.Screenshake\Screenshake.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="..\examples\12.Screenshot\Screenshot.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="..\examples\13.CmdConsole\CmdConsole.dproj">
+            <Dependencies/>
+        </Projects>
         <Projects Include="..\examples\99.Testbed\Testbed.dproj">
             <Dependencies/>
         </Projects>
@@ -122,6 +131,33 @@
     <Target Name="Elastic:Make">
         <MSBuild Projects="..\examples\10.Elastic\Elastic.dproj" Targets="Make"/>
     </Target>
+    <Target Name="Screenshake">
+        <MSBuild Projects="..\examples\11.Screenshake\Screenshake.dproj"/>
+    </Target>
+    <Target Name="Screenshake:Clean">
+        <MSBuild Projects="..\examples\11.Screenshake\Screenshake.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Screenshake:Make">
+        <MSBuild Projects="..\examples\11.Screenshake\Screenshake.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Screenshot">
+        <MSBuild Projects="..\examples\12.Screenshot\Screenshot.dproj"/>
+    </Target>
+    <Target Name="Screenshot:Clean">
+        <MSBuild Projects="..\examples\12.Screenshot\Screenshot.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Screenshot:Make">
+        <MSBuild Projects="..\examples\12.Screenshot\Screenshot.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="CmdConsole">
+        <MSBuild Projects="..\examples\13.CmdConsole\CmdConsole.dproj"/>
+    </Target>
+    <Target Name="CmdConsole:Clean">
+        <MSBuild Projects="..\examples\13.CmdConsole\CmdConsole.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="CmdConsole:Make">
+        <MSBuild Projects="..\examples\13.CmdConsole\CmdConsole.dproj" Targets="Make"/>
+    </Target>
     <Target Name="Testbed">
         <MSBuild Projects="..\examples\99.Testbed\Testbed.dproj"/>
     </Target>
@@ -132,13 +168,13 @@
         <MSBuild Projects="..\examples\99.Testbed\Testbed.dproj" Targets="Make"/>
     </Target>
     <Target Name="Build">
-        <CallTarget Targets="ZipArc;HelloWorld;Starfield;Texture;Shader;Video;Font;Audio;Elastic;Testbed"/>
+        <CallTarget Targets="ZipArc;HelloWorld;Starfield;Texture;Shader;Video;Font;Audio;Elastic;Screenshake;Screenshot;CmdConsole;Testbed"/>
     </Target>
     <Target Name="Clean">
-        <CallTarget Targets="ZipArc:Clean;HelloWorld:Clean;Starfield:Clean;Texture:Clean;Shader:Clean;Video:Clean;Font:Clean;Audio:Clean;Elastic:Clean;Testbed:Clean"/>
+        <CallTarget Targets="ZipArc:Clean;HelloWorld:Clean;Starfield:Clean;Texture:Clean;Shader:Clean;Video:Clean;Font:Clean;Audio:Clean;Elastic:Clean;Screenshake:Clean;Screenshot:Clean;CmdConsole:Clean;Testbed:Clean"/>
     </Target>
     <Target Name="Make">
-        <CallTarget Targets="ZipArc:Make;HelloWorld:Make;Starfield:Make;Texture:Make;Shader:Make;Video:Make;Font:Make;Audio:Make;Elastic:Make;Testbed:Make"/>
+        <CallTarget Targets="ZipArc:Make;HelloWorld:Make;Starfield:Make;Texture:Make;Shader:Make;Video:Make;Font:Make;Audio:Make;Elastic:Make;Screenshake:Make;Screenshot:Make;CmdConsole:Make;Testbed:Make"/>
     </Target>
     <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
 </Project>

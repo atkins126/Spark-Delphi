@@ -63,5 +63,5 @@ uses
   uHelloWorld in 'uHelloWorld.pas';
 
 begin
-  RunGame(THelloWorldExample);
+  RunGame(THelloWorldEx);
 end.

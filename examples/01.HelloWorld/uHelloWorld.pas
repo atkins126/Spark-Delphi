@@ -60,8 +60,8 @@ uses
   uCommon;
 
 type
-  { THelloWorldExample }
-  THelloWorldExample = class(TGame)
+  { THelloWorldEx }
+  THelloWorldEx = class(TGame)
   protected
     FBigFont: TFont;
   public
@@ -73,8 +73,8 @@ type
 
 implementation
 
-{ THelloWorldExample }
-procedure THelloWorldExample.OnSetSettings(var aSettings: TGameSettings);
+{ THelloWorldEx }
+procedure THelloWorldEx.OnSetSettings(var aSettings: TGameSettings);
 begin
   inherited;
 
@@ -83,7 +83,7 @@ begin
   aSettings.ArchiveFilename := cArchiveFilename;
 end;
 
-function  THelloWorldExample.OnStartup: Boolean;
+function  THelloWorldEx.OnStartup: Boolean;
 
 begin
   inherited;
@@ -94,14 +94,14 @@ begin
   Result := True;
 end;
 
-procedure THelloWorldExample.OnShutdown;
+procedure THelloWorldEx.OnShutdown;
 begin
   FreeNilObject(@FBigFont);
 
   inherited;
 end;
 
-procedure THelloWorldExample.OnRenderHUD;
+procedure THelloWorldEx.OnRenderHUD;
 begin
   inherited;
 

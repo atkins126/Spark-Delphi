@@ -63,5 +63,5 @@ uses
   uStarfield in 'uStarfield.pas';
 
 begin
-  RunGame(TStarfieldExample);
+  RunGame(TStarfieldEx);
 end.

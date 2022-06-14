@@ -51,17 +51,107 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 ============================================================================= }
 
-program Font;
+unit uScreenshot;
 
-{$APPTYPE CONSOLE}
-
-{$R *.res}
+interface
 
 uses
-  Spark in '..\..\sources\Spark.pas',
-  uCommon in '..\Common\uCommon.pas',
-  uFont in 'uFont.pas';
+  Spark,
+  uCommon;
 
+type
+  { TScreenshotEx }
+  TScreenshotEx = class(TGame)
+  protected
+    FTexture: TTexture;
+    FScreenshotImage: TTexture;
+    FPos: TVector;
+    FFilename: string;
+  public
+    procedure OnSetSettings(var aSettings: TGameSettings); override;
+    function  OnStartup: Boolean; override;
+    procedure OnShutdown; override;
+    procedure OnUpdate(aDeltaTime: Double); override;
+    procedure OnRender; override;
+    procedure OnRenderHUD; override;
+    procedure OnShowRender; override;
+    procedure OnScreenshot(const aFilename: string); override;
+  end;
+
+implementation
+
+{ TScreenshotEx }
+procedure TScreenshotEx.OnSetSettings(var aSettings: TGameSettings);
 begin
-  RunGame(TFontEx);
+  inherited;
+  aSettings.WindowTitle := 'Spark - Screenshot';
+  aSettings.ArchivePassword := cArchivePassword;
+  aSettings.ArchiveFilename := cArchiveFilename;
+end;
+
+function  TScreenshotEx.OnStartup: Boolean;
+begin
+  inherited;
+
+  FScreenshotImage := TTexture.Create;
+
+  FTexture := TTexture.Create;
+  FTexture.Load(Archive, 'arc/images/spark2.png', nil);
+  FPos.Assign(Window.Width/2, Window.Height/2, 30, 0);
+
+  Result := True;
+end;
+
+procedure TScreenshotEx.OnShutdown;
+begin
+  Game.FreeNilObject(@FTexture);
+  Game.FreeNilObject(@FScreenshotImage);
+
+  inherited;
+end;
+
+procedure TScreenshotEx.OnUpdate(aDeltaTime: Double);
+begin
+  inherited;
+
+  // update rotation
+  FPos.W := FPos.W + (FPos.Z * aDeltaTime);
+
+  // take a screenshot
+  if KeyPressed(KEY_S) then
+    TakeScreenshot;
+end;
+
+procedure TScreenshotEx.OnRender;
+begin
+  inherited;
+
+  FTexture.Draw(FPos.X, FPos.Y, 0.65, FPos.W, WHITE, haCenter, vaCenter);
+end;
+
+procedure TScreenshotEx.OnShowRender;
+begin
+  inherited;
+
+  // display scaled down version of last screen image
+  FScreenshotImage.Draw(Window.Width-1, 3, 0.25, 0, WHITE, haRight, vaTop);
+end;
+
+procedure TScreenshotEx.OnRenderHUD;
+begin
+  inherited;
+
+  HudText(Font, GREEN, haLeft, HudTextItem('S', 'Screenshot'), []);
+  HudText(Font, YELLOW, haLeft, HudTextItem('File', '#s'), [GetFileName(FFilename)]);
+end;
+
+procedure TScreenshotEx.OnScreenshot(const aFilename: string);
+begin
+  // get the filename of last screenshot image
+  FFilename := aFilename;
+
+  // load in this image
+  FScreenshotImage.Load(nil, FFilename, nil);
+end;
+
 end.

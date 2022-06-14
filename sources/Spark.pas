@@ -3547,6 +3547,7 @@ type
     procedure OnUpdate(aDeltaTime: Double); virtual;
     procedure OnFixedUpdate; virtual;
     procedure OnRender; virtual;
+    procedure OnShowRender; virtual;
     procedure OnRenderHUD; virtual;
     procedure OnReady(aReady: Boolean); virtual;
     procedure OnVideoState(aState: TVideoState; const aFilename: string); virtual;
@@ -4224,7 +4225,7 @@ begin
   Dec(FCount);
   if aIndex < FCount then
     Move(FItems[aIndex + 1], FItems[aIndex], (FCount - aIndex) * SizeOf(FItems[0]));
-  if Length(FItems) - FCount + 1 > FCapacity then
+  if Length(FItems) - FCount > FCapacity then
     SetLength(FItems, Length(FItems) - FCapacity);
 end;
 
@@ -4233,7 +4234,7 @@ procedure TList.Insert(aIndex: Integer; aItem: Pointer);
 begin
   if OutOfBounds(aIndex) then Exit;
   Add(nil);
-  Move(FItems[aIndex], FItems[aIndex + 1], (FCount - aIndex - 1) * SizeOf(FItems[0]));
+  Move(FItems[aIndex], FItems[aIndex + 1], (FCount - aIndex) * SizeOf(FItems[0]));
   FItems[aIndex] := aItem;
 end;
 
@@ -4350,7 +4351,7 @@ begin
   Dec(FCount);
   if aIndex < FCount then
     Move(FItems[aIndex + 1], FItems[aIndex], (FCount - aIndex) * SizeOf(FItems[0]));
-  if Length(FItems) - FCount + 1 > FCapacity then
+  if Length(FItems) - FCount > FCapacity then
     SetLength(FItems, Length(FItems) - FCapacity);
 end;
 
@@ -4358,7 +4359,7 @@ procedure TStringList.Insert(aIndex: Integer; aItem: string);
 begin
   if OutOfBounds(aIndex) then Exit;
   Add('');
-  Move(FItems[aIndex], FItems[aIndex + 1], (FCount - aIndex - 1) * SizeOf(FItems[0]));
+  Move(FItems[aIndex], FItems[aIndex + 1], (FCount - aIndex) * SizeOf(FItems[0]));
   FItems[aIndex] := aItem;
 end;
 
@@ -5786,39 +5787,35 @@ begin
       AddTextLine('', []);
       AddTextLine('Options:', []);
       LList := TStringList.Create;
-      try
-        LList.AddPair('up/down', 'Console history');
-        LList.AddPair('cls', 'Clear console window');
-        LList.AddPair('help', 'Display list of commands');
+      LList.AddPair('up/down', 'Console history');
+      LList.AddPair('cls', 'Clear console window');
+      LList.AddPair('help', 'Display list of commands');
 
-        for I := 0 to FCmdActionList.Count-1 do
-        begin
-          LAction := FCmdActionList.GetItem(I);
-          LList.AddPair(LAction.Name, LAction.Discription);
-        end;
-
-        LMaxLen := 0;
-        for I := 0 to LList.Count-1 do
-        begin
-          if Length(LList.GetKey(I)) > LMaxLen then
-            LMaxLen := Length(LList.GetKey(I));
-        end;
-
-        for I := 0 to LList.Count-1 do
-        begin
-          AddTextLine('  #s - #s', [Game.PadRightStr(LList.GetKey(I), LMaxLen, ' '), LList.GetValue(I)]);
-        end;
-
-      finally
-        Game.FreeNilObject(@LList);
+      for I := 0 to FCmdActionList.Count-1 do
+      begin
+        LAction := FCmdActionList.GetItem(I);
+        LList.AddPair(LAction.Name, LAction.Discription);
       end;
+
+      LMaxLen := 0;
+      for I := 0 to LList.Count-1 do
+      begin
+        if Length(LList.GetKey(I)) > LMaxLen then
+          LMaxLen := Length(LList.GetKey(I));
+      end;
+
+      for I := 0 to LList.Count-1 do
+      begin
+        AddTextLine('  #s - #s', [Game.PadRightStr(LList.GetKey(I), LMaxLen, ' '), LList.GetValue(I)]);
+      end;
+
+      Game.FreeNilObject(@LList);
       aWasInternalCmd := True;
       Result := True;
       Exit;
     end;
 
   // check external commands
-  //for LRec in FCmdActionList do
   for I := 0 to FCmdActionList.Count-1 do
   begin
     LAction := FCmdActionList.GetItem(I);
@@ -5876,7 +5873,7 @@ begin
   FActive := False;
   FState := stInactive;
   FFont := TFont.Create;
-  FFont.LoadDefault(16);
+  FFont.LoadDefault(18);
   FFontHeight := FFont.GetLineHeight;
   FToggleKey :=  KEY_TILDE;
   FSlideSpeed := cDefaultSlideSpeed;
@@ -5896,21 +5893,12 @@ begin
 end;
 
 procedure TCmdConsole.Close;
-var
-  LAction: PAction;
-  I: Integer;
 begin
   Game.FreeNilObject(@FFont);
   FTextLines.Clear;
   FCmdHistory.Clear;
   FCmdParams.Clear;
-
-  for I := 0 to FCmdActionList.Count-1 do
-  begin
-    LAction := FCmdActionList.GetItem(I);
-    Dispose(LAction);
-  end;
-
+  ClearCommands;
   FCmdActionList.Clear;
   FActive := False;
   FState := stInactive;
@@ -6002,6 +5990,7 @@ begin
       begin
         FPos.Y := FSize.Y;
         if not FActive then Game.EmitCmdConActiveEvent;
+        if FTextLines.Count = 0 then AddTextLine('Type Help for list of commands', []);
         FActive := True;
       end;
     end
@@ -6144,7 +6133,17 @@ begin
 end;
 
 procedure TCmdConsole.ClearCommands;
+var
+  LAction: PAction;
+  I: Integer;
 begin
+
+  for I := 0 to FCmdActionList.Count-1 do
+  begin
+    LAction := FCmdActionList.GetItem(I);
+    Dispose(LAction);
+  end;
+
   FCmdActionList.Clear;
 end;
 
@@ -9304,8 +9303,8 @@ begin
   GetWindowViewportSize(LSize);
   LVX := Round(LSize.X);
   LVY := Round(LSize.Y);
-  LVW := Round(LSize.Width);
-  LVH := Round(LSize.Height);
+  LVW := Round(LSize.Width*Window.Scale);
+  LVH := Round(LSize.Height*Window.Scale);
 
   // create LScreenshot bitmpat
   al_set_new_bitmap_flags(ALLEGRO_MIN_LINEAR or ALLEGRO_MAG_LINEAR);
@@ -10497,6 +10496,11 @@ procedure TGame.OnRender;
 begin
 end;
 
+procedure TGame.OnShowRender;
+begin
+end;
+
+
 procedure TGame.OnRenderHUD;
 begin
   ResetHudPos;
@@ -10676,6 +10680,7 @@ begin
         FCmdConsole.Render;
         al_use_transform(@LCurrentTransform);
         ProcessScreenshot;
+        OnShowRender;
         ShowWindow;
       end
     else

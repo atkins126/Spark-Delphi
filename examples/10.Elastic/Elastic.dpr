@@ -63,5 +63,5 @@ uses
   uElastic in 'uElastic.pas';
 
 begin
-  RunGame(TElasticExample);
+  RunGame(TElasticEx);
 end.

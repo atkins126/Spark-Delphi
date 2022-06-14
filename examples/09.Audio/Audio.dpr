@@ -63,5 +63,5 @@ uses
   uAudio in 'uAudio.pas';
 
 begin
-  RunGame(TAudioExample);
+  RunGame(TAudioEx);
 end.

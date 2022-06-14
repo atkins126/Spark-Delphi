@@ -60,8 +60,8 @@ uses
   uCommon;
 
 type
-  { TFontExample }
-  TFontExample = class(TGame)
+  { TFontEx }
+  TFontEx = class(TGame)
   protected
     FUnicodeFont: TFont;
   public
@@ -73,8 +73,8 @@ type
 
 implementation
 
-{ TFontExample }
-procedure TFontExample.OnSetSettings(var aSettings: TGameSettings);
+{ TFontEx }
+procedure TFontEx.OnSetSettings(var aSettings: TGameSettings);
 begin
   inherited;
   aSettings.WindowTitle := 'Spark - Font';
@@ -82,7 +82,7 @@ begin
   aSettings.ArchiveFilename := cArchiveFilename;
 end;
 
-function  TFontExample.OnStartup: Boolean;
+function  TFontEx.OnStartup: Boolean;
 begin
   inherited;
 
@@ -92,13 +92,13 @@ begin
   Result := True;
 end;
 
-procedure TFontExample.OnShutdown;
+procedure TFontEx.OnShutdown;
 begin
   FreeNilObject(@FUnicodeFont);
   inherited;
 end;
 
-procedure TFontExample.OnRenderHUD;
+procedure TFontEx.OnRenderHUD;
 begin
   inherited;
 

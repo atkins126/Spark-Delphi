@@ -60,8 +60,8 @@ uses
   uCommon;
 
 type
-  { TTextureExample }
-  TTextureExample = class(TGame)
+  { TTextureEx }
+  TTextureEx = class(TGame)
   protected
   const
     cSpriteWidth   = 128;
@@ -96,8 +96,8 @@ type
 
 implementation
 
-{ TTextureExample }
-procedure TTextureExample.OnSetSettings(var aSettings: TGameSettings);
+{ TTextureEx }
+procedure TTextureEx.OnSetSettings(var aSettings: TGameSettings);
 begin
   inherited;
   aSettings.WindowTitle := 'Spark - Texture';
@@ -105,7 +105,7 @@ begin
   aSettings.ArchiveFilename := cArchiveFilename;
 end;
 
-function  TTextureExample.OnStartup: Boolean;
+function  TTextureEx.OnStartup: Boolean;
 begin
   inherited;
 
@@ -168,7 +168,7 @@ begin
   Result := True;
 end;
 
-procedure TTextureExample.OnShutdown;
+procedure TTextureEx.OnShutdown;
 begin
   FreeNilObject(@FTexture[10]);
   FreeNilObject(@FTexture[9]);
@@ -185,7 +185,7 @@ begin
   inherited;
 end;
 
-procedure TTextureExample.OnUpdate(aDeltaTime: Double);
+procedure TTextureEx.OnUpdate(aDeltaTime: Double);
 var
   I: Integer;
 begin
@@ -264,7 +264,7 @@ begin
   end;
 end;
 
-procedure TTextureExample.OnRender;
+procedure TTextureEx.OnRender;
 var
   LCenterPos: TVector;
   LSize: TVector;
@@ -349,7 +349,7 @@ begin
   end;
 end;
 
-procedure TTextureExample.OnRenderHUD;
+procedure TTextureEx.OnRenderHUD;
 begin
   inherited;
 

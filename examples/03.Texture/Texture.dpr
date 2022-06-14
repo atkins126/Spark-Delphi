@@ -63,5 +63,5 @@ uses
   uTexture in 'uTexture.pas';
 
 begin
-  RunGame(TTextureExample);
+  RunGame(TTextureEx);
 end.

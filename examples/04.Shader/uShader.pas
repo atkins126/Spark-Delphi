@@ -60,8 +60,8 @@ uses
   uCommon;
 
 type
-  { TShaderExample }
-  TShaderExample = class(TGame)
+  { TShaderEx }
+  TShaderEx = class(TGame)
   protected
   const
     CName: array[0..2] of string = ('swirl', 'vortex', 'fire');
@@ -80,8 +80,8 @@ type
 
 implementation
 
-{ TShaderExample }
-procedure TShaderExample.OnSetSettings(var aSettings: TGameSettings);
+{ TShaderEx }
+procedure TShaderEx.OnSetSettings(var aSettings: TGameSettings);
 begin
   inherited;
   aSettings.WindowTitle := 'Spark - Shader';
@@ -90,7 +90,7 @@ begin
   aSettings.ArchiveFilename := cArchiveFilename;
 end;
 
-function  TShaderExample.OnStartup: Boolean;
+function  TShaderEx.OnStartup: Boolean;
 var
   I: Integer;
 begin
@@ -113,7 +113,7 @@ begin
   Result := True;
 end;
 
-procedure TShaderExample.OnShutdown;
+procedure TShaderEx.OnShutdown;
 var
   I: Integer;
 begin
@@ -123,7 +123,7 @@ begin
   inherited;
 end;
 
-procedure TShaderExample.OnUpdate(aDeltaTime: Double);
+procedure TShaderEx.OnUpdate(aDeltaTime: Double);
 begin
   inherited;
 
@@ -141,7 +141,7 @@ begin
   FShader[FIndex].Enable(False);
 end;
 
-procedure TShaderExample.OnRender;
+procedure TShaderEx.OnRender;
 begin
   inherited;
 
@@ -150,7 +150,7 @@ begin
   FShader[FIndex].Enable(False);
 end;
 
-procedure TShaderExample.OnRenderHUD;
+procedure TShaderEx.OnRenderHUD;
 begin
   inherited;
 

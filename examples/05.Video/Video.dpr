@@ -63,5 +63,5 @@ uses
   uVideo in 'uVideo.pas';
 
 begin
-  RunGame(TVideoExample);
+  RunGame(TVideoEx);
 end.

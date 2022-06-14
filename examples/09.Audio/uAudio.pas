@@ -60,8 +60,8 @@ uses
   uCommon;
 
 type
-  { TTemplate }
-  TAudioExample = class(TGame)
+  { TAudioEx }
+  TAudioEx = class(TGame)
   protected
     FFilename: string;
     FNum: Integer;
@@ -84,8 +84,8 @@ type
 
 implementation
 
-{ TTemplate }
-procedure TAudioExample.Play(aNum: Integer; aVol: Single);
+{ TAudioEx }
+procedure TAudioEx.Play(aNum: Integer; aVol: Single);
 begin
   if aNum < 10 then
     FFilename := FormatStr('arc/music/song0#i.ogg', [aNum])
@@ -94,7 +94,7 @@ begin
   PlayMusic(Archive, FFilename, aVol, True);
 end;
 
-procedure TAudioExample.OnSetSettings(var aSettings: TGameSettings);
+procedure TAudioEx.OnSetSettings(var aSettings: TGameSettings);
 begin
   inherited;
   aSettings.WindowTitle := 'Spark - Audio';
@@ -102,7 +102,7 @@ begin
   aSettings.ArchiveFilename := cArchiveFilename;
 end;
 
-function  TAudioExample.OnStartup: Boolean;
+function  TAudioEx.OnStartup: Boolean;
 var
   I: Integer;
 begin
@@ -120,7 +120,7 @@ begin
   Result := True;
 end;
 
-procedure TAudioExample.OnShutdown;
+procedure TAudioEx.OnShutdown;
 var
   I: Integer;
 begin
@@ -134,7 +134,7 @@ begin
   inherited;
 end;
 
-procedure TAudioExample.OnUpdate(aDeltaTime: Double);
+procedure TAudioEx.OnUpdate(aDeltaTime: Double);
 begin
   inherited;
 
@@ -195,17 +195,17 @@ begin
 
 end;
 
-procedure TAudioExample.OnFixedUpdate;
+procedure TAudioEx.OnFixedUpdate;
 begin
   inherited;
 end;
 
-procedure TAudioExample.OnRender;
+procedure TAudioEx.OnRender;
 begin
   inherited;
 end;
 
-procedure TAudioExample.OnRenderHUD;
+procedure TAudioEx.OnRenderHUD;
 begin
   inherited;
   HudText(Font, GREEN,  haLeft, HudTextItem('Up/Down', 'Play sample'), []);
@@ -214,22 +214,22 @@ begin
   HudText(Font, ORANGE, haLeft, HudTextItem('Song:', '#s', ' '), [GetFileName(FFilename)]);
 end;
 
-procedure TAudioExample.OnReady(aReady: Boolean);
+procedure TAudioEx.OnReady(aReady: Boolean);
 begin
   inherited;
 end;
 
-procedure TAudioExample.OnVideoState(aState: TVideoState; const aFilename: string);
+procedure TAudioEx.OnVideoState(aState: TVideoState; const aFilename: string);
 begin
   inherited;
 end;
 
-procedure TAudioExample.OnOpenCmdConsole;
+procedure TAudioEx.OnOpenCmdConsole;
 begin
   inherited;
 end;
 
-procedure TAudioExample.OnCloseCmdConsole;
+procedure TAudioEx.OnCloseCmdConsole;
 begin
   inherited;
 end;

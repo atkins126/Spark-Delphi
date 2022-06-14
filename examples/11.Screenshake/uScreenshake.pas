@@ -51,17 +51,79 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 ============================================================================= }
 
-program Font;
+unit uScreenshake;
 
-{$APPTYPE CONSOLE}
-
-{$R *.res}
+interface
 
 uses
-  Spark in '..\..\sources\Spark.pas',
-  uCommon in '..\Common\uCommon.pas',
-  uFont in 'uFont.pas';
+  Spark,
+  uCommon;
 
+type
+  { TScreenshakeEx }
+  TScreenshakeEx = class(TGame)
+  protected
+    FStarfield: TStarfield;
+  public
+    procedure OnSetSettings(var aSettings: TGameSettings); override;
+    function  OnStartup: Boolean; override;
+    procedure OnShutdown; override;
+    procedure OnUpdate(aDeltaTime: Double); override;
+    procedure OnRender; override;
+    procedure OnRenderHUD; override;
+  end;
+
+implementation
+
+{ TScreenshakeEx }
+procedure TScreenshakeEx.OnSetSettings(var aSettings: TGameSettings);
 begin
-  RunGame(TFontEx);
+  inherited;
+  aSettings.WindowTitle := 'Spark - Screenshake';
+  aSettings.WindowClearColor := BLACK;
+  aSettings.ArchivePassword := cArchivePassword;
+  aSettings.ArchiveFilename := cArchiveFilename;
+end;
+
+function  TScreenshakeEx.OnStartup: Boolean;
+begin
+  inherited;
+
+  FStarfield := TStarfield.Create;
+
+  Result := True;
+end;
+
+procedure TScreenshakeEx.OnShutdown;
+begin
+  Game.FreeNilObject(@FStarfield);
+
+  inherited;
+end;
+
+procedure TScreenshakeEx.OnUpdate(aDeltaTime: Double);
+begin
+  inherited;
+
+  if KeyPressed(KEY_S) then StartScreenshake(60, 5);
+
+
+  FStarfield.Update(aDeltaTime);
+end;
+
+procedure TScreenshakeEx.OnRender;
+begin
+  inherited;
+
+  FStarfield.Render;
+end;
+
+procedure TScreenshakeEx.OnRenderHUD;
+begin
+  inherited;
+
+  HudText(Font, GREEN, haLeft, HudTextItem('S', 'Screenshake'), []);
+
+end;
+
 end.

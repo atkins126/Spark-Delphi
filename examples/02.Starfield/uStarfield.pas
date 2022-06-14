@@ -60,8 +60,8 @@ uses
   uCommon;
 
 type
-  { TStarfieldExample }
-  TStarfieldExample = class(TGame)
+  { TStarfieldEx }
+  TStarfieldEx = class(TGame)
   protected
     FStarfield: TStarfield;
   public
@@ -75,8 +75,8 @@ type
 
 implementation
 
-{ TStarfieldExample }
-procedure TStarfieldExample.OnSetSettings(var aSettings: TGameSettings);
+{ TStarfieldEx }
+procedure TStarfieldEx.OnSetSettings(var aSettings: TGameSettings);
 begin
   inherited;
   aSettings.WindowTitle := 'Spark - Starfield';
@@ -85,7 +85,7 @@ begin
   aSettings.ArchiveFilename := cArchiveFilename;
 end;
 
-function  TStarfieldExample.OnStartup: Boolean;
+function  TStarfieldEx.OnStartup: Boolean;
 begin
   inherited;
 
@@ -94,13 +94,13 @@ begin
   Result := True;
 end;
 
-procedure TStarfieldExample.OnShutdown;
+procedure TStarfieldEx.OnShutdown;
 begin
   FreeNilObject(@FStarfield);
   inherited;
 end;
 
-procedure TStarfieldExample.OnUpdate(aDeltaTime: Double);
+procedure TStarfieldEx.OnUpdate(aDeltaTime: Double);
 const
   cFactor = 20;
 begin
@@ -167,14 +167,14 @@ begin
   FStarfield.Update(aDeltaTime);
 end;
 
-procedure TStarfieldExample.OnRender;
+procedure TStarfieldEx.OnRender;
 begin
   inherited;
 
   FStarfield.Render;
 end;
 
-procedure TStarfieldExample.OnRenderHUD;
+procedure TStarfieldEx.OnRenderHUD;
 begin
   inherited;
 

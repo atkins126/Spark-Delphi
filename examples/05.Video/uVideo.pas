@@ -60,8 +60,8 @@ uses
   uCommon;
 
 type
-  { TVideoExample }
-  TVideoExample = class(TGame)
+  { TVideoEx }
+  TVideoEx = class(TGame)
   protected
     FFilename: array[0..2] of string;
     FNum: Integer;
@@ -78,8 +78,8 @@ type
 
 implementation
 
-{ TVideoExample }
-procedure TVideoExample.Play(aNum: Integer; aVolume: Single);
+{ TVideoEx }
+procedure TVideoEx.Play(aNum: Integer; aVolume: Single);
 begin
   if (aNum < Low(FFilename)) or (aNum > High(FFilename)) then Exit;
   if  (aNum = FNum) then Exit;
@@ -87,7 +87,7 @@ begin
   PlayVideo(Archive, 'arc/videos/'+FFilename[FNum], True, aVolume);
 end;
 
-procedure TVideoExample.OnSetSettings(var aSettings: TGameSettings);
+procedure TVideoEx.OnSetSettings(var aSettings: TGameSettings);
 begin
   inherited;
   aSettings.WindowTitle := 'Spark - Video';
@@ -95,7 +95,7 @@ begin
   aSettings.ArchiveFilename := cArchiveFilename;
 end;
 
-function  TVideoExample.OnStartup: Boolean;
+function  TVideoEx.OnStartup: Boolean;
 begin
   inherited;
 
@@ -108,14 +108,14 @@ begin
   Result := True;
 end;
 
-procedure TVideoExample.OnShutdown;
+procedure TVideoEx.OnShutdown;
 begin
   UnloadVideo;
 
   inherited;
 end;
 
-procedure TVideoExample.OnUpdate(aDeltaTime: Double);
+procedure TVideoEx.OnUpdate(aDeltaTime: Double);
 begin
   inherited;
 
@@ -127,21 +127,21 @@ begin
 
 end;
 
-procedure TVideoExample.OnRender;
+procedure TVideoEx.OnRender;
 begin
   inherited;
 
   DrawVideo(0, 0, 0.50);
 end;
 
-procedure TVideoExample.OnRenderHUD;
+procedure TVideoEx.OnRenderHUD;
 begin
   inherited;
 
   HudText(Font, GREEN, haLeft, HudTextItem('1-3', 'Video (#s)'), [FFilename[FNum]]);
 end;
 
-procedure TVideoExample.OnVideoState(aState: TVideoState; const aFilename: string);
+procedure TVideoEx.OnVideoState(aState: TVideoState; const aFilename: string);
 begin
   case aState of
     vsLoad    : WriteLn('Load video: ', aFilename);

@@ -63,5 +63,5 @@ uses
   uShader in 'uShader.pas';
 
 begin
-  RunGame(TShaderExample);
+  RunGame(TShaderEx);
 end.

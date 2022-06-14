@@ -60,8 +60,8 @@ uses
   uCommon;
 
 type
-  { TElasticExample }
-  TElasticExample = class(TGame)
+  { TElasticEx }
+  TElasticEx = class(TGame)
   protected
   const
     cGravity          = 0.04;
@@ -99,8 +99,8 @@ type
 
 implementation
 
-{ TElasticExample }
-procedure TElasticExample.OnSetSettings(var aSettings: TGameSettings);
+{ TElasticEx }
+procedure TElasticEx.OnSetSettings(var aSettings: TGameSettings);
 begin
   inherited;
   aSettings.WindowTitle := 'Spark - Elastic';
@@ -108,7 +108,7 @@ begin
   aSettings.ArchiveFilename := cArchiveFilename;
 end;
 
-function  TElasticExample.OnStartup: Boolean;
+function  TElasticEx.OnStartup: Boolean;
 var
   LVP: TRectangle;
 begin
@@ -124,14 +124,14 @@ begin
   Result := True;
 end;
 
-procedure TElasticExample.OnShutdown;
+procedure TElasticEx.OnShutdown;
 begin
   UnloadMusic;
 
   inherited;
 end;
 
-procedure TElasticExample.OnUpdate(aDeltaTime: Double);
+procedure TElasticEx.OnUpdate(aDeltaTime: Double);
 var
   LI: Integer;
   LDist, LDistX, LDistY: Single;
@@ -235,7 +235,7 @@ begin
 
 end;
 
-procedure TElasticExample.OnRender;
+procedure TElasticEx.OnRender;
 var
   I: Integer;
 begin
