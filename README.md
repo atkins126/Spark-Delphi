@@ -34,7 +34,7 @@ It's robust, designed for easy use and suitable for making all types of 2D games
 
 ## Minimum System Requirements
 - Any Delphi version with unicode, advanced records and win64 support
-- Microsoft Windows 10, 64 bits
+- Microsoft Windows 8.1, 64 bits
 - OpenGL 3
 
 ## How to use in Delphi
