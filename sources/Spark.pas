@@ -89,6 +89,8 @@ const
   STD_OUTPUT_HANDLE = System.FixedUInt(-11);
   INVALID_FILE_ATTRIBUTES = System.FixedUInt($FFFFFFFF);
 
+  ERROR_FILE_NOT_FOUND = 2;
+
   CP_UTF8                  = 65001;         { UTF-8 translation }
 
 type
@@ -141,6 +143,13 @@ type
     cAlternateFileName: array[0..13] of WideChar;
   end;
 
+  PSecurityAttributes = ^TSecurityAttributes;
+  TSecurityAttributes = record
+    nLength: DWORD;
+    lpSecurityDescriptor: Pointer;
+    bInheritHandle: BOOL;
+  end;
+
 // kernel32
 function  FindResourceW(hModule: HMODULE; lpName, lpType: LPCWSTR): HRSRC; stdcall; external 'kernel32';
 function  LoadResource(hModule: HINST; hResInfo: HRSRC): HGLOBAL; stdcall; stdcall; external 'kernel32';
@@ -162,6 +171,8 @@ function  GetStdHandle(nStdHandle: DWORD): THandle; stdcall; external 'kernel32'
 function  GetFileAttributesW(lpFileName: LPCWSTR): DWORD; stdcall; external 'kernel32';
 function  GetConsoleOutputCP: UINT; stdcall; external 'kernel32';
 function  SetConsoleOutputCP(wCodePageID: UINT): BOOL; stdcall; external 'kernel32';
+function  GetFullPathNameW(lpFileName: LPCWSTR; nBufferLength: DWORD; lpBuffer: LPWSTR; var lpFilePart: LPWSTR): DWORD; stdcall; external 'kernel32';
+function  CreateDirectoryW(lpPathName: LPCWSTR; lpSecurityAttributes: PSecurityAttributes): BOOL; stdcall; external 'kernel32';
 
 // user32
 function  GetSystemMetrics(nIndex: Integer): Integer; stdcall; external 'user32';
@@ -2848,7 +2859,6 @@ type
     function AddPair(const aName, aValue: string): TStringList;
     function GetKey(aIndex: Integer): string; inline;
     function GetValue(aIndex: Integer): string; inline;
-
   end;
 
   { TArchiveBuildProgressEvent }
@@ -2976,6 +2986,35 @@ type
     function SetTextureUniform(const aName: string; aTexture: TTexture): Boolean;
     function SetVec2Uniform(const aName: string; aValue: TVector): Boolean; overload;
     function SetVec2Uniform(const aName: string; aX: Single; aY: Single): Boolean; overload;
+  end;
+
+  { TAScreenshake }
+  TAScreenshake = class
+  protected
+    FActive: Boolean;
+    FDuration: Single;
+    FMagnitude: Single;
+    FTimer: Single;
+    FPos: TVector;
+  public
+    constructor Create(aDuration: Single; aMagnitude: Single);
+    destructor Destroy; override;
+    procedure Process(aSpeed: Single; aDeltaTime: Double);
+    property Active: Boolean read FActive;
+  end;
+
+  { TScreenshake }
+  TScreenshake = class(TBaseObject)
+  protected
+    FTrans: ALLEGRO_TRANSFORM;
+    FList: TList;
+  public
+    constructor Create; override;
+    destructor Destroy; override;
+    procedure Process(aSpeed: Single; aDeltaTime: Double);
+    procedure Start(aDuration: Single; aMagnitude: Single);
+    procedure Clear;
+    function  Active: Boolean;
   end;
 
   { TStarfield }
@@ -3167,6 +3206,21 @@ type
       Paused: Boolean;
       Filename: string;
     end;
+    { TLog }
+    TLog = record
+      Filename: string;
+      Text: Text;
+      Buffer: array[Word] of Byte;
+      Open: Boolean;
+      GlobalWriteToConsole: Boolean;
+    end;
+    { TScreenshot }
+    TScreenshot = record
+      Flag: Boolean;
+      Dir: string;
+      BaseFilename: string;
+      Filename: string;
+    end;
   {$ENDREGION}
 
   protected
@@ -3200,7 +3254,11 @@ type
     FArchive: TArchive;
     FVideo: TVideo;
     FCmdConsole: TCmdConsole;
+    FScreenshake: TScreenshake;
     FMusic: PALLEGRO_AUDIO_STREAM;
+    FMusicFilename: string;
+    FLog: TLog;
+    FScreenshot: TScreenshot;
   {$ENDREGION}
 
   {$REGION 'Routines'}
@@ -3222,6 +3280,9 @@ type
     // --- Video ------------------------------------------------------------
     procedure OnVideoFinished(aHandle: PALLEGRO_VIDEO);
     procedure PlayVideo(aLoop: Boolean; aVolume: Single); overload;
+
+    // --- Screenshot -------------------------------------------------------
+    procedure ProcessScreenshot;
 
     // --- Misc -------------------------------------------------------------
     procedure EmitCmdConInactiveEvent;
@@ -3246,7 +3307,7 @@ type
     constructor Create; virtual;
     destructor Destroy; override;
 
-    function ManualStartup: Boolean;
+    function  ManualStartup: Boolean;
     procedure ManualShutdown;
 
     // --- Utils ------------------------------------------------------------
@@ -3270,6 +3331,7 @@ type
     function  FileExist(const aFilename: string): Boolean;
     function  DirExist(const aDir: string): Boolean;
     function  GetFiles(const aPath: string; aRecursive: Boolean): TStringArray;
+    function  FileCount(const aPath: string; const aMask: string): Int64;
     function  GetBit(const aValue: Cardinal; const Bit: Byte): Boolean;
     function  SetBit(const aValue: Cardinal; const Bit: Byte): Cardinal;
     function  ClearBit(const aValue: Cardinal; const Bit: Byte): Cardinal;
@@ -3280,10 +3342,17 @@ type
     function  DequotedStr(const aText: string; aQuote: Char): string;
     function  RemoveQuotes(const aText: string): string;
     function  FormatStr(const aMsg: string; const aArgs: array of const): string;
-    function  PadRightStr(aText: string; aTotalWidth: Integer; aPaddingChar: Char): string;
+    function  PadRightStr(const aText: string; aTotalWidth: Integer; aPaddingChar: Char): string;
+    function  PadLeftStr(const aText: string; aTotalWidth: Integer; aPaddingChar: Char): string;
     function  ExtractStrings(Separators, WhiteSpace: TSysCharSet; Content: PChar; Strings: TStringList): Integer;
     procedure FreeNilObject(aObject: PObject);
     function  GetFilename(const aPath: string): string;
+
+    // --- Log --------------------------------------------------------------
+    procedure OpenLog(const aFilename: string=''; aOverwrite: Boolean=True);
+    procedure CloseLog;
+    procedure WriteLogToConsole(aEnable: Boolean);
+    function  Log(const aMsg: string; const aArgs: array of const; aWriteToConsole: Boolean=False): string;
 
     // --- Math -------------------------------------------------------------
     function  RandomRange(aMin, aMax: Integer): Integer; overload;
@@ -3318,16 +3387,18 @@ type
     function  RadiusOverlap(aRadius1, aX1, aY1, aRadius2, aX2, aY2, aShrinkFactor: Single): Boolean;
 
     // --- Easing -----------------------------------------------------------
-    function EaseValue(aCurrentTime: Double; aStartValue: Double; aChangeInValue: Double; aDuration: Double; aEaseType: TEaseType): Double;
-    function EasePosition(aStartPos: Double; aEndPos: Double; aCurrentPos: Double; aEaseType: TEaseType): Double;
+    function  EaseValue(aCurrentTime: Double; aStartValue: Double; aChangeInValue: Double; aDuration: Double; aEaseType: TEaseType): Double;
+    function  EasePosition(aStartPos: Double; aEndPos: Double; aCurrentPos: Double; aEaseType: TEaseType): Double;
 
     // --- Console ----------------------------------------------------------
-    function IsConsolePresent: Boolean;
+    function  ConsolePresent: Boolean;
+    procedure ConsoleWrite(const aMsg: string; const aArgs: array of const);
+    procedure ConsoleWriteLn(const aMsg: string; const aArgs: array of const);
 
     // --- Math -------------------------------------------------------------
-    function InRange(const AValue, AMin, AMax: Int64): Boolean; overload;
-    function InRange(const AValue, AMin, AMax: UInt64): Boolean; overload;
-    function InRange(const AValue, AMin, AMax: Double): Boolean; overload;
+    function  InRange(const AValue, AMin, AMax: Int64): Boolean; overload;
+    function  InRange(const AValue, AMin, AMax: UInt64): Boolean; overload;
+    function  InRange(const AValue, AMin, AMax: Double): Boolean; overload;
 
     // --- FileSystem -------------------------------------------------------
     procedure SetFileSandBoxed(aEnable: Boolean);
@@ -3372,6 +3443,7 @@ type
     procedure SaveWindow(const aFilename: string);
     procedure GetWindowViewportSize(var aSize: TRectangle);
     procedure SetWindowRenderTarget(aRenderTarget: TRenderTarget);
+    procedure SetWindowTransformPos(aX: Single; aY: Single);
 
     // --- Blending ---------------------------------------------------------
     procedure SetBlender(aOperation: Integer; aSource: Integer; aDestination: Integer);
@@ -3459,6 +3531,15 @@ type
     procedure SeekVideo(aSeconds: Single);
     procedure RewindVideo;
 
+    // --- Screenshake ------------------------------------------------------
+    procedure StartScreenshake(aDuration: Single; aMagnitude: Single);
+    procedure ClearScreenshake;
+    function  ScreenshakeActive: Boolean;
+
+    // --- Screenshot -------------------------------------------------------
+    procedure InitScreenshot(const aDir: string=''; const aBaseFilename: string='');
+    procedure TakeScreenshot;
+
     // --- Callbacks --------------------------------------------------------
     procedure OnSetSettings(var aSettings: TGameSettings); virtual;
     function  OnStartup: Boolean; virtual;
@@ -3471,6 +3552,7 @@ type
     procedure OnVideoState(aState: TVideoState; const aFilename: string); virtual;
     procedure OnOpenCmdConsole; virtual;
     procedure OnCloseCmdConsole; virtual;
+    procedure OnScreenshot(const aFilename: string); virtual;
 
     // --- Gameloop ---------------------------------------------------------
     function  Run: Boolean;
@@ -3668,7 +3750,7 @@ begin
   LGame := aGame.Create;
 
   // Validate instance
-  Assert(LGame <> nil);
+  //Assert(LGame <> nil);
 
   // Run game instance
   LGame.Run;
@@ -4068,7 +4150,7 @@ end;
 { TList }
 function TList.OutOfBounds(aIndex: Integer): Boolean;
 begin
-  if (aIndex < 0) or (aIndex >= FCount) then
+  if (aIndex < 0) or (aIndex > FCount-1) then
     Result := True
   else
     Result := False;
@@ -4139,11 +4221,13 @@ begin
   Result := nil;
   if OutOfBounds(aIndex) then Exit;
   Result := FItems[aIndex];
-  Move(FItems[aIndex + 1], FItems[aIndex], (FCount - aIndex - 1) * SizeOf(FItems[0]));
   Dec(FCount);
+  if aIndex < FCount then
+    Move(FItems[aIndex + 1], FItems[aIndex], (FCount - aIndex) * SizeOf(FItems[0]));
   if Length(FItems) - FCount + 1 > FCapacity then
     SetLength(FItems, Length(FItems) - FCapacity);
 end;
+
 
 procedure TList.Insert(aIndex: Integer; aItem: Pointer);
 begin
@@ -4257,52 +4341,6 @@ begin
   Inc(FCount);
 end;
 
-(*
-procedure TStringList.Delete(Index: Integer);
-var
-  Obj: TObject;
-begin
-  if (Index < 0) or (Index >= FCount) then Error(@SListIndexError, Index);
-  Changing;
-  // If this list owns its objects then free the associated TObject with this index
-  if OwnsObjects then
-    Obj := FList[Index].FObject
-  else
-    Obj := nil;
-
-  // Direct memory writing to managed array follows
-  //  see http://dn.embarcadero.com/article/33423
-  // Explicitly finalize the element we about to stomp on with move
-  Finalize(FList[Index]);
-  Dec(FCount);
-  if Index < FCount then
-  begin
-    System.Move(FList[Index + 1], FList[Index],
-      (FCount - Index) * SizeOf(TStringItem));
-    // Make sure there is no danglng pointer in the last (now unused) element
-    PPointer(@FList[FCount].FString)^ := nil;
-    PPointer(@FList[FCount].FObject)^ := nil;
-  end;
-  if Obj <> nil then
-    Obj.Free;
-  Changed;
-end;
-*)
-
-(*
-function TStringList.Delete(aIndex: Integer): string;
-begin
-  Result := '';
-  if OutOfBounds(aIndex) then Exit;
-  Result := FItems[aIndex];
-  Finalize(FItems[aIndex]);
-  Move(FItems[aIndex + 1], FItems[aIndex], (FCount - aIndex) * SizeOf(FItems[0]));
-  Dec(FCount);
-  if Length(FItems) - FCount + 1 > FCapacity then
-    SetLength(FItems, Length(FItems) - FCapacity);
-end;
-*)
-
 function TStringList.Delete(aIndex: Integer): string;
 begin
   Result := '';
@@ -4310,7 +4348,8 @@ begin
   Result := FItems[aIndex];
   Finalize(FItems[aIndex]);
   Dec(FCount);
-  Move(FItems[aIndex + 1], FItems[aIndex], (FCount - aIndex-1) * SizeOf(FItems[0]));
+  if aIndex < FCount then
+    Move(FItems[aIndex + 1], FItems[aIndex], (FCount - aIndex) * SizeOf(FItems[0]));
   if Length(FItems) - FCount + 1 > FCapacity then
     SetLength(FItems, Length(FItems) - FCapacity);
 end;
@@ -4670,7 +4709,7 @@ begin
       if not aArchive.IsOpen then Exit;
       if not aArchive.FileExist(aFilename) then
       begin
-        //GV.Logger.Log('Failed to load font file: %s', [aFilename]);
+        Game.Log('Failed to load font file: #s', [aFilename]);
         Exit;
       end;
       LFilename := string(aArchive.GetPasswordFilename(aFilename));
@@ -4679,7 +4718,7 @@ begin
     begin
       if not Game.FileExist(aFilename) then
       begin
-        //GV.Logger.Log('Failed to load font file: %s', [aFilename]);
+        Game.Log('Failed to load font file: #s', [aFilename]);
         Exit;
       end;
       LFilename := aFilename;
@@ -4693,11 +4732,11 @@ begin
   if LHandle = nil then
   begin
     Exit;
-    //GV.Logger.Log('Failed to load font file: %s', [aFilename]);
+    Game.Log('Failed to load font file: #s', [aFilename]);
   end;
 
   Unload;
-  //GV.Logger.Log('Sucessfully loaded texture file: "%s"', [aFilename]);
+  Game.Log('Sucessfully loaded texture file: "#s"', [aFilename]);
   FHandle := LHandle;
   FFilename := aFilename;
   FSize := aSize;
@@ -4708,8 +4747,8 @@ begin
   Result := False;
   if FHandle = nil then Exit;
   al_destroy_font(FHandle);
-  //if not FFilename.IsEmpty then
-  //  GV.Logger.Log('Unloaded font file: "%s"', [FFilename]);
+  if FFilename <> '' then
+    Game.Log('Unloaded font file: "#s"', [FFilename]);
   FHandle := nil;
   FFilename := '';
   FSize := 0;
@@ -4814,7 +4853,7 @@ begin
   FWidth := al_get_bitmap_width(FHandle);
   FHeight := al_get_bitmap_height(FHandle);
   FFilename := '';
-  //GV.Logger.Log('Sucessfully allocated texture (%d:%d)', [Round(FWidth), Round(FHeight)]);
+  Game.Log('Sucessfully allocated texture (#i:#i)', [Round(FWidth), Round(FHeight)]);
   Result := True;
 end;
 
@@ -4845,7 +4884,7 @@ begin
   if aArchive = nil then Game.SetFileSandBoxed(LSandBoxed);
   if LHandle = nil then
   begin
-    //GV.Logger.Log('Failed to load texture file: %s', [aFilename]);
+    Game.Log('Failed to load texture file: #s', [aFilename]);
     Exit;
   end;
 
@@ -4858,7 +4897,7 @@ begin
   if aColorKey <> nil then
     al_convert_mask_to_alpha(FHandle, LColorKey^);
 
-  //GV.Logger.Log('Sucessfully loaded texture file: "%s"', [aFilename]);
+  Game.Log('Sucessfully loaded texture file: "#s"', [aFilename]);
 
   Result := True;
 end;
@@ -4868,10 +4907,10 @@ begin
   Result := False;
   if FHandle = nil then Exit;
   al_destroy_bitmap(FHandle);
-//  if FFilename.IsEmpty then
-//    GV.Logger.Log('Unloaded allocated texture (%d:%d)', [Round(FWidth), Round(FHeight)])
-//  else
-//    GV.Logger.Log('Unloaded texture file: "%s"', [FFilename]);
+  if FFilename = '' then
+    Game.Log('Unloaded allocated texture (#i:#i)', [Round(FWidth), Round(FHeight)])
+  else
+    Game.Log('Unloaded texture file: "#s"', [FFilename]);
   FHandle := nil;
   FWidth := 0;
   FHeight := 0;
@@ -5273,10 +5312,10 @@ begin
   if aSource = '' then Exit;
   al_attach_shader_source(FHandle, Ord(aType), nil);
   Result := al_attach_shader_source(FHandle, Ord(aType), PAnsiChar(AnsiString(aSource)));
-//  if Result then
-//    GV.Logger.Log('Sucessfully attached shader source', [])
-//  else
-//    GV.Logger.Log('Failed to attached shader source', []);
+  if Result then
+    Game.Log('Sucessfully attached shader source', [])
+  else
+    Game.Log('Failed to attached shader source', []);
 end;
 
 function TShader.Load(aArchive: TArchive; aType: TShaderType; const aFilename: string): Boolean;
@@ -5294,7 +5333,7 @@ begin
       al_attach_shader_source(FHandle, Ord(aType), nil);
       if not al_attach_shader_source_file(FHandle, Ord(aType), aArchive.GetPasswordFilename(aFilename)) then
       begin
-        //GV.Logger.Log('Failed to attached shader file: %s', [aFilename]);
+        Game.Log('Failed to attached shader file: #s', [aFilename]);
         Exit;
       end;
     end
@@ -5305,13 +5344,13 @@ begin
       if aArchive = nil then Game.SetFileSandBoxed(False);
       if not al_attach_shader_source_file(FHandle, Ord(aType), PAnsiChar(AnsiString(aFilename))) then
       begin
-        //GV.Logger.Log('Failed to attached shader file: %s', [aFilename]);
+        Game.Log('Failed to attached shader file: #s', [aFilename]);
         Exit;
       end;
       if aArchive = nil then Game.SetFileSandBoxed(LSandBoxed);
     end;
 
-  //GV.Logger.Log('Sucessfully attached shader file: "%s"', [aFilename]);
+  Game.Log('Sucessfully attached shader file: "#s"', [aFilename]);
   Result := True;
 end;
 
@@ -5404,6 +5443,116 @@ begin
   LVec2[0] := aX;
   LVec2[1] := aY;
   Result := SetFloatUniform(aName, 2, @LVec2, 1);
+end;
+
+{ TAScreenshake }
+constructor TAScreenshake.Create(aDuration: Single; aMagnitude: Single);
+begin
+  inherited Create;
+
+  FActive := True;
+  FDuration := aDuration;
+  FMagnitude := aMagnitude;
+  FTimer := 0;
+  FPos.x := 0;
+  FPos.y := 0;
+end;
+
+destructor TAScreenshake.Destroy;
+begin
+  inherited;
+end;
+
+function lerp(t: Single; a: Single; b: Single): Single; inline;
+begin
+  Result := (1 - t) * a + t * b;
+end;
+
+procedure TAScreenshake.Process(aSpeed: Single; aDeltaTime: Double);
+begin
+  if not FActive then Exit;
+
+  FDuration := FDuration - (aSpeed * aDeltaTime);
+  if FDuration <= 0 then
+  begin
+    Game.SetWindowTransformPos(-FPos.x, -FPos.y);
+    FActive := False;
+    Exit;
+  end;
+
+  if Round(FDuration) <> Round(FTimer) then
+  begin
+    Game.SetWindowTransformPos(-FPos.x, -FPos.y);
+
+    FPos.x := Round(Game.RandomRange(-FMagnitude, FMagnitude));
+    FPos.y := Round(Game.RandomRange(-FMagnitude, FMagnitude));
+
+    Game.SetWindowTransformPos(FPos.x, FPos.y);
+
+    FTimer := FDuration;
+  end;
+end;
+
+{ TScreenshake }
+procedure TScreenshake.Process(aSpeed: Single; aDeltaTime: Double);
+var
+  LShake: TAScreenshake;
+  I: Integer;
+begin
+  // process shakes
+  for I := FList.Count-1 downto 0 do
+  begin
+    LShake := FList.GetItem(I);
+
+    if LShake.Active then
+      LShake.Process(aSpeed, aDeltaTime)
+    else
+      begin
+        Game.FreeNilObject(@LShake);
+        FList.Delete(I);
+      end;
+  end;
+end;
+
+constructor TScreenshake.Create;
+begin
+  inherited;
+  FList := TList.Create;
+  al_identity_transform(@FTrans);
+end;
+
+destructor TScreenshake.Destroy;
+begin
+  Clear;
+  Game.FreeNilObject(@FList);
+  inherited;
+end;
+
+procedure TScreenshake.Start(aDuration: Single; aMagnitude: Single);
+var
+  LShake: TAScreenshake;
+begin
+  LShake := TAScreenshake.Create(aDuration, aMagnitude);
+  FList.Add(LShake);
+end;
+
+procedure TScreenshake.Clear;
+var
+  I: Integer;
+  LShake: TAScreenshake;
+begin
+  for I := 0 to FList.Count-1 do
+  begin
+    LShake := FList.GetItem(I);
+    Game.FreeNilObject(@LShake);
+  end;
+
+  FList.Clear;
+end;
+
+function TScreenshake.Active: Boolean;
+begin
+  Result := Boolean(FList.Count > 0);
 end;
 
 { TStarfield }
@@ -5709,7 +5858,7 @@ begin
   FCmdHistory := TStringList.Create;
   FCmdParams := TStringList.Create;
   FCmdActionList := TList.Create;
-  //GV.Logger.Log('Initialized %s Subsystem', ['CmdConsole']);
+  Game.Log('Initialized #s Subsystem', ['CmdConsole']);
 end;
 
 procedure TCmdConsole.Shutdown;
@@ -5719,7 +5868,7 @@ begin
   Game.FreeNilObject(@FCmdParams);
   Game.FreeNilObject(@FCmdHistory);
   Game.FreeNilObject(@FTextLines);
-  //GV.Logger.Log('Shutdown %s Subsystem', ['CmdConsole']);
+  Game.Log('Shutdown #s Subsystem', ['CmdConsole']);
 end;
 
 procedure TCmdConsole.Open;
@@ -6997,29 +7146,54 @@ begin
 end;
 
 function TGame.StartupAllegro: Boolean;
+var
+  LOk: Boolean;
 begin
   Result := False;
 
   if al_is_system_installed then Exit;
 
   // init allegro
-  al_install_system(ALLEGRO_VERSION_INT, nil);
+  LOk := al_install_system(ALLEGRO_VERSION_INT, nil);
+  if LOk then Log('Initialized Allegro v#s', [ALLEGRO_VERSION_STR]) else Log('Failed to initialize Allegro', []);
 
   // init devices
-  al_install_joystick;
-  al_install_keyboard;
-  al_install_mouse;
-  al_install_touch_input;
-  al_install_audio;
+  LOk := al_install_joystick;
+  if LOk then Log('Initialized Allegro joystick support', []) else Log('Failed to initialize Allegro joystick support', []);
+
+  LOk := al_install_keyboard;
+  if LOk then Log('Initialized Allegro keyboard support', []) else Log('Failed to initialize Allegro keyboard', []);
+
+  LOk := al_install_mouse;
+  if LOk then Log('Initialized Allegro mouse support', []) else Log('Failed to initialize Allegro mouse support', []);
+
+  LOk := al_install_touch_input;
+  if LOk then Log('Initialized Allegro touch input', []) else Log('Failed to initialize Allegro touch input support', []);
+
+  LOk := al_install_audio;
+  if LOk then Log('Initialized Allegro audio support', []) else Log('Failed to initialize Allegro audio support', []);
 
   // init addons
-  al_init_acodec_addon;
-  al_init_font_addon;
-  al_init_image_addon;
-  al_init_native_dialog_addon;
-  al_init_primitives_addon;
-  al_init_ttf_addon;
-  al_init_video_addon;
+  LOk := al_init_acodec_addon;
+  if LOk then Log('Initialized Allegro audio codecs', []) else Log('Failed to initialize Allegro audio codecs', []);
+
+  LOk := al_init_font_addon;
+  if LOk then Log('Initialized Allegro font support', []) else Log('Failed to initialize Allegro font support', []);
+
+  LOk := al_init_image_addon;
+  if LOk then Log('Initialized Allegro image support', []) else Log('Failed to initialize Allegro image support', []);
+
+  LOk := al_init_native_dialog_addon;
+  if LOk then Log('Initialized Allegro native dialog support', []) else Log('Failed to initialize Allegro native dialog support', []);
+
+  LOk := al_init_primitives_addon;
+  if LOk then Log('Initialized Allegro primitives', []) else Log('Failed to initialize Allegro primitives', []);
+
+  LOk := al_init_ttf_addon;
+  if LOk then Log('Initialized Allegro ttf support', []) else Log('Failed to initialize Allegro ttf support', []);
+
+  LOk := al_init_video_addon;
+  if LOk then Log('Initialized Allegro video support', []) else Log('Failed to initialize Allegro video support', []);
 
   // int user event source
   al_init_user_event_source(@FUserEventSrc);
@@ -7032,6 +7206,7 @@ begin
   al_register_event_source(FQueue, al_get_touch_input_event_source);
   al_register_event_source(FQueue, al_get_touch_input_mouse_emulation_event_source);
   al_register_event_source(FQueue , @FUserEventSrc);
+  Log('Initialized Allegro event queues', []);
 
   FCmdConActive.type_ := EVENT_CMDCON_ACTIVE;
   FCmdConInactive.type_ := EVENT_CMDCON_INACTIVE;
@@ -7044,12 +7219,15 @@ begin
     al_set_default_mixer(FMixer);
     al_attach_mixer_to_voice(FMixer, FVoice);
     al_reserve_samples(AUDIO_CHANNEL_COUNT);
+    Log('Successfully setup Allegro audio', []);
   end;
 
   // init physfs
   FFileInterface[False] := al_get_new_file_interface;
   al_store_state(@FFileState[False], ALLEGRO_STATE_NEW_FILE_INTERFACE);
-  PHYSFS_init(nil);
+  LOk := Boolean(PHYSFS_init(nil) <> 0);
+  if LOk then Log('Successfully initialized Allegro PHYSFS support', []) else Log('Failed to initialize Allegro PHYSFS support', []);
+
   al_set_physfs_file_interface;
   FFileInterface[True] := al_get_new_file_interface;
   al_store_state(@FFileState[True], ALLEGRO_STATE_NEW_FILE_INTERFACE);
@@ -7058,12 +7236,15 @@ begin
 end;
 
 procedure TGame.ShutdownAllegro;
+var
+  LOk: Boolean;
 begin
   if not al_is_system_installed then Exit;
 
   // shutdown physfs
   al_set_standard_file_interface;
-  PHYSFS_deinit;
+  LOk :=  Boolean(PHYSFS_deinit <> 0);
+  if LOk then Log('Shutdown Allegro PHYSFS support', []) else Log('Failed to shutdown Allegro PHYSFS support', []);
 
   // shutdown audio
   if al_is_audio_installed then
@@ -7073,6 +7254,7 @@ begin
     al_destroy_mixer(FMixer);
     al_destroy_voice(FVoice);
     al_uninstall_audio;
+    Log('Shutdown Allegro audio support', []);
   end;
 
   // shutdown event queues
@@ -7090,6 +7272,7 @@ begin
 
   if al_is_event_source_registered(FQueue, al_get_joystick_event_source) then
     al_unregister_event_source(FQueue, al_get_joystick_event_source);
+  Log('Shutdown Allegro event queues', []);
 
   // shutdown devices
   if al_is_touch_input_installed then
@@ -7161,6 +7344,12 @@ begin
   // CmdConsole
   FCmdConsole := TCmdConsole.Create;
 
+  // Screenshake
+  FScreenshake := TScreenshake.Create;
+
+  // Screenshot
+  InitScreenshot;
+
   ClearInput;
   FInput.JoyStick.Setup(0);
   ResetTiming(60.0, 1.0);
@@ -7170,6 +7359,7 @@ end;
 
 procedure TGame.UnapplySettings;
 begin
+  FreeNilObject(@FScreenshake);
   FreeNilObject(@FCmdConsole);
   FreeNilObject(@FFont);
   FreeNilObject(@FArchive);
@@ -7196,10 +7386,14 @@ begin
   Game := Self;
   FCodePage := GetConsoleOutputCP;
   SetConsoleOutputCP(CP_UTF8);
+  OpenLog;
+  Log('Starting up Spark Game Toolkit v#s', [SPARK_VERSION]);
 end;
 
 destructor TGame.Destroy;
 begin
+  Log('Shutdown Spark Game Toolkit', []);
+  CloseLog;
   SetConsoleOutputCP(FCodePage);
   Game := nil;
   inherited;
@@ -7408,7 +7602,6 @@ var
   I: Integer;
 begin
   I := LastDelimiter(aFilename, ['.', PathDelim , DriveDelim]);
-  writeln(aFilename[I]);
   if (I < 0) or (aFilename[I+1] <> '.') then
     Result := aFilename + aExtension
   else
@@ -7442,6 +7635,7 @@ begin
   Result := (LAttrib and FILE_ATTRIBUTE_DIRECTORY) = FILE_ATTRIBUTE_DIRECTORY;
 end;
 
+(*
 function  TGame.GetFiles(const aPath: string; aRecursive: Boolean): TStringArray;
 const
   CWildCard = '\*';
@@ -7485,6 +7679,88 @@ begin
   end;
 
   FindClose(LFind);
+end;
+*)
+
+function  TGame.GetFiles(const aPath: string; aRecursive: Boolean): TStringArray;
+const
+  CWildCard = '\*';
+var
+  LData: TWIN32FindDataW;
+  LFind: THandle;
+  LCount: Integer;
+  LFilename: string;
+  LPath: string;
+  LSubFiles: TStringArray;
+begin
+  Result := nil;
+  if aPath = '' then Exit;
+  LPath := aPath + CWildCard;
+  LCount := 0;
+  LFind := FindFirstFileW(PChar(LPath), LData);
+  if LFind = INVALID_HANDLE_VALUE then Exit;
+  if GetLastError = ERROR_FILE_NOT_FOUND then
+  begin
+    FindClose(LFind);
+    Exit;
+  end;
+  repeat
+    LFilename := string(LData.cFileName);
+    if (LFilename = '..') or (LFilename = '.') then continue;
+    if LData.dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY then
+    begin
+      if aRecursive then
+      begin
+        LSubFiles := GetFiles(aPath + '\' + LFilename, aRecursive);
+        for LFilename in LSubFiles do
+        begin
+          Inc(LCount);
+          SetLength(Result, LCount);
+          Result[LCount-1] := LFilename;
+        end;
+        continue;
+      end;
+    end;
+
+    Inc(LCount);
+    SetLength(Result, LCount);
+    Result[LCount-1] := aPath + '\' + LFilename;
+  until not FindNextFileW(LFind, LData);
+
+  FindClose(LFind);
+end;
+
+function  TGame.FileCount(const aPath: string; const aMask: string): Int64;
+var
+  LData: TWIN32FindDataW;
+  LFind: THandle;
+  LCount: Integer;
+  LFilename: string;
+  LPath: string;
+begin
+  Result := 0;
+  if aPath = '' then Exit;
+  LPath := aPath + '\' + aMask;
+  LCount := 0;
+  LFind := FindFirstFileW(PChar(LPath), LData);
+  if LFind = INVALID_HANDLE_VALUE then Exit;
+  if GetLastError = ERROR_FILE_NOT_FOUND then
+  begin
+    FindClose(LFind);
+    Exit;
+  end;
+  repeat
+    LFilename := string(LData.cFileName);
+    if (LFilename = '..') or (LFilename = '.') then continue;
+    if LData.dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY then
+      continue;
+
+    Inc(LCount);
+  until not FindNextFileW(LFind, LData);
+
+  FindClose(LFind);
+
+  Result := LCount;
 end;
 
 function TGame.GetBit(const aValue: Cardinal; const Bit: Byte): Boolean;
@@ -7597,6 +7873,9 @@ var
   LMsg: PChar;
   LArgIndex: Integer;
   LArgCount: Integer;
+  LChar: Char;
+  LNum: Integer;
+  LStr: string;
 begin
   Result := '';
   if aMsg = '' then Exit;
@@ -7622,10 +7901,30 @@ begin
         end;
         'i', 'I':
         begin
+          // check for leading zeros #I:n where n = leading zero count
+          LNum := 0;
+          LStr := '';
+          Inc(LMsg);
+          LChar := LMsg^;
+          if LChar = ':' then
+            begin
+              Inc(LMsg);
+              LChar := LMsg^;
+              if AnsiChar(LChar) in ['0' .. '9'] then
+              begin
+                LNum := StrToInt(LChar);
+              end;
+            end
+          else
+            Dec(LMsg);
+
           case aArgs[LArgIndex].VType of
-            vtInteger: LText := LText +  NumToStr(aArgs[LArgIndex].VInteger);
-            vtInt64  : LText := LText +  NumToStr(aArgs[LArgIndex].VInt64^);
+            vtInteger: LStr := NumToStr(aArgs[LArgIndex].VInteger);
+            vtInt64  : LStr := NumToStr(aArgs[LArgIndex].VInt64^);
           end;
+
+          LText := LText + PadLeftStr(LStr, LNum, '0');
+
           Inc(LMsg);
           Inc(LArgIndex);
           continue;
@@ -7650,11 +7949,20 @@ begin
   Result := LText;
 end;
 
-function TGame.PadRightStr(aText: string; aTotalWidth: Integer; aPaddingChar: Char): string;
+function TGame.PadRightStr(const aText: string; aTotalWidth: Integer; aPaddingChar: Char): string;
 begin
   aTotalWidth := aTotalWidth - Length(aText);
   if aTotalWidth > 0 then
     Result := aText + System.StringOfChar(aPaddingChar, aTotalWidth)
+  else
+    Result := aText;
+end;
+
+function TGame.PadLeftStr(const aText: string; aTotalWidth: Integer; aPaddingChar: Char): string;
+begin
+  aTotalWidth := aTotalWidth - Length(aText);
+  if aTotalWidth > 0 then
+    Result := System.StringOfChar(aPaddingChar, aTotalWidth) + aText
   else
     Result := aText;
 end;
@@ -7729,6 +8037,80 @@ begin
   LPath := al_create_path(PAnsiChar(AnsiString(aPath)));
   Result := string(al_get_path_filename(LPath));
   al_destroy_path(LPath);
+end;
+
+// --- Log ------------------------------------------------------------------
+procedure TGame.OpenLog(const aFilename: string; aOverwrite: Boolean);
+var
+  LFilename: string;
+begin
+  LFilename := aFilename;
+  if LFilename = '' then LFilename := ParamStr(0);
+  LFilename := ChangeFileExt(LFilename, FILEEXT_LOG);
+
+  CloseLog;
+
+  FillChar(FLog.Buffer, SizeOf(FLog.Buffer), 0);
+  FLog.Open := False;
+  FLog.GlobalWriteToConsole := True;
+
+  AssignFile(FLog.Text, LFilename);
+  if aOverwrite then
+    ReWrite(FLog.Text)
+  else
+    begin
+      if FileExist(LFilename) then
+        Reset(FLog.Text)
+      else
+        ReWrite(FLog.Text);
+    end;
+  SetTextBuf(FLog.Text, FLog.Buffer);
+  FLog.Open := True;
+  FLog.Filename := LFilename;
+end;
+
+procedure TGame.CloseLog;
+begin
+  if not FLog.Open then Exit;
+  CloseFile(FLog.Text);
+  FLog.Open := False;
+end;
+
+procedure TGame.WriteLogToConsole(aEnable: Boolean);
+begin
+  FLog.GlobalWriteToConsole := aEnable;
+end;
+
+function TGame.Log(const aMsg: string; const aArgs: array of const; aWriteToConsole: Boolean): string;
+var
+  LLine: string;
+begin
+  if not FLog.Open then Exit;
+
+  // get line
+  LLine := FormatStr(aMsg, aArgs);
+
+  // write to console
+  if FLog.GlobalWriteToConsole then
+    begin
+      if ConsolePresent then
+        WriteLn(LLine);
+    end
+  else
+    begin
+      if aWriteToConsole then
+      begin
+        if ConsolePresent then
+          WriteLn(LLine);
+      end;
+    end;
+
+  // write to logfile
+  {$I-}
+  //LLine := Format('%s %s', [DateTimeToStr(Now, FFormatSettings), LLine]);
+  Writeln(FLog.Text, LLine);
+  Flush(FLog.Text);
+  {$I+}
 end;
 
 // --- Math -----------------------------------------------------------------
@@ -8462,7 +8844,7 @@ begin
 end;
 
 // --- Console --------------------------------------------------------------
-function TGame.IsConsolePresent: Boolean;
+function TGame.ConsolePresent: Boolean;
 var
   LStdout: THandle;
 begin
@@ -8470,6 +8852,18 @@ begin
   LStdout := GetStdHandle(STD_OUTPUT_HANDLE);
   if LStdout = Invalid_Handle_Value then Exit;
   Result := Boolean(LStdout <> 0);
+end;
+
+procedure TGame.ConsoleWrite(const aMsg: string; const aArgs: array of const);
+begin
+  if not ConsolePresent then Exit;
+  Write(FormatStr(aMsg, aArgs));
+end;
+
+procedure TGame.ConsoleWriteLn(const aMsg: string; const aArgs: array of const);
+begin
+  if not ConsolePresent then Exit;
+  WriteLn(FormatStr(aMsg, aArgs));
 end;
 
 // --- Math -----------------------------------------------------------------
@@ -8691,7 +9085,7 @@ begin
     if not FCmdConsole.GetActive then
     begin
       // process screen shakes
-      //GV.Screenshake.Process(FTimer.UpdateSpeed, FTimer.DeltaTime);
+      FScreenshake.Process(FTimer.UpdateSpeed, FTimer.DeltaTime);
 
       // call herited update frame
       OnUpdate(FTimer.DeltaTime);
@@ -8956,6 +9350,16 @@ end;
 procedure TGame.SetWindowRenderTarget(aRenderTarget: TRenderTarget);
 begin
   FWindow.RenderTarget := aRenderTarget;
+end;
+
+procedure TGame.SetWindowTransformPos(aX: Single; aY: Single);
+var
+  LTransform: ALLEGRO_TRANSFORM;
+begin
+  if FWindow.Handle = nil then Exit;
+  al_copy_transform(@LTransform, al_get_current_transform);
+  al_translate_transform(@LTransform, aX, aY);
+  al_use_transform(@LTransform);
 end;
 
 // --- Blending -------------------------------------------------------------
@@ -9430,7 +9834,7 @@ begin
   if aArchive = nil then Game.SetFileSandBoxed(LSandBoxed);
   if LHandle = nil then
   begin
-    //GV.Logger.Log('Failed to load texture file: %s', [aFilename]);
+    Game.Log('Failed to load music file: #s', [aFilename]);
     Exit;
   end;
 
@@ -9439,6 +9843,8 @@ begin
   al_attach_audio_stream_to_mixer(LHandle, FMixer);
   al_set_audio_stream_playing(LHandle, False);
   FMusic := LHandle;
+  FMusicFilename := aFilename;
+  Game.Log('Loaded music file: #s', [aFilename]);
 end;
 
 procedure TGame.UnloadMusic;
@@ -9450,7 +9856,9 @@ begin
     al_drain_audio_stream(FMusic);
     al_detach_audio_stream(FMusic);
     al_destroy_audio_stream(FMusic);
+    Game.Log('Unloaded music file: #s', [FMusicFilename]);
     FMusic := nil;
+    FMusicFilename := '';
   end;
 end;
 
@@ -9584,10 +9992,11 @@ begin
   if aArchive = nil then Game.SetFileSandBoxed(LSandBoxed);
   if LSample = nil then
   begin
-    //GV.Logger.Log('Failed to load texture file: %s', [aFilename]);
+    Game.Log('Failed to load sample file: #s', [aFilename]);
     Exit;
   end;
   Result := LSample;
+  Game.Log('Loaded sample file: #s', [aFilename]);
 end;
 
 procedure TGame.UnloadSample(var aSample: TSample);
@@ -9701,7 +10110,7 @@ begin
       if not aArchive.IsOpen then Exit;
       if not aArchive.FileExist(aFilename) then
       begin
-        //GV.Logger.Log('Failed to load video file: %s', [aFilename]);
+        Game.Log('Failed to load video file: #s', [aFilename]);
         Exit;
       end;
       LFilename := string(aArchive.GetPasswordFilename(aFilename));
@@ -9710,7 +10119,7 @@ begin
     begin
       if not FileExist(aFilename) then
       begin
-        //GV.Logger.Log('Failed to load video file: %s', [aFilename]);
+        Game.Log('Failed to load video file: #s', [aFilename]);
         Exit;
       end;
       LFilename := aFilename;
@@ -9743,7 +10152,7 @@ begin
   FVideo.Playing := False;
   FVideo.Paused := False;
   OnVideoState(vsLoad, FVideo.Filename);
-  //GV.Logger.Log('Sucessfully loaded video: "%s"', [aFilename]);
+  Game.Log('Sucessfully loaded video: "#s"', [aFilename]);
   Result := True;
 end;
 
@@ -9763,7 +10172,7 @@ begin
     al_destroy_voice(FVideo.Voice);
   end;
 
-  //GV.Logger.Log('Unloaded video "%s"', [FFilename]);
+  Game.Log('Unloaded video "#s"', [FVideo.Filename]);
 
   FVideo.Handle := nil;
   FVideo.Mixer := nil;
@@ -9913,6 +10322,134 @@ begin
   al_seek_video(FVideo.Handle, 0);
 end;
 
+// --- Screenshake ----------------------------------------------------------
+procedure TGame.StartScreenshake(aDuration: Single; aMagnitude: Single);
+begin
+  FScreenshake.Start(aDuration, aMagnitude);
+end;
+
+procedure TGame.ClearScreenshake;
+begin
+  FScreenshake.Clear;
+end;
+
+function  TGame.ScreenshakeActive: Boolean;
+begin
+  Result := FScreenshake.Active;
+end;
+
+// --- Screenshot -----------------------------------------------------------
+
+function ExcludeTrailingPathDelimiter(const S: string): string;
+begin
+  Result := S;
+  if Result[High(Result)] = PathDelim then
+    SetLength(Result, Length(Result)-1);
+end;
+
+function ExpandFileName(const FileName: string): string;
+var
+  FName: PChar;
+  Buffer: array[0..MAX_PATH - 1] of Char;
+  Len: Integer;
+begin
+  Len := GetFullPathNameW(PChar(FileName), Length(Buffer), Buffer, FName);
+  if Len <= Length(Buffer) then
+    SetString(Result, Buffer, Len)
+  else if Len > 0 then
+  begin
+    SetLength(Result, Len);
+    Len := GetFullPathNameW(PChar(FileName), Len, PChar(Result), FName);
+    if Len < Length(Result) then
+      SetLength(Result, Len);
+  end;
+end;
+
+function ExtractFilePath(const FileName: string): string;
+var
+  I: Integer;
+begin
+  I :=  Game.LastDelimiter(Filename, [PathDelim , DriveDelim]);
+  Result := Copy(FileName, 1, I + 1);
+end;
+
+function CreateDir(const Dir: string): Boolean;
+begin
+  Result := CreateDirectoryW(PChar(Dir), nil);
+end;
+
+function ForceDirectories(Dir: string): Boolean;
+begin
+  Result := True;
+  if Dir = '' then Exit;
+
+  Dir := ExcludeTrailingPathDelimiter(Dir);
+  if Game.DirExist(Dir) then  Exit;
+
+  if (Length(Dir) < 3) or (ExtractFilePath(Dir) = Dir) then
+    Result := CreateDir(Dir)
+  else
+    Result := ForceDirectories(ExtractFilePath(Dir)) and CreateDir(Dir);
+end;
+
+procedure TGame.ProcessScreenshot;
+var
+  LC: Integer;
+  LF, LD, LB: string;
+begin
+  if FScreenshake.Active then Exit;
+  if not FScreenshot.Flag then Exit;
+
+  FScreenshot.Flag := False;
+
+  // directory
+  LD := ExpandFilename(FScreenshot.Dir);
+  ForceDirectories(LD);
+
+  // base name
+  LB := FScreenshot.BaseFilename;
+
+  // search file maks
+  LF := LB + '*.png';
+
+  // file count
+  LC := Game.FileCount(LD, LF);
+
+  // screenshot file mask
+  LF := FormatStr('#s\#s (#i:6).png', [LD, LB, LC]);
+  FScreenshot.Filename := LF;
+
+  // save screenshot
+  SaveWindow(LF);
+
+  // call event handler
+  if FileExist(LF) then
+    OnScreenshot(LF);
+end;
+
+procedure TGame.InitScreenshot(const aDir: string; const aBaseFilename: string);
+begin
+  FScreenshot.Flag := False;
+
+  FScreenshot.Filename := '';
+  FScreenshot.Flag := False;
+
+  if aDir = '' then
+    FScreenshot.Dir := 'Screenshots'
+  else
+    FScreenshot.Dir := aDir;
+
+  if aBaseFilename = '' then
+    FScreenshot.BaseFilename := 'Screen';
+
+  ChangeFileExt(FScreenshot.BaseFilename, '');
+end;
+
+procedure TGame.TakeScreenshot;
+begin
+  FScreenshot.Flag := True;
+end;
+
 // Callbacks ----------------------------------------------------------------
 procedure TGame.OnSetSettings(var aSettings: TGameSettings);
 begin
@@ -9980,6 +10517,10 @@ begin
 end;
 
 procedure TGame.OnCloseCmdConsole;
+begin
+end;
+
+procedure TGame.OnScreenshot(const aFilename: string);
 begin
 end;
 
@@ -10134,7 +10675,7 @@ begin
         OnRenderHUD;
         FCmdConsole.Render;
         al_use_transform(@LCurrentTransform);
-        //GV.Screenshot.Process;
+        ProcessScreenshot;
         ShowWindow;
       end
     else

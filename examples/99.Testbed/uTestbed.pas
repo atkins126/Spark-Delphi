@@ -60,9 +60,10 @@ uses
   uCommon;
 
 type
-  { TTemplate }
-  TTemplate = class(TGame)
+  { TTestbed }
+  TTestbed = class(TGame)
   protected
+    FStarfield: TStarfield;
   public
     procedure OnSetSettings(var aSettings: TGameSettings); override;
     function  OnStartup: Boolean; override;
@@ -75,69 +76,92 @@ type
     procedure OnVideoState(aState: TVideoState; const aFilename: string); override;
     procedure OnOpenCmdConsole; override;
     procedure OnCloseCmdConsole; override;
+    procedure OnScreenshot(const aFilename: string); override;
   end;
 
 implementation
 
-{ TTemplate }
-procedure TTemplate.OnSetSettings(var aSettings: TGameSettings);
+uses
+  classes;
+
+{ TTestbed }
+procedure TTestbed.OnSetSettings(var aSettings: TGameSettings);
 begin
   inherited;
   aSettings.WindowTitle := 'Spark - Testbed';
+  aSettings.WindowClearColor := BLACK;
   aSettings.ArchivePassword := cArchivePassword;
   aSettings.ArchiveFilename := cArchiveFilename;
 end;
 
-function  TTemplate.OnStartup: Boolean;
+
+
+function  TTestbed.OnStartup: Boolean;
 begin
   inherited;
+
+  FStarfield := TStarfield.Create;
 
   Result := True;
 end;
 
-procedure TTemplate.OnShutdown;
+procedure TTestbed.OnShutdown;
+begin
+  FreeNilObject(@FStarfield);
+  inherited;
+end;
+
+procedure TTestbed.OnUpdate(aDeltaTime: Double);
+begin
+  inherited;
+
+  if KeyPressed(KEY_S) then StartScreenshake(60, 5);
+  if KeyPressed(KEY_D) then TakeScreenshot;
+
+
+  FStarfield.Update(aDeltaTime);
+end;
+
+procedure TTestbed.OnFixedUpdate;
 begin
   inherited;
 end;
 
-procedure TTemplate.OnUpdate(aDeltaTime: Double);
+procedure TTestbed.OnRender;
+begin
+  inherited;
+
+  FStarfield.Render;
+end;
+
+procedure TTestbed.OnRenderHUD;
 begin
   inherited;
 end;
 
-procedure TTemplate.OnFixedUpdate;
+procedure TTestbed.OnReady(aReady: Boolean);
 begin
   inherited;
 end;
 
-procedure TTemplate.OnRender;
+procedure TTestbed.OnVideoState(aState: TVideoState; const aFilename: string);
 begin
   inherited;
 end;
 
-procedure TTemplate.OnRenderHUD;
+procedure TTestbed.OnOpenCmdConsole;
 begin
   inherited;
 end;
 
-procedure TTemplate.OnReady(aReady: Boolean);
+procedure TTestbed.OnCloseCmdConsole;
 begin
   inherited;
 end;
 
-procedure TTemplate.OnVideoState(aState: TVideoState; const aFilename: string);
+procedure TTestbed.OnScreenshot(const aFilename: string);
 begin
-  inherited;
-end;
-
-procedure TTemplate.OnOpenCmdConsole;
-begin
-  inherited;
-end;
-
-procedure TTemplate.OnCloseCmdConsole;
-begin
-  inherited;
+  ConsoleWriteLn('Screenshot "#s"', [aFilename]);
 end;
 
 end.

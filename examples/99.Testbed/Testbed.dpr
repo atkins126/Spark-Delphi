@@ -63,5 +63,5 @@ uses
   uTestbed in 'uTestbed.pas';
 
 begin
-  RunGame(TTemplate);
+  RunGame(TTestbed);
 end.

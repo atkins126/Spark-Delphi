@@ -210,6 +210,7 @@ begin
   inherited;
   HudText(Font, GREEN,  haLeft, HudTextItem('Up/Down', 'Play sample'), []);
   HudText(Font, GREEN, haLeft, HudTextItem('1-9', 'Play sample'), []);
+  HudText(Font, GREEN, haLeft, HudTextItem('0', 'Stop looping sample'), []);
   HudText(Font, ORANGE, haLeft, HudTextItem('Song:', '#s', ' '), [GetFileName(FFilename)]);
 end;
 

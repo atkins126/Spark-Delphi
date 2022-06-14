@@ -88,7 +88,7 @@ end;
 { TGVArc }
 procedure TZipArc.ShowHeader;
 begin
-  if not FGame.IsConsolePresent then Exit;
+  if not FGame.ConsolePresent then Exit;
   WriteLn;
   WriteLn('ZipArc™ Archive Utilty v', SPARK_VERSION);
   WriteLn('Copyright © 2022 tinyBigGAMES™');
@@ -97,7 +97,7 @@ end;
 
 procedure TZipArc.ShowUsage;
 begin
-  if not FGame.IsConsolePresent then Exit;
+  if not FGame.ConsolePresent then Exit;
   WriteLn;
   WriteLn('Usage: ZipArc [password] archivename[.zip] directoryname');
   WriteLn('  password      - make archive password protected');
@@ -107,7 +107,7 @@ end;
 
 procedure TZipArc.OnProgress(const aFilename: string; aProgress: Integer; aNewFile: Boolean);
 begin
-  if not FGame.IsConsolePresent then Exit;
+  if not FGame.ConsolePresent then Exit;
   if aNewFile then WriteLn;
   Write(CR+'Adding "', aFilename, '" (', aProgress, '%)...');
 end;
@@ -173,7 +173,7 @@ begin
   // check if directory exist
   if not FGame.DirExist(LDirectoryName) then
     begin
-      if FGame.IsConsolePresent then
+      if FGame.ConsolePresent then
       begin
         WriteLn;
         WriteLn('Directory was not found: ', LDirectoryName);
@@ -183,7 +183,7 @@ begin
     end;
 
   // display params
-  if FGame.IsConsolePresent then
+  if FGame.ConsolePresent then
   begin
     WriteLn;
     if LPassword = '' then
@@ -197,7 +197,7 @@ begin
   // try to build archive
   LArchive := TArchive.Create;
   LOk := LArchive.Build(LPassword, LArchiveFilename, LDirectoryName, OnProgress);
-  if FGame.IsConsolePresent then
+  if FGame.ConsolePresent then
   begin
     if LOk then
       WriteLn(LF+'Success!')
