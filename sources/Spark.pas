@@ -2454,8 +2454,9 @@ const
   FILEEXT_PNG = '.png';
 
   // Common Character
-  CR = #13;  // carrage return
-  LF = #10;  // line feed
+  CR   = #13;  // carrage return
+  LF   = #10;  // line feed
+  CRLF = #13#10;
 
   // Display Constants
   DISPLAY_DEFAULT_DPI = 96;
@@ -2806,6 +2807,37 @@ type
     destructor Destroy; override;
   end;
 
+  { TStream }
+  TStream = class(TBaseObject)
+  protected
+  type
+    TType = (stClosed, stMemory, stFile);
+  protected
+    FType  : TType;
+    FSize  : Integer;
+    FPos   : Integer;
+    FFile  : File;
+    FMem   : Pointer;
+    procedure SetPos(aValue: Integer);
+  public
+    property Size: Integer read FSize;
+    property Pos: Integer read FPos write SetPos;
+    constructor Create; override;
+    destructor Destroy; override;
+    function Open(aMemory: Pointer; aMemSize: Integer): Boolean; overload;
+    function Open(const aFilename: string; aCreate: Boolean = False): Boolean; overload;
+    procedure Close;
+    procedure CopyFrom(const aStream: TStream);
+    function Read(out aBuf; aBufSize: Integer): Integer;
+    function Write(const aBuf; aBufSize: Integer): Integer;
+    function ReadAnsiString: AnsiString;
+    procedure WriteAnsiString(const aValue: AnsiString);
+    function ReadString: string;
+    procedure WriteString(const aValue: string);
+    class function Init(aMemory: Pointer; aMemSize: Integer): TStream; overload;
+    class function Init(const aFilename: string; aCreate: Boolean = False): TStream; overload;
+  end;
+
   { TListCompareFunc }
   TListCompareFunc = function (Item1, Item2: Pointer): Integer;
 
@@ -2860,6 +2892,38 @@ type
     function GetKey(aIndex: Integer): string; inline;
     function GetValue(aIndex: Integer): string; inline;
   end;
+
+  { TConfigFile }
+  TConfigFile = class(TBaseObject)
+  protected
+  type
+    TParams = record
+      Name : string;
+      Value: string;
+    end;
+    TData = record
+      Category: string;
+      Params  : array of TParams;
+    end;
+  protected
+    FData: array of TData;
+  public
+    constructor Create; override;
+    destructor Destroy; override;
+    procedure Clear;
+    procedure Load(const aFilename: string);
+    procedure Save(const aFilename: string);
+    procedure Write(const aCategory, aName, aValue: string); overload;
+    procedure Write(const aCategory, aName: string; aValue: Int64); overload;
+    procedure Write(const aCategory, aName: string; aValue: Single); overload;
+    procedure Write(const aCategory, aName: string; aValue: Boolean); overload;
+    function Read(const aCategory, aName: string; const Default: string = ''): string; overload;
+    function Read(const aCategory, aName: string; aDefault: Int64 = 0): Int64; overload;
+    function Read(const aCategory, aName: string; aDefault: Single = 0): Single; overload;
+    function Read(const aCategory, aName: string; aDefault: Boolean = False): Boolean; overload;
+    function CategoryName(aIndex: Integer): string;
+  end;
+
 
   { TArchiveBuildProgressEvent }
   TArchiveBuildProgressEvent = procedure(const aFilename: string; aProgress: Integer; aNewFile: Boolean) of object;
@@ -3320,6 +3384,7 @@ type
     function  NumToStr(aValue: Extended; aWidth: Integer=0; aDecimals: Integer=2): string; overload;
     function  TrimChars(const aValue: string; Chars: TSysCharSet): string;
     function  TrimStr(aValue: string): string;
+    function  DeleteChars(const Str: string; Chars: TSysCharSet): string;
     function  StrToInt(aValue: string): Int64;
     function  StrToUInt(aValue: string): UInt64;
     function  StrToFloat(aValue: string): Double;
@@ -4148,6 +4213,161 @@ begin
   inherited;
 end;
 
+procedure TStream.SetPos(aValue: Integer);
+begin
+  FPos := aValue;
+  if FType = stFile then
+    Seek(FFile, FPos);
+end;
+
+constructor TStream.Create;
+begin
+  inherited;
+end;
+
+destructor TStream.Destroy;
+begin
+  if FType = stFile then CloseFile(FFile);
+  inherited;
+end;
+
+function TStream.Open(aMemory: Pointer; aMemSize: Integer): Boolean;
+begin
+  Result := False;
+
+  if aMemory = nil then Exit;
+  if aMemSize <=0 then Exit;
+
+  FType := stMemory;
+  FMem   := aMemory;
+  FSize := aMemSize;
+  FPos  := 0;
+end;
+
+function TStream.Open(const aFilename: string; aCreate: Boolean = False): Boolean;
+begin
+  Result := False;
+
+  if not aCreate then
+    if not Game.FileExist(aFilename) then Exit;
+
+  AssignFile(FFile, aFilename);
+
+  if aCreate then
+    Rewrite(FFile, 1)
+  else
+    Reset(FFile, 1);
+
+  FType := stFile;
+  FSize := FileSize(FFile);
+  FPos := 0;
+  FMem := nil;
+end;
+
+procedure TStream.Close;
+begin
+  if FType = stFile then
+    CloseFile(FFile);
+  FType := stClosed;
+  FSize := 0;
+  FPos := 0;
+  FMem := nil;
+end;
+
+procedure TStream.CopyFrom(const aStream: TStream);
+var
+  P : Pointer;
+  LPos : LongInt;
+begin
+  P := GetMemory(aStream.Size);
+  LPos := aStream.Pos;
+  aStream.Pos := 0;
+  aStream.Read(P^, aStream.Size);
+  aStream.Pos := LPos;
+  Write(P^, aStream.Size);
+  FreeMemory(P);
+end;
+
+function TStream.Read(out aBuf; aBufSize: Integer): Integer;
+begin
+  if FType = stMemory then
+  begin
+    Result := Game.Min(FPos + aBufSize, FSize) - FPos;
+    Move(FMem^, aBuf, Result);
+  end else
+    BlockRead(FFile, aBuf, aBufSize, Result);
+  Inc(FPos, Result);
+end;
+
+function TStream.Write(const aBuf; aBufSize: Integer): Integer;
+begin
+  if FType = stMemory then
+  begin
+    Result := Game.Min(FPos + aBufSize, FSize) - FPos;
+    Move(aBuf, FMem^, Result);
+  end else
+    BlockWrite(FFile, aBuf, aBufSize, Result);
+  Inc(FPos, Result);
+  Inc(FSize, Game.Max(0, FPos - FSize));
+end;
+
+function TStream.ReadAnsiString: AnsiString;
+var
+  LLen : Integer;
+begin
+  Read(LLen, SizeOf(LLen));
+  if LLen > 0 then
+  begin
+    SetLength(Result, LLen);
+    Read(Result[1], LLen);
+  end else
+    Result := '';
+end;
+
+procedure TStream.WriteAnsiString(const aValue: AnsiString);
+var
+  LLen : Integer;
+begin
+  LLen := Length(aValue);
+  Write(LLen, SizeOf(LLen));
+  if LLen > 0 then
+    Write(aValue[1], LLen);
+end;
+
+function TStream.ReadString: string;
+var
+  LLen : Integer;
+begin
+  Read(LLen, SizeOf(LLen));
+  if LLen > 0 then
+  begin
+    SetLength(Result, LLen);
+    Read(Result[1], LLen * SizeOf(Char));
+  end;
+end;
+
+procedure TStream.WriteString(const aValue: string);
+var
+  LLen : Integer;
+begin
+  LLen := Length(aValue);
+  Write(LLen, SizeOf(LLen));
+  if LLen > 0 then Write(aValue[1], LLen * SizeOf(Char));
+end;
+
+class function TStream.Init(aMemory: Pointer; aMemSize: Integer): TStream;
+begin
+  Result := TStream.Create;
+  Result.Open(aMemory, aMemSize);
+end;
+
+class function TStream.Init(const aFilename: string; aCreate: Boolean): TStream;
+begin
+  Result := TStream.Create;
+  Result.Open(aFilename, aCreate);
+end;
+
+
 { TList }
 function TList.OutOfBounds(aIndex: Integer): Boolean;
 begin
@@ -4426,6 +4646,204 @@ begin
   P := Pos('=', Result);
   if P > 0 then
     System.Delete(Result, 1, P);
+end;
+
+{ TConfigFile }
+constructor TConfigFile.Create;
+begin
+  inherited;
+end;
+
+destructor TConfigFile.Destroy;
+begin
+  Clear;
+  inherited;
+end;
+
+procedure TConfigFile.Clear;
+begin
+  FData := nil;
+end;
+
+procedure TConfigFile.Load(const aFilename: string);
+var
+  AnsiText : string;
+  Text, Category, Line : string;
+  CatId : LongInt;
+  Stream : TStream;
+  i, BeginPos : LongInt;
+begin
+  FData := nil;
+  CatId := -1;
+  Stream := TStream.Init(aFilename);
+  SetLength(AnsiText, Stream.Size);
+  Stream.Read(AnsiText[1], Length(AnsiText)*SizeOf(Char));
+  Stream.Free;
+  Text := string(AnsiText);
+  BeginPos := 1;
+  while BeginPos < Length(Text) do
+  begin
+    for i := BeginPos to Length(Text) do
+      if (Text[i] = #13) or (i = Length(Text)) then
+      begin
+        Line := Copy(Text, BeginPos, i - BeginPos + 1);
+        BeginPos := i + 1;
+        break;
+      end;
+    Line := Game.TrimStr(Line);
+
+    if Line <> '' then
+      if Line[1] <> '[' then
+      begin
+        if (Line[1] <> ';') and (CatId >= 0) then
+        begin
+          SetLength(FData[CatId].Params, Length(FData[CatId].Params) + 1);
+          with FData[CatId], Params[Length(Params) - 1] do
+          begin
+            Name  := Game.TrimStr(Copy(Line, 1, Pos('=', Line) - 1));
+            Value := Game.TrimStr(Copy(Line, Pos('=', Line) + 1, Length(Line)));
+          end;
+        end;
+      end else
+      begin
+        Category := Game.TrimStr(Game.DeleteChars(Line, ['[', ']']));
+        CatId := Length(FData);
+        SetLength(FData, CatId + 1);
+        FData[CatId].Category := Category;
+      end;
+  end;
+end;
+
+procedure TConfigFile.Save(const aFilename: string);
+var
+  LStream : TStream;
+  LText   : string;
+  I, J : Integer;
+begin
+  LText := '';
+  for I := 0 to Length(FData) - 1 do
+  begin
+    LText := LText + '[' + FData[I].Category + ']' + CRLF;
+    for J := 0 to Length(FData[I].Params) - 1 do
+      LText := LText + FData[I].Params[J].Name + ' = ' + FData[I].Params[J].Value + CRLF;
+    LText := LText + CRLF;
+  end;
+  LStream := TStream.Init(aFilename, True);
+  LStream.Write(LText[1], Length(LText)*SizeOf(Char));
+  //LStream.WriteString(LText);
+  LStream.Free;
+end;
+
+procedure TConfigFile.Write(const aCategory, aName, aValue: string);
+var
+  i, j : Integer;
+begin
+  for i := 0 to Length(FData) - 1 do
+    if aCategory = FData[i].Category then
+      with FData[i] do
+      begin
+        for j := 0 to Length(Params) - 1 do
+          if Params[j].Name = aName then
+          begin
+            Params[j].Value := aValue;
+            Exit;
+          end;
+      // Add new param
+        SetLength(Params, Length(Params) + 1);
+        Params[Length(Params) - 1].Name  := aName;
+        Params[Length(Params) - 1].Value := aValue;
+        Exit;
+      end;
+// Add new category
+  SetLength(FData, Length(FData) + 1);
+  with FData[Length(FData) - 1] do
+  begin
+    Category := aCategory;
+    SetLength(Params, 1);
+    Params[0].Name  := aName;
+    Params[0].Value := aValue;
+  end;
+end;
+
+procedure TConfigFile.Write(const aCategory, aName: string; aValue: Int64);
+begin
+  Write(aCategory, aName, Game.NumToStr(aValue));
+end;
+
+procedure TConfigFile.Write(const aCategory, aName: string; aValue: Single);
+begin
+  Write(aCategory, aName, Game.NumToStr(aValue));
+end;
+
+procedure TConfigFile.Write(const aCategory, aName: string; aValue: Boolean);
+begin
+  if aValue then
+    Write(aCategory, aName, 'TRUE')
+  else
+    Write(aCategory, aName, 'FALSE');
+end;
+
+function TConfigFile.Read(const aCategory, aName: string; const Default: string): string;
+var
+  I, J : Integer;
+begin
+  Result := Default;
+  for I := 0 to Length(FData) - 1 do
+    if aCategory = FData[I].Category then
+      for J := 0 to Length(FData[I].Params) - 1 do
+        if FData[I].Params[J].Name = aName then
+        begin
+          Result := FData[I].Params[J].Value;
+          Exit;
+        end;
+end;
+
+function TConfigFile.Read(const aCategory, aName: string; aDefault: Int64): Int64;
+var
+  LValue: string;
+begin
+  LValue := Read(aCategory, aName, '');
+  if LValue = '' then
+    Result := aDefault
+  else
+  Result := Game.StrToInt(LValue);
+end;
+
+function TConfigFile.Read(const aCategory, aName: string; aDefault: Single): Single;
+var
+  LValue: string;
+begin
+  LValue := Read(aCategory, aName, '');
+  if LValue = '' then
+    Result := aDefault
+  else
+  Result := Game.StrToInt(LValue);
+end;
+
+function TConfigFile.Read(const aCategory, aName: string; aDefault: Boolean = False): Boolean;
+var
+  LValue: string;
+begin
+  LValue := Read(aCategory, aName, '');
+  if LValue = '' then
+    Result := aDefault
+  else
+    //Result := Game.StrToInt(LValue);
+    if Game.SameText(LValue, 'TRUE') then
+      Result := True
+    else
+    if Game.SameText(LValue, 'FALSE') then
+      Result := False
+    else
+      Result := aDefault;
+end;
+
+function TConfigFile.CategoryName(aIndex: Integer): string;
+begin
+  if (aIndex >= 0) and (aIndex < Length(FData)) then
+    Result := FData[aIndex].Category
+  else
+    Result := '';
 end;
 
 { TArchive }
@@ -7517,6 +7935,21 @@ end;
 function  TGame.TrimStr(aValue: string): string;
 begin
   Result := TrimChars(aValue, [#9, #10, #13, #32, #34, #39]);
+end;
+
+function TGame.DeleteChars(const Str: string; Chars: TSysCharSet): string;
+var
+  i, j : LongInt;
+begin
+  j := 0;
+  SetLength(Result, Length(Str));
+  for i := 1 to Length(Str) do
+    if not (AnsiChar(Str[i]) in Chars) then
+    begin
+      Inc(j);
+      Result[j] := Str[i];
+    end;
+  SetLength(Result, j);
 end;
 
 function  TGame.StrToInt(aValue: string): Int64;

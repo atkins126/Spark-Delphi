@@ -63,7 +63,9 @@ type
   { TTestbed }
   TTestbed = class(TGame)
   protected
+    FStream: TStream;
     FStarfield: TStarfield;
+    FConfigFile: TConfigFile;
   public
     procedure OnSetSettings(var aSettings: TGameSettings); override;
     function  OnStartup: Boolean; override;
@@ -81,9 +83,6 @@ type
 
 implementation
 
-uses
-  classes;
-
 { TTestbed }
 procedure TTestbed.OnSetSettings(var aSettings: TGameSettings);
 begin
@@ -94,11 +93,28 @@ begin
   aSettings.ArchiveFilename := cArchiveFilename;
 end;
 
-
-
 function  TTestbed.OnStartup: Boolean;
 begin
   inherited;
+  FConfigFile := TConfigFile.Create;
+
+  FConfigFile.Write('vars', 'ide', 3306);
+  FConfigFile.Save('test.cfg');
+  FConfigFile.Clear;
+
+  FConfigFile.Load('test.cfg');
+  Game.ConsoleWriteLn('ide= #i', [FConfigFile.Read('vars', 'ide', 0)]);
+
+  FreeNilObject(@FConfigFile);
+
+
+  FStream := TStream.Init('test.stm', True);
+  FStream.WriteString('Jarrod Davis');
+  FreeNilObject(@FStream);
+
+  FStream := TStream.Init('test.stm', False);
+  Game.ConsoleWriteLn(FStream.ReadString, []);
+  FreeNilObject(@FStream);
 
   FStarfield := TStarfield.Create;
 
