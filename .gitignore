@@ -76,3 +76,4 @@ examples/**/Win64
 bin/Screenshots
 bin/*.txt
 bin/*.ini
+!bin/Spark.dll
