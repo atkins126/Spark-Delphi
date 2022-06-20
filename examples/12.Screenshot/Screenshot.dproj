@@ -1,6 +1,6 @@
 ﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup>
-        <ProjectGuid>{3B7D5A31-CA38-4F1E-A7C6-82C96D542162}</ProjectGuid>
+        <ProjectGuid>{302A47E5-D639-45C8-B2DD-06F76E0E00D7}</ProjectGuid>
         <ProjectVersion>19.4</ProjectVersion>
         <FrameworkType>None</FrameworkType>
         <Base>True</Base>
@@ -121,8 +121,6 @@
         <DelphiCompile Include="$(MainSource)">
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
-        <DCCReference Include="..\..\sources\Spark.pas"/>
-        <DCCReference Include="..\Common\uCommon.pas"/>
         <DCCReference Include="uScreenshot.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>

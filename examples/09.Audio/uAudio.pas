@@ -70,16 +70,10 @@ type
     procedure Play(aNum: Integer; aVol: Single);
   public
     procedure OnSetSettings(var aSettings: TGameSettings); override;
-    function  OnStartup: Boolean; override;
+    procedure OnStartup; override;
     procedure OnShutdown; override;
     procedure OnUpdate(aDeltaTime: Double); override;
-    procedure OnFixedUpdate; override;
-    procedure OnRender; override;
     procedure OnRenderHUD; override;
-    procedure OnReady(aReady: Boolean); override;
-    procedure OnVideoState(aState: TVideoState; const aFilename: string); override;
-    procedure OnOpenCmdConsole; override;
-    procedure OnCloseCmdConsole; override;
   end;
 
 implementation
@@ -91,46 +85,47 @@ begin
     FFilename := FormatStr('arc/music/song0#i.ogg', [aNum])
   else
     FFilename := FormatStr('arc/music/song#i.ogg', [aNum]);
-  PlayMusic(Archive, FFilename, aVol, True);
+  SGT.Audio.PlayMusic(Archive, FFilename, aVol, True);
 end;
 
 procedure TAudioEx.OnSetSettings(var aSettings: TGameSettings);
 begin
   inherited;
+
   aSettings.WindowTitle := 'Spark - Audio';
   aSettings.ArchivePassword := cArchivePassword;
   aSettings.ArchiveFilename := cArchiveFilename;
 end;
 
-function  TAudioEx.OnStartup: Boolean;
+procedure TAudioEx.OnStartup;
 var
   I: Integer;
 begin
   inherited;
 
-  for I := 0 to 5 do FSample[I] := LoadSample(Archive, FormatStr('arc/sfx/samp#i.ogg', [I]));
-  FSample[6] := LoadSample(Archive, 'arc/sfx/weapon_player.ogg');
-  FSample[7] := LoadSample(Archive, 'arc/sfx/thunder.ogg');
-  FSample[8] := LoadSample(Archive, 'arc/sfx/digthis.ogg');
+  for I := 0 to 5 do FSample[I] := SGT.Audio.LoadSample(Archive, FormatStr('arc/sfx/samp#i.ogg', [I]));
+  FSample[6] := SGT.Audio.LoadSample(Archive, 'arc/sfx/weapon_player.ogg');
+  FSample[7] := SGT.Audio.LoadSample(Archive, 'arc/sfx/thunder.ogg');
+  FSample[8] := SGT.Audio.LoadSample(Archive, 'arc/sfx/digthis.ogg');
 
   FNum := 1;
   FFilename := '';
   Play(1, 1.0);
-
-  Result := True;
 end;
 
 procedure TAudioEx.OnShutdown;
 var
   I: Integer;
 begin
-  StopAllSamples;
-  for I := 0 to 5 do UnLoadSample(FSample[i]);
-  UnLoadSample(FSample[6]);
-  UnLoadSample(FSample[7]);
-  UnLoadSample(FSample[8]);
+  SGT.Audio.StopAllSamples;
 
-  UnloadMusic;
+  for I := 0 to 5 do SGT.Audio.UnLoadSample(FSample[i]);
+  SGT.Audio.UnLoadSample(FSample[6]);
+  SGT.Audio.UnLoadSample(FSample[7]);
+  SGT.Audio.UnLoadSample(FSample[8]);
+
+  SGT.Audio.UnloadMusic;
+
   inherited;
 end;
 
@@ -138,7 +133,7 @@ procedure TAudioEx.OnUpdate(aDeltaTime: Double);
 begin
   inherited;
 
-  if KeyPressed(KEY_UP) then
+  if SGT.Input.KeyPressed(KEY_UP) then
   begin
     Inc(FNum);
     if FNum > 13 then
@@ -146,7 +141,7 @@ begin
     Play(FNum, 1.0);
   end
   else
-  if KeyPressed(KEY_DOWN) then
+  if SGT.Input.KeyPressed(KEY_DOWN) then
   begin
     Dec(FNum);
     if FNum < 1 then
@@ -154,84 +149,53 @@ begin
     Play(FNum, 1.0);
   end;
 
-  if KeyPressed(KEY_1) then
-    PlaySample(FSample[0], 1, AUDIO_PAN_NONE,  1, False, nil);
+  if SGT.Input.KeyPressed(KEY_1) then
+    SGT.Audio.PlaySample(FSample[0], 1, AUDIO_PAN_NONE,  1, False, nil);
 
-  if KeyPressed(KEY_2) then
-    PlaySample(FSample[1], 1, AUDIO_PAN_NONE,  1, False, nil);
+  if SGT.Input.KeyPressed(KEY_2) then
+    SGT.Audio.PlaySample(FSample[1], 1, AUDIO_PAN_NONE,  1, False, nil);
 
-  if KeyPressed(KEY_3) then
-    PlaySample(FSample[2], 1, AUDIO_PAN_NONE,  1, False, nil);
+  if SGT.Input.KeyPressed(KEY_3) then
+    SGT.Audio.PlaySample(FSample[2], 1, AUDIO_PAN_NONE,  1, False, nil);
 
-  if KeyPressed(KEY_4) then
-    PlaySample(FSample[3], 1, AUDIO_PAN_NONE,  1, False, nil);
+  if SGT.Input.KeyPressed(KEY_4) then
+    SGT.Audio.PlaySample(FSample[3], 1, AUDIO_PAN_NONE,  1, False, nil);
 
-  if KeyPressed(KEY_5) then
-    PlaySample(FSample[4], 1, AUDIO_PAN_NONE,  1, False, nil);
+  if SGT.Input.KeyPressed(KEY_5) then
+    SGT.Audio.PlaySample(FSample[4], 1, AUDIO_PAN_NONE,  1, False, nil);
 
-  if KeyPressed(KEY_6) then
+  if SGT.Input.KeyPressed(KEY_6) then
   begin
-    if not GetSamplePlaying(FSampleId) then
-      PlaySample(FSample[5], 1, AUDIO_PAN_NONE,  1, True, @FSampleId);
+    if not SGT.Audio.GetSamplePlaying(FSampleId) then
+      SGT.Audio.PlaySample(FSample[5], 1, AUDIO_PAN_NONE,  1, True, @FSampleId);
   end;
 
-  if KeyPressed(KEY_7) then
+  if SGT.Input.KeyPressed(KEY_7) then
   begin
-      PlaySample(FSample[6], 1, AUDIO_PAN_NONE,  1, False, nil);
+      SGT.Audio.PlaySample(FSample[6], 1, AUDIO_PAN_NONE,  1, False, nil);
   end;
 
-  if KeyPressed(KEY_8) then
-    PlaySample(FSample[7], 1, AUDIO_PAN_NONE,  1, False, nil);
+  if SGT.Input.KeyPressed(KEY_8) then
+    SGT.Audio.PlaySample(FSample[7], 1, AUDIO_PAN_NONE,  1, False, nil);
 
-  if KeyPressed(KEY_9) then
-    PlaySample(FSample[8], 1, AUDIO_PAN_NONE,  1, False, nil);
+  if SGT.Input.KeyPressed(KEY_9) then
+    SGT.Audio.PlaySample(FSample[8], 1, AUDIO_PAN_NONE,  1, False, nil);
 
-  if KeyPressed(KEY_0) then
+  if SGT.Input.KeyPressed(KEY_0) then
   begin
-    if GetSamplePlaying(FSampleId) then
-      StopSample(FSampleId);
-
+    if SGT.Audio.GetSamplePlaying(FSampleId) then
+      SGT.Audio.StopSample(FSampleId);
   end;
-
-end;
-
-procedure TAudioEx.OnFixedUpdate;
-begin
-  inherited;
-end;
-
-procedure TAudioEx.OnRender;
-begin
-  inherited;
 end;
 
 procedure TAudioEx.OnRenderHUD;
 begin
   inherited;
+
   HudText(Font, GREEN,  haLeft, HudTextItem('Up/Down', 'Play sample'), []);
   HudText(Font, GREEN, haLeft, HudTextItem('1-9', 'Play sample'), []);
   HudText(Font, GREEN, haLeft, HudTextItem('0', 'Stop looping sample'), []);
   HudText(Font, ORANGE, haLeft, HudTextItem('Song:', '#s', ' '), [GetFileName(FFilename)]);
-end;
-
-procedure TAudioEx.OnReady(aReady: Boolean);
-begin
-  inherited;
-end;
-
-procedure TAudioEx.OnVideoState(aState: TVideoState; const aFilename: string);
-begin
-  inherited;
-end;
-
-procedure TAudioEx.OnOpenCmdConsole;
-begin
-  inherited;
-end;
-
-procedure TAudioEx.OnCloseCmdConsole;
-begin
-  inherited;
 end;
 
 end.

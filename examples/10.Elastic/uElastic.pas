@@ -91,7 +91,7 @@ type
     FTimer: Single;
   public
     procedure OnSetSettings(var aSettings: TGameSettings); override;
-    function  OnStartup: Boolean; override;
+    procedure OnStartup; override;
     procedure OnShutdown; override;
     procedure OnUpdate(aDeltaTime: Double); override;
     procedure OnRender; override;
@@ -103,30 +103,29 @@ implementation
 procedure TElasticEx.OnSetSettings(var aSettings: TGameSettings);
 begin
   inherited;
+
   aSettings.WindowTitle := 'Spark - Elastic';
   aSettings.ArchivePassword := cArchivePassword;
   aSettings.ArchiveFilename := cArchiveFilename;
 end;
 
-function  TElasticEx.OnStartup: Boolean;
+procedure TElasticEx.OnStartup;
 var
   LVP: TRectangle;
 begin
   inherited;
 
   FillChar(FBead, SizeOf(FBead), 0);
-  GetWindowViewportSize(LVP);
+  SGT.Window.GetViewportSize(LVP);
   FViewWidth := LVP.Width;
   FViewHeight := LVP.Height;
 
-  PlayMusic(Archive, 'arc/music/song04.ogg', 0.5, True);
-
-  Result := True;
+  SGT.Audio.PlayMusic(Archive, 'arc/music/song04.ogg', 0.5, True);
 end;
 
 procedure TElasticEx.OnShutdown;
 begin
-  UnloadMusic;
+  SGT.Audio.UnloadMusic;
 
   inherited;
 end;
@@ -242,18 +241,17 @@ begin
   inherited;
 
   // draw last bead
-  DrawFilledRectangle(FBead[0].X, FBead[0].Y, cBeadSize, cBeadSize, GREEN);
+  SGT.Window.DrawFilledRectangle(FBead[0].X, FBead[0].Y, cBeadSize, cBeadSize, GREEN);
 
   // loop though other beads
   for I := 1 to cBeadCount do
   begin
     // draw bead and string from it to the one before it
-    DrawLine(FBead[I].x+cBedHalfSize,
+    SGT.Window.DrawLine(FBead[I].x+cBedHalfSize,
       FBead[I].y+cBedHalfSize, FBead[I-1].x+cBedHalfSize, FBead[I-1].y+cBedHalfSize, 1, YELLOW);
-    DrawFilledRectangle(FBead[I].X, FBead[I].Y, cBeadSize, cBeadSize, GREEN);
+    SGT.Window.DrawFilledRectangle(FBead[I].X, FBead[I].Y, cBeadSize, cBeadSize, GREEN);
   end;
 
 end;
-
 
 end.

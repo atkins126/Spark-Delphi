@@ -66,7 +66,7 @@ type
     FStarfield: TStarfield;
   public
     procedure OnSetSettings(var aSettings: TGameSettings); override;
-    function  OnStartup: Boolean; override;
+    procedure OnStartup; override;
     procedure OnShutdown; override;
     procedure OnUpdate(aDeltaTime: Double); override;
     procedure OnRender; override;
@@ -79,24 +79,23 @@ implementation
 procedure TScreenshakeEx.OnSetSettings(var aSettings: TGameSettings);
 begin
   inherited;
+
   aSettings.WindowTitle := 'Spark - Screenshake';
   aSettings.WindowClearColor := BLACK;
   aSettings.ArchivePassword := cArchivePassword;
   aSettings.ArchiveFilename := cArchiveFilename;
 end;
 
-function  TScreenshakeEx.OnStartup: Boolean;
+procedure TScreenshakeEx.OnStartup;
 begin
   inherited;
 
   FStarfield := TStarfield.Create;
-
-  Result := True;
 end;
 
 procedure TScreenshakeEx.OnShutdown;
 begin
-  Game.FreeNilObject(@FStarfield);
+  FreeNilObject(FStarfield);
 
   inherited;
 end;
@@ -105,8 +104,8 @@ procedure TScreenshakeEx.OnUpdate(aDeltaTime: Double);
 begin
   inherited;
 
-  if KeyPressed(KEY_S) then StartScreenshake(60, 5);
-
+   if SGT.Input.KeyPressed(KEY_S) then
+    SGT.Screenshake.Start(60, 5);
 
   FStarfield.Update(aDeltaTime);
 end;
@@ -123,7 +122,6 @@ begin
   inherited;
 
   HudText(Font, GREEN, haLeft, HudTextItem('S', 'Screenshake'), []);
-
 end;
 
 end.

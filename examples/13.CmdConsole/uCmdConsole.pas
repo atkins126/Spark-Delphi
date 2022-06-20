@@ -67,17 +67,11 @@ type
     FShowStarfield: Boolean;
   public
     procedure OnSetSettings(var aSettings: TGameSettings); override;
-    function  OnStartup: Boolean; override;
+    procedure OnStartup; override;
     procedure OnShutdown; override;
     procedure OnUpdate(aDeltaTime: Double); override;
-    procedure OnFixedUpdate; override;
     procedure OnRender; override;
     procedure OnRenderHUD; override;
-    procedure OnReady(aReady: Boolean); override;
-    procedure OnVideoState(aState: TVideoState; const aFilename: string); override;
-    procedure OnOpenCmdConsole; override;
-    procedure OnCloseCmdConsole; override;
-    procedure OnScreenshot(const aFilename: string); override;
     procedure CustCmd1;
     procedure CustCmd2;
   end;
@@ -88,29 +82,29 @@ implementation
 procedure TCmdConsoleEx.OnSetSettings(var aSettings: TGameSettings);
 begin
   inherited;
-  aSettings.WindowTitle := 'Spark - Command Console';
+
+  aSettings.WindowTitle := 'Spark - CmdConsole';
   aSettings.WindowClearColor := BLACK;
+
   aSettings.ArchivePassword := cArchivePassword;
   aSettings.ArchiveFilename := cArchiveFilename;
 end;
 
-function  TCmdConsoleEx.OnStartup: Boolean;
+procedure TCmdConsoleEx.OnStartup;
 begin
   inherited;
 
   FStarfield := TStarfield.Create;
   FShowStarfield := False;
 
-  CmdConsole.AddCommand('Starfield', 'ON | OFF', CustCmd1);
-  CmdConsole.AddCommand('ClearColor', 'BLACK | DARKSLATEBROWN | SKYBLUE', CustCmd2);
-
-
-  Result := True;
+  SGT.CmdConsole.AddCommand('Starfield', 'ON | OFF', CustCmd1);
+  SGT.CmdConsole.AddCommand('ClearColor', 'BLACK | DARKSLATEBROWN | SKYBLUE', CustCmd2);
 end;
 
 procedure TCmdConsoleEx.OnShutdown;
 begin
-  Game.FreeNilObject(@FStarfield);
+  FreeNilObject(FStarfield);
+
   inherited;
 end;
 
@@ -120,11 +114,6 @@ begin
 
   if FShowStarfield then
     FStarfield.Update(aDeltaTime);
-end;
-
-procedure TCmdConsoleEx.OnFixedUpdate;
-begin
-  inherited;
 end;
 
 procedure TCmdConsoleEx.OnRender;
@@ -142,53 +131,28 @@ begin
   HudText(Font, GREEN, haLeft, HudTextItem('~', 'Toggle console'), []);
 end;
 
-procedure TCmdConsoleEx.OnReady(aReady: Boolean);
-begin
-  inherited;
-end;
-
-procedure TCmdConsoleEx.OnVideoState(aState: TVideoState; const aFilename: string);
-begin
-  inherited;
-end;
-
-procedure TCmdConsoleEx.OnOpenCmdConsole;
-begin
-  inherited;
-end;
-
-procedure TCmdConsoleEx.OnCloseCmdConsole;
-begin
-  inherited;
-end;
-
-procedure TCmdConsoleEx.OnScreenshot(const aFilename: string);
-begin
-  inherited;
-end;
-
 procedure TCmdConsoleEx.CustCmd1;
 var
   S,P: string;
 
   procedure Error;
   begin
-    CmdConsole.AddTextLine('Invalid parameter, usage: starfield on | off', []);
+    SGT.CmdConsole.AddTextLine('Invalid parameter, usage: starfield on | off', []);
   end;
 
 begin
   s := 'Starfiled ';
-  if CmdConsole.ParamCount < 1 then
+  if SGT.CmdConsole.ParamCount < 1 then
   begin
     Error;
     Exit;
   end;
 
-  P := CmdConsole.ParamStr(0);
-  if Game.SameText(P, 'ON') then
+  P := SGT.CmdConsole.ParamStr(0);
+  if SameText(P, 'ON') then
     FShowStarfield := True
   else
-  if Game.SameText(P, 'OFF') then
+  if SameText(P, 'OFF') then
     FShowStarfield := False
   else
     begin
@@ -196,7 +160,7 @@ begin
       Exit;
     end;
 
-  CmdConsole.AddTextLine(s + P, []);
+  SGT.CmdConsole.AddTextLine(s + P, []);
 end;
 
 procedure TCmdConsoleEx.CustCmd2;
@@ -205,32 +169,32 @@ var
 
   procedure Error;
   begin
-    CmdConsole.AddTextLine('Invalid parameter, usage: clearcolor BLACK | DARKSLATEBROWN | SKYBLUE', []);
+    SGT.CmdConsole.AddTextLine('Invalid parameter, usage: clearcolor BLACK | DARKSLATEBROWN | SKYBLUE', []);
   end;
 
 begin
   s := 'ClearColor ';
-  if CmdConsole.ParamCount < 1 then
+  if SGT.CmdConsole.ParamCount < 1 then
   begin
     Error;
     Exit;
   end;
 
-  P := CmdConsole.ParamStr(0);
-  if Game.SameText(P, 'BLACK') then
+  P := SGT.CmdConsole.ParamStr(0);
+  if SameText(P, 'BLACK') then
     FSettings.WindowClearColor := BLACK
   else
-  if Game.SameText(P, 'DARKSLATEBROWN') then
+  if SameText(P, 'DARKSLATEBROWN') then
     FSettings.WindowClearColor := DARKSLATEBROWN
   else
-  if Game.SameText(P, 'SKYBLUE') then
+  if SameText(P, 'SKYBLUE') then
     FSettings.WindowClearColor := SKYBLUE
   else
     begin
       Error;
       Exit;
     end;
-  CmdConsole.AddTextLine(s + P, []);
+  SGT.CmdConsole.AddTextLine(s + P, []);
 end;
 
 

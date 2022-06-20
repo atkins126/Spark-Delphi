@@ -63,94 +63,55 @@ type
   { TTestbed }
   TTestbed = class(TGame)
   protected
-    FStream: TStream;
-    FStarfield: TStarfield;
-    FConfigFile: TConfigFile;
   public
+    procedure OnInit; override;
+    procedure OnDone; override;
     procedure OnSetSettings(var aSettings: TGameSettings); override;
-    function  OnStartup: Boolean; override;
+    procedure OnStartup; override;
     procedure OnShutdown; override;
+    procedure OnReady(aReady: Boolean); override;
     procedure OnUpdate(aDeltaTime: Double); override;
     procedure OnFixedUpdate; override;
+    procedure OnClearWindow; override;
+    procedure OnShowWindow; override;
     procedure OnRender; override;
     procedure OnRenderHUD; override;
-    procedure OnReady(aReady: Boolean); override;
-    procedure OnVideoState(aState: TVideoState; const aFilename: string); override;
-    procedure OnOpenCmdConsole; override;
-    procedure OnCloseCmdConsole; override;
+    procedure OnPreShowWindow; override;
+    procedure OnPostShowWindow; override;
+    procedure OnCmdConsoleState(aState: TCmdConsoleState); override;
+    procedure OnVideoState(aState: TVideoState; aFilename: string); override;
     procedure OnScreenshot(const aFilename: string); override;
+
   end;
 
 implementation
 
 { TTestbed }
+procedure TTestbed.OnInit;
+begin
+  inherited;
+end;
+
+procedure TTestbed.OnDone;
+begin
+  inherited;
+end;
+
 procedure TTestbed.OnSetSettings(var aSettings: TGameSettings);
 begin
   inherited;
+
   aSettings.WindowTitle := 'Spark - Testbed';
-  aSettings.WindowClearColor := BLACK;
   aSettings.ArchivePassword := cArchivePassword;
   aSettings.ArchiveFilename := cArchiveFilename;
 end;
 
-function  TTestbed.OnStartup: Boolean;
+procedure TTestbed.OnStartup;
 begin
   inherited;
-  FConfigFile := TConfigFile.Create;
-
-  FConfigFile.Write('vars', 'ide', 3306);
-  FConfigFile.Save('test.cfg');
-  FConfigFile.Clear;
-
-  FConfigFile.Load('test.cfg');
-  Game.ConsoleWriteLn('ide= #i', [FConfigFile.Read('vars', 'ide', 0)]);
-
-  FreeNilObject(@FConfigFile);
-
-
-  FStream := TStream.Init('test.stm', True);
-  FStream.WriteString('Jarrod Davis');
-  FreeNilObject(@FStream);
-
-  FStream := TStream.Init('test.stm', False);
-  Game.ConsoleWriteLn(FStream.ReadString, []);
-  FreeNilObject(@FStream);
-
-  FStarfield := TStarfield.Create;
-
-  Result := True;
 end;
 
 procedure TTestbed.OnShutdown;
-begin
-  FreeNilObject(@FStarfield);
-  inherited;
-end;
-
-procedure TTestbed.OnUpdate(aDeltaTime: Double);
-begin
-  inherited;
-
-  if KeyPressed(KEY_S) then StartScreenshake(60, 5);
-  if KeyPressed(KEY_D) then TakeScreenshot;
-
-
-  FStarfield.Update(aDeltaTime);
-end;
-
-procedure TTestbed.OnFixedUpdate;
-begin
-  inherited;
-end;
-
-procedure TTestbed.OnRender;
-begin
-  inherited;
-
-  FStarfield.Render;
-end;
-
-procedure TTestbed.OnRenderHUD;
 begin
   inherited;
 end;
@@ -160,24 +121,60 @@ begin
   inherited;
 end;
 
-procedure TTestbed.OnVideoState(aState: TVideoState; const aFilename: string);
+procedure TTestbed.OnUpdate(aDeltaTime: Double);
 begin
   inherited;
 end;
 
-procedure TTestbed.OnOpenCmdConsole;
+procedure TTestbed.OnFixedUpdate;
 begin
   inherited;
 end;
 
-procedure TTestbed.OnCloseCmdConsole;
+procedure TTestbed.OnClearWindow;
+begin
+  inherited;
+end;
+
+procedure TTestbed.OnShowWindow;
+begin
+  inherited;
+end;
+
+procedure TTestbed.OnRender;
+begin
+  inherited;
+end;
+
+procedure TTestbed.OnRenderHUD;
+begin
+  inherited;
+end;
+
+procedure TTestbed.OnPreShowWindow;
+begin
+  inherited;
+end;
+
+procedure TTestbed.OnPostShowWindow;
+begin
+  inherited;
+end;
+
+procedure TTestbed.OnCmdConsoleState(aState: TCmdConsoleState);
+begin
+  inherited;
+end;
+
+procedure TTestbed.OnVideoState(aState: TVideoState; aFilename: string);
 begin
   inherited;
 end;
 
 procedure TTestbed.OnScreenshot(const aFilename: string);
 begin
-  ConsoleWriteLn('Screenshot "#s"', [aFilename]);
+  inherited;
 end;
+
 
 end.

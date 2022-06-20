@@ -58,8 +58,7 @@ program Elastic;
 {$R *.res}
 
 uses
-  Spark in '..\..\sources\Spark.pas',
-  uCommon in '..\Common\uCommon.pas',
+  Spark,
   uElastic in 'uElastic.pas';
 
 begin

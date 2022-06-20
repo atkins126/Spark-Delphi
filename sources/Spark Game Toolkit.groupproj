@@ -1,6 +1,6 @@
 ﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup>
-        <ProjectGuid>{720FD546-75AA-4E5D-BB85-D7D2281D4DB3}</ProjectGuid>
+        <ProjectGuid>{3F170FEA-16BB-4F0E-9AFD-8AB699DE5BF8}</ProjectGuid>
     </PropertyGroup>
     <ItemGroup>
         <Projects Include="ZipArc.dproj">
@@ -40,6 +40,9 @@
             <Dependencies/>
         </Projects>
         <Projects Include="..\examples\99.Testbed\Testbed.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="..\examples\00.Template\Template.dproj">
             <Dependencies/>
         </Projects>
     </ItemGroup>
@@ -167,14 +170,23 @@
     <Target Name="Testbed:Make">
         <MSBuild Projects="..\examples\99.Testbed\Testbed.dproj" Targets="Make"/>
     </Target>
+    <Target Name="Template">
+        <MSBuild Projects="..\examples\00.Template\Template.dproj"/>
+    </Target>
+    <Target Name="Template:Clean">
+        <MSBuild Projects="..\examples\00.Template\Template.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Template:Make">
+        <MSBuild Projects="..\examples\00.Template\Template.dproj" Targets="Make"/>
+    </Target>
     <Target Name="Build">
-        <CallTarget Targets="ZipArc;HelloWorld;Starfield;Texture;Shader;Video;Font;Audio;Elastic;Screenshake;Screenshot;CmdConsole;Testbed"/>
+        <CallTarget Targets="ZipArc;HelloWorld;Starfield;Texture;Shader;Video;Font;Audio;Elastic;Screenshake;Screenshot;CmdConsole;Testbed;Template"/>
     </Target>
     <Target Name="Clean">
-        <CallTarget Targets="ZipArc:Clean;HelloWorld:Clean;Starfield:Clean;Texture:Clean;Shader:Clean;Video:Clean;Font:Clean;Audio:Clean;Elastic:Clean;Screenshake:Clean;Screenshot:Clean;CmdConsole:Clean;Testbed:Clean"/>
+        <CallTarget Targets="ZipArc:Clean;HelloWorld:Clean;Starfield:Clean;Texture:Clean;Shader:Clean;Video:Clean;Font:Clean;Audio:Clean;Elastic:Clean;Screenshake:Clean;Screenshot:Clean;CmdConsole:Clean;Testbed:Clean;Template:Clean"/>
     </Target>
     <Target Name="Make">
-        <CallTarget Targets="ZipArc:Make;HelloWorld:Make;Starfield:Make;Texture:Make;Shader:Make;Video:Make;Font:Make;Audio:Make;Elastic:Make;Screenshake:Make;Screenshot:Make;CmdConsole:Make;Testbed:Make"/>
+        <CallTarget Targets="ZipArc:Make;HelloWorld:Make;Starfield:Make;Texture:Make;Shader:Make;Video:Make;Font:Make;Audio:Make;Elastic:Make;Screenshake:Make;Screenshot:Make;CmdConsole:Make;Testbed:Make;Template:Make"/>
     </Target>
     <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
 </Project>

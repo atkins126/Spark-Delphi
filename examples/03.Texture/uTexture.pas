@@ -87,7 +87,7 @@ type
     FState: Integer;
   public
     procedure OnSetSettings(var aSettings: TGameSettings); override;
-    function  OnStartup: Boolean; override;
+    procedure OnStartup; override;
     procedure OnShutdown; override;
     procedure OnUpdate(aDeltaTime: Double); override;
     procedure OnRender; override;
@@ -96,16 +96,16 @@ type
 
 implementation
 
-{ TTextureEx }
 procedure TTextureEx.OnSetSettings(var aSettings: TGameSettings);
 begin
   inherited;
+
   aSettings.WindowTitle := 'Spark - Texture';
   aSettings.ArchivePassword := cArchivePassword;
   aSettings.ArchiveFilename := cArchiveFilename;
 end;
 
-function  TTextureEx.OnStartup: Boolean;
+procedure TTextureEx.OnStartup;
 begin
   inherited;
 
@@ -164,23 +164,21 @@ begin
   FScale.Z := 0.0;
 
   FState := 0;
-
-  Result := True;
 end;
 
 procedure TTextureEx.OnShutdown;
 begin
-  FreeNilObject(@FTexture[10]);
-  FreeNilObject(@FTexture[9]);
-  FreeNilObject(@FTexture[8]);
-  FreeNilObject(@FTexture[7]);
-  FreeNilObject(@FTexture[6]);
-  FreeNilObject(@FTexture[5]);
-  FreeNilObject(@FTexture[4]);
-  FreeNilObject(@FTexture[3]);
-  FreeNilObject(@FTexture[2]);
-  FreeNilObject(@FTexture[1]);
-  FreeNilObject(@FTexture[0]);
+  FreeNilObject(FTexture[10]);
+  FreeNilObject(FTexture[9]);
+  FreeNilObject(FTexture[8]);
+  FreeNilObject(FTexture[7]);
+  FreeNilObject(FTexture[6]);
+  FreeNilObject(FTexture[5]);
+  FreeNilObject(FTexture[4]);
+  FreeNilObject(FTexture[3]);
+  FreeNilObject(FTexture[2]);
+  FreeNilObject(FTexture[1]);
+  FreeNilObject(FTexture[0]);
 
   inherited;
 end;
@@ -191,13 +189,13 @@ var
 begin
   inherited;
 
-  if Game.KeyPressed(KEY_1) then FState := 0;
-  if Game.KeyPressed(KEY_2) then FState := 1;
-  if Game.KeyPressed(KEY_3) then FState := 2;
-  if Game.KeyPressed(KEY_4) then FState := 3;
-  if Game.KeyPressed(KEY_5) then FState := 4;
-  if Game.KeyPressed(KEY_6) then FState := 5;
-  if Game.KeyPressed(KEY_7) then FState := 6;
+  if SGT.Input.KeyPressed(KEY_1) then FState := 0;
+  if SGT.Input.KeyPressed(KEY_2) then FState := 1;
+  if SGT.Input.KeyPressed(KEY_3) then FState := 2;
+  if SGT.Input.KeyPressed(KEY_4) then FState := 3;
+  if SGT.Input.KeyPressed(KEY_5) then FState := 4;
+  if SGT.Input.KeyPressed(KEY_6) then FState := 5;
+  if SGT.Input.KeyPressed(KEY_7) then FState := 6;
 
   case FState of
     0: // texture draw
@@ -227,7 +225,7 @@ begin
         Inc(FFrame);
 
         // clip frame number between first and last
-        Game.ClipValue(FFrame, cFrameFirst, cFrameLast, True);
+        ClipValue(FFrame, cFrameFirst, cFrameLast, True);
       end;
 
       // calc grid x and y based on frame number
@@ -245,18 +243,17 @@ begin
 
     6: // texture scale/rotate
     begin
-      if KeyPressed(KEY_UP) then
+      if SGT.Input.KeyPressed(KEY_UP) then
         FScale.W := FScale.W + cScaleAmount
       else
-      if KeyPressed(KEY_DOWN) then
+      if SGT.Input.KeyPressed(KEY_DOWN) then
         FScale.W := FScale.W - cScaleAmount;
 
-      if KeyDown(KEY_LEFT) then
+      if SGT.Input.KeyDown(KEY_LEFT) then
         FScale.Z := FScale.Z - (30.0 * aDeltaTime)
       else
-      if KeyDown(KEY_RIGHT) then
+      if SGT.Input.KeyDown(KEY_RIGHT) then
         FScale.Z := FScale.Z + (30.0 * aDeltaTime);
-
 
       ClipValue(FScale.W, cScaleMin, cScaleMax, False);
       ClipValue(FScale.Z, 0, 359, True);
@@ -275,21 +272,21 @@ begin
   case FState of
     0: // texture render
     begin
-      FTexture[FState].Draw((Window.Width/2)-(FTexture[FState].Width/2),
-        (Window.Height/2)-(FTexture[FState].Height/2), 1, 0, WHITE, haLeft, vaTop);
+      FTexture[FState].Draw((SGT.Window.Width/2)-(FTexture[FState].Width/2),
+        (SGT.Window.Height/2)-(FTexture[FState].Height/2), 1, 0, WHITE, haLeft, vaTop);
     end;
 
     1: // texture alignment
     begin
       LCenterPos.Assign(Settings.WindowWidth/2, Settings.WindowHeight/2);
 
-      Game.DrawLine(LCenterPos.X, 0, LCenterPos.X, Settings.WindowHeight, 1, YELLOW);
-      Game.DrawLine(0, LCenterPos.Y, Settings.WindowWidth,  LCenterPos.Y, 1, YELLOW);
+      SGT.Window.DrawLine(LCenterPos.X, 0, LCenterPos.X, Settings.WindowHeight, 1, YELLOW);
+      SGT.Window.DrawLine(0, LCenterPos.Y, Settings.WindowWidth,  LCenterPos.Y, 1, YELLOW);
 
       FTexture[FState].Draw(LCenterPos.X, LCenterPos.Y, 1, 0, WHITE, haCenter, vaCenter);
       Font.PrintText(LCenterPos.X, LCenterPos.Y+25, DARKGREEN, haCenter, 'center-center', []);
 
-      Game.DrawLine(0, LCenterPos.Y-128, Settings.WindowWidth,  LCenterPos.Y-128, 1, YELLOW);
+      SGT.Window.DrawLine(0, LCenterPos.Y-128, Settings.WindowWidth,  LCenterPos.Y-128, 1, YELLOW);
 
       FTexture[FState].Draw(LCenterPos.X, LCenterPos.Y-128, 1, 0, WHITE, haLeft, vaTop);
       Font.PrintText(LCenterPos.X+34, LCenterPos.Y-(128-6), DARKGREEN, haLeft, 'left-top', []);
@@ -297,7 +294,7 @@ begin
       FTexture[FState].Draw(LCenterPos.X, LCenterPos.Y-128, 1, 0, WHITE, haLeft, vaBottom);
       Font.PrintText(LCenterPos.X+34, LCenterPos.Y-(128+25), DARKGREEN, haLeft, 'left-bottom', []);
 
-      Game.DrawLine(0, LCenterPos.Y+128, Settings.WindowWidth,  LCenterPos.Y+128, 1, YELLOW);
+      SGT.Window.DrawLine(0, LCenterPos.Y+128, Settings.WindowWidth,  LCenterPos.Y+128, 1, YELLOW);
       FTexture[FState].Draw(LCenterPos.X, LCenterPos.Y+128, 1, 0, WHITE, haRight, vaTop);
       Font.PrintText(LCenterPos.X+4, LCenterPos.Y+(128+6), DARKGREEN, haLeft, 'right-top', []);
 
@@ -322,28 +319,28 @@ begin
     begin
       for I := 0 to 3 do
       begin
-        if I = 1 then SetBlendMode(bmAdditiveAlpha);
+        if I = 1 then SGT.Window.SetBlendMode(bmAdditiveAlpha);
         FTexture[I+3].DrawTiled(FPos[I].X, FPos[I].Y);
-        if I = 1 then RestoreDefaultBlendMode;
+        if I = 1 then SGT.Window.RestoreDefaultBlendMode;
       end;
     end;
 
     4: // texture region
     begin
       // draw each sprite frame center aligned at the center of the window
-      FTexture[7].Draw(Game.Window.Width/2, Game.Window.Height/2, @FRegion, @FCenter, nil, 0, WHITE);
+      FTexture[7].Draw(SGT.Window.Width/2, SGT.Window.Height/2, @FRegion, @FCenter, nil, 0, WHITE);
     end;
 
     5: // texture transparency
     begin
       LSize.Assign(FTexture[8].Width, FTexture[8].Height);
-      FTexture[8].Draw(Window.Width/2, Window.Height/2, 1, 0, WHITE, haCenter, vaCenter);
-      Font.PrintText(Window.Width/2, (Window.Height/2)+(LSize.Y/3.5), DARKORANGE, haCenter, 'Native transparency', []);
+      FTexture[8].Draw(SGT.Window.Width/2, SGT.Window.Height/2, 1, 0, WHITE, haCenter, vaCenter);
+      Font.PrintText(SGT.Window.Width/2, (SGT.Window.Height/2)+(LSize.Y/3.5), DARKORANGE, haCenter, 'Native transparency', []);
     end;
 
     6: // texture scale/rotate
     begin
-      FTexture[9].Draw(Window.Width/2, Window.Height/2, FScale.W, FScale.Z, WHITE, haCenter, vaCenter);
+      FTexture[9].Draw(SGT.Window.Width/2, SGT.Window.Height/2, FScale.W, FScale.Z, WHITE, haCenter, vaCenter);
     end;
 
   end;
@@ -354,7 +351,6 @@ begin
   inherited;
 
   HudText(Font, GREEN, haLeft, HudTextItem('1-7', 'Texture (#s)'), [cStateStr[FState]]);
-
 
   case FState of
     0: // texture render

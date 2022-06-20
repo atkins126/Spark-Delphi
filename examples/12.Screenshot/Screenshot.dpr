@@ -58,10 +58,9 @@ program Screenshot;
 {$R *.res}
 
 uses
-  Spark in '..\..\sources\Spark.pas',
-  uCommon in '..\Common\uCommon.pas',
+  Spark,
   uScreenshot in 'uScreenshot.pas';
 
 begin
-  RunGame(TScreenshotEx);
+  RunGame(TScreenshot);
 end.

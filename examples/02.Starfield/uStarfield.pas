@@ -66,7 +66,7 @@ type
     FStarfield: TStarfield;
   public
     procedure OnSetSettings(var aSettings: TGameSettings); override;
-    function  OnStartup: Boolean; override;
+    procedure OnStartup; override;
     procedure OnShutdown; override;
     procedure OnUpdate(aDeltaTime: Double); override;
     procedure OnRender; override;
@@ -79,24 +79,24 @@ implementation
 procedure TStarfieldEx.OnSetSettings(var aSettings: TGameSettings);
 begin
   inherited;
+
   aSettings.WindowTitle := 'Spark - Starfield';
   aSettings.WindowClearColor := BLACK;
   aSettings.ArchivePassword := cArchivePassword;
   aSettings.ArchiveFilename := cArchiveFilename;
 end;
 
-function  TStarfieldEx.OnStartup: Boolean;
+procedure TStarfieldEx.OnStartup;
 begin
   inherited;
 
   FStarfield := TStarfield.Create;
-
-  Result := True;
 end;
 
 procedure TStarfieldEx.OnShutdown;
 begin
-  FreeNilObject(@FStarfield);
+  FreeNilObject(FStarfield);
+
   inherited;
 end;
 
@@ -106,7 +106,7 @@ const
 begin
   inherited;
 
-  if Game.KeyPressed(KEY_1) then
+  if SGT.Input.KeyPressed(KEY_1) then
   begin
     FStarfield.SetXSpeed(25*cFactor);
     FStarfield.SetYSpeed(0);
@@ -114,7 +114,7 @@ begin
     FStarfield.SetVirtualPos(0, 0);
   end;
 
-  if Game.KeyPressed(KEY_2) then
+  if SGT.Input.KeyPressed(KEY_2) then
   begin
     FStarfield.SetXSpeed(0);
     FStarfield.SetYSpeed(-25*cFactor);
@@ -123,7 +123,7 @@ begin
 
   end;
 
-  if Game.KeyPressed(KEY_3) then
+  if SGT.Input.KeyPressed(KEY_3) then
   begin
     FStarfield.SetXSpeed(-25*cFactor);
     FStarfield.SetYSpeed(0);
@@ -131,7 +131,7 @@ begin
     FStarfield.SetVirtualPos(0, 0);
   end;
 
-  if Game.KeyPressed(KEY_4) then
+  if SGT.Input.KeyPressed(KEY_4) then
   begin
     FStarfield.SetXSpeed(0);
     FStarfield.SetYSpeed(25*cFactor);
@@ -139,7 +139,7 @@ begin
     FStarfield.SetVirtualPos(0, 0);
   end;
 
-  if Game.KeyPressed(KEY_5) then
+  if SGT.Input.KeyPressed(KEY_5) then
   begin
     FStarfield.SetXSpeed(0);
     FStarfield.SetYSpeed(0);
@@ -147,7 +147,7 @@ begin
     FStarfield.SetVirtualPos(0, 0);
   end;
 
-  if Game.KeyPressed(KEY_6) then
+  if SGT.Input.KeyPressed(KEY_6) then
   begin
     FStarfield.Init(250, -1000, -1000, 10, 1000, 1000, 1000, 160);
     FStarfield.SetZSpeed(0);
@@ -155,7 +155,7 @@ begin
   end;
 
 
-  if Game.KeyPressed(KEY_7) then
+  if SGT.Input.KeyPressed(KEY_7) then
   begin
     FStarfield.Init(250, -1000, -1000, 10, 1000, 1000, 1000, 120);
     FStarfield.SetXSpeed(0);
@@ -180,6 +180,5 @@ begin
 
   HudText(Font, GREEN, haLeft, HudTextItem('1-7', 'Change starfield'), []);
 end;
-
 
 end.

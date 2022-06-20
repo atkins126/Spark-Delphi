@@ -58,75 +58,43 @@ uses
   Spark;
 
 type
-
   { TZipArc }
-  TZipArc = class
+  TZipArc = class(TCustomGame)
   protected
-    FGame: TGame;
     procedure ShowHeader;
     procedure ShowUsage;
     procedure OnProgress(const aFilename: string; aProgress: Integer; aNewFile: Boolean);
   public
-    constructor Create; virtual;
-    destructor Destroy; override;
-    procedure Run;
+    procedure OnRun; override;
   end;
 
-procedure RunZipArc;
-
 implementation
-
-procedure RunZipArc;
-var
-  LArc: TZipArc;
-begin
-  LArc := TZipArc.Create;
-  LArc.Run;
-  LArc.Free;
-end;
 
 { TGVArc }
 procedure TZipArc.ShowHeader;
 begin
-  if not FGame.ConsolePresent then Exit;
-  WriteLn;
-  WriteLn('ZipArc™ Archive Utilty v', SPARK_VERSION);
-  WriteLn('Copyright © 2022 tinyBigGAMES™');
-  WriteLn('All Rights Reserved.');
+  PrintLn('', []);
+  PrintLn('ZipArc™ Archive Utilty v#s', [SPARK_VERSION]);
+  PrintLn('Copyright © 2022 tinyBigGAMES™', []);
+  PrintLn('All Rights Reserved.', []);
 end;
 
 procedure TZipArc.ShowUsage;
 begin
-  if not FGame.ConsolePresent then Exit;
-  WriteLn;
-  WriteLn('Usage: ZipArc [password] archivename[.zip] directoryname');
-  WriteLn('  password      - make archive password protected');
-  WriteLn('  archivename   - compressed archive name');
-  WriteLn('  directoryname - directory to archive');
+  PrintLn('', []);
+  PrintLn('Usage: ZipArc [password] archivename[.zip] directoryname', []);
+  PrintLn('  password      - make archive password protected', []);
+  PrintLn('  archivename   - compressed archive name', []);
+  PrintLn('  directoryname - directory to archive', []);
 end;
 
 procedure TZipArc.OnProgress(const aFilename: string; aProgress: Integer; aNewFile: Boolean);
 begin
-  if not FGame.ConsolePresent then Exit;
   if aNewFile then WriteLn;
-  Write(CR+'Adding "', aFilename, '" (', aProgress, '%)...');
+  Print(CR+'Adding #s(#i)...', [aFilename, aProgress]);
 end;
 
-constructor TZipArc.Create;
-begin
-  inherited;
-  FGame := TGame.Create;
-  FGame.ManualStartup;
-end;
-
-destructor TZipArc.Destroy;
-begin
-  FGame.ManualShutdown;
-  FGame.Free;
-  inherited;
-end;
-
-procedure TZipArc.Run;
+procedure TZipArc.OnRun;
 var
   LPassword: string;
   LArchiveFilename: string;
@@ -148,17 +116,17 @@ begin
       LPassword := ParamStr(1);
       LArchiveFilename := ParamStr(2);
       LDirectoryName := ParamStr(3);
-      LPassword := FGame.RemoveQuotes(LPassword);
-      LArchiveFilename := FGame.RemoveQuotes(LArchiveFilename);
-      LDirectoryName := FGame.RemoveQuotes(LDirectoryName);
+      LPassword := RemoveQuotes(LPassword);
+      LArchiveFilename := RemoveQuotes(LArchiveFilename);
+      LDirectoryName := RemoveQuotes(LDirectoryName);
     end
   // check for archive directory
   else if ParamCount = 2 then
     begin
       LArchiveFilename := ParamStr(1);
       LDirectoryName := ParamStr(2);
-      LArchiveFilename := FGame.RemoveQuotes(LArchiveFilename);
-      LDirectoryName := FGame.RemoveQuotes(LDirectoryName);
+      LArchiveFilename := RemoveQuotes(LArchiveFilename);
+      LDirectoryName := RemoveQuotes(LDirectoryName);
     end
   else
     begin
@@ -167,43 +135,31 @@ begin
       Exit;
     end;
 
-  // init archive filename
-  //LArchiveFilename :=  TPath.ChangeExtension(LArchiveFilename, 'zip');
-
   // check if directory exist
-  if not FGame.DirExist(LDirectoryName) then
+  if not DirExist(LDirectoryName) then
     begin
-      if FGame.ConsolePresent then
-      begin
-        WriteLn;
-        WriteLn('Directory was not found: ', LDirectoryName);
-      end;
+      PrintLn('', []);
+      PrintLn('Directory was not found: #s', [LDirectoryName]);
       ShowUsage;
       Exit;
     end;
 
   // display params
-  if FGame.ConsolePresent then
-  begin
-    WriteLn;
-    if LPassword = '' then
-      WriteLn('Password : NONE')
-    else
-      WriteLn('Password : ', LPassword);
-    WriteLn('Archive  : ', LArchiveFilename);
-    WriteLn('Directory: ', LDirectoryName);
-  end;
+  PrintLn('', []);
+  if LPassword = '' then
+    PrintLn('Password : NONE', [])
+  else
+    PrintLn('Password : #s', [LPassword]);
+  PrintLn('Archive  : #s', [LArchiveFilename]);
+  PrintLn('Directory: #s', [LDirectoryName]);
 
   // try to build archive
   LArchive := TArchive.Create;
   LOk := LArchive.Build(LPassword, LArchiveFilename, LDirectoryName, OnProgress);
-  if FGame.ConsolePresent then
-  begin
-    if LOk then
-      WriteLn(LF+'Success!')
-    else
-      WriteLn(LF+'Failed!');
-  end;
+  if LOk then
+    PrintLn(LF+'Success!', [])
+  else
+    PrintLn(LF+'Failed!', []);
   LArchive.Free;
 end;
 

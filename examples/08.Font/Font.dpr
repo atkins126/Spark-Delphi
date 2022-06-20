@@ -58,8 +58,7 @@ program Font;
 {$R *.res}
 
 uses
-  Spark in '..\..\sources\Spark.pas',
-  uCommon in '..\Common\uCommon.pas',
+  Spark,
   uFont in 'uFont.pas';
 
 begin

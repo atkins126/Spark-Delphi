@@ -58,9 +58,10 @@ program ZipArc;
 {$R *.res}
 
 uses
-  Spark in 'Spark.pas',
+  Spark,
   uZipArc in 'uZipArc.pas';
 
 begin
-  RunZipArc;
+  LogToConsole := False;
+  RunGame(TZipArc);
 end.

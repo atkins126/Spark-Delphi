@@ -68,10 +68,9 @@ type
   protected
     FShader: array[0..2] of TShader;
     FIndex: Integer;
-  protected
   public
     procedure OnSetSettings(var aSettings: TGameSettings); override;
-    function  OnStartup: Boolean; override;
+    procedure OnStartup; override;
     procedure OnShutdown; override;
     procedure OnUpdate(aDeltaTime: Double); override;
     procedure OnRender; override;
@@ -84,13 +83,14 @@ implementation
 procedure TShaderEx.OnSetSettings(var aSettings: TGameSettings);
 begin
   inherited;
+
   aSettings.WindowTitle := 'Spark - Shader';
   aSettings.WindowClearColor := BLACK;
   aSettings.ArchivePassword := cArchivePassword;
   aSettings.ArchiveFilename := cArchiveFilename;
 end;
 
-function  TShaderEx.OnStartup: Boolean;
+procedure TShaderEx.OnStartup;
 var
   I: Integer;
 begin
@@ -103,14 +103,11 @@ begin
     FShader[I].Build;
 
     FShader[I].Enable(True);
-    FShader[I].SetVec2Uniform('u_resolution', Window.Width * Window.Scale, Window.Height * Window.Scale);
+    FShader[I].SetVec2Uniform('u_resolution', SGT.Window.Width * SGT.Window.Scale, SGT.Window.Height * SGT.Window.Scale);
     FShader[I].Enable(False);
   end;
 
   FIndex := 0;
-
-
-  Result := True;
 end;
 
 procedure TShaderEx.OnShutdown;
@@ -118,7 +115,7 @@ var
   I: Integer;
 begin
   for I := 2 downto 0 do
-    FreeNilObject(@FShader[I]);
+    FreeNilObject(FShader[I]);
 
   inherited;
 end;
@@ -127,13 +124,13 @@ procedure TShaderEx.OnUpdate(aDeltaTime: Double);
 begin
   inherited;
 
-  if KeyPressed(KEY_1) then
+  if SGT.Input.KeyPressed(KEY_1) then
     FIndex := 0
   else
-  if KeyPressed(KEY_2) then
+  if SGT.Input.KeyPressed(KEY_2) then
     FIndex := 1
   else
-  if KeyPressed(KEY_3) then
+  if SGT.Input.KeyPressed(KEY_3) then
     FIndex := 2;
 
   FShader[FIndex].Enable(True);
@@ -146,7 +143,7 @@ begin
   inherited;
 
   FShader[FIndex].Enable(True);
-  DrawFilledRectangle(0, 0, Window.Width, Window.Height, WHITE);
+  SGT.Window.DrawFilledRectangle(0, 0, SGT.Window.Width, SGT.Window.Height, WHITE);
   FShader[FIndex].Enable(False);
 end;
 

@@ -60,8 +60,8 @@ uses
   uCommon;
 
 type
-  { TScreenshotEx }
-  TScreenshotEx = class(TGame)
+  { TScreenshot }
+  TScreenshot = class(TGame)
   protected
     FTexture: TTexture;
     FScreenshotImage: TTexture;
@@ -69,27 +69,28 @@ type
     FFilename: string;
   public
     procedure OnSetSettings(var aSettings: TGameSettings); override;
-    function  OnStartup: Boolean; override;
+    procedure OnStartup; override;
     procedure OnShutdown; override;
     procedure OnUpdate(aDeltaTime: Double); override;
     procedure OnRender; override;
     procedure OnRenderHUD; override;
-    procedure OnShowRender; override;
+    procedure OnPreShowWindow; override;
     procedure OnScreenshot(const aFilename: string); override;
   end;
 
 implementation
 
-{ TScreenshotEx }
-procedure TScreenshotEx.OnSetSettings(var aSettings: TGameSettings);
+{ TScreenshot }
+procedure TScreenshot.OnSetSettings(var aSettings: TGameSettings);
 begin
   inherited;
+
   aSettings.WindowTitle := 'Spark - Screenshot';
   aSettings.ArchivePassword := cArchivePassword;
   aSettings.ArchiveFilename := cArchiveFilename;
 end;
 
-function  TScreenshotEx.OnStartup: Boolean;
+procedure TScreenshot.OnStartup;
 begin
   inherited;
 
@@ -97,20 +98,18 @@ begin
 
   FTexture := TTexture.Create;
   FTexture.Load(Archive, 'arc/images/spark2.png', nil);
-  FPos.Assign(Window.Width/2, Window.Height/2, 30, 0);
-
-  Result := True;
+  FPos.Assign(SGT.Window.Width/2, SGT.Window.Height/2, 30, 0);
 end;
 
-procedure TScreenshotEx.OnShutdown;
+procedure TScreenshot.OnShutdown;
 begin
-  Game.FreeNilObject(@FTexture);
-  Game.FreeNilObject(@FScreenshotImage);
+  FreeNilObject(FTexture);
+  FreeNilObject(FScreenshotImage);
 
   inherited;
 end;
 
-procedure TScreenshotEx.OnUpdate(aDeltaTime: Double);
+procedure TScreenshot.OnUpdate(aDeltaTime: Double);
 begin
   inherited;
 
@@ -118,26 +117,18 @@ begin
   FPos.W := FPos.W + (FPos.Z * aDeltaTime);
 
   // take a screenshot
-  if KeyPressed(KEY_S) then
-    TakeScreenshot;
+  if SGT.Input.KeyPressed(KEY_S) then
+    SGT.Screenshot.Take;
 end;
 
-procedure TScreenshotEx.OnRender;
+procedure TScreenshot.OnRender;
 begin
   inherited;
 
   FTexture.Draw(FPos.X, FPos.Y, 0.65, FPos.W, WHITE, haCenter, vaCenter);
 end;
 
-procedure TScreenshotEx.OnShowRender;
-begin
-  inherited;
-
-  // display scaled down version of last screen image
-  FScreenshotImage.Draw(Window.Width-1, 3, 0.25, 0, WHITE, haRight, vaTop);
-end;
-
-procedure TScreenshotEx.OnRenderHUD;
+procedure TScreenshot.OnRenderHUD;
 begin
   inherited;
 
@@ -145,13 +136,23 @@ begin
   HudText(Font, YELLOW, haLeft, HudTextItem('File', '#s'), [GetFileName(FFilename)]);
 end;
 
-procedure TScreenshotEx.OnScreenshot(const aFilename: string);
+procedure TScreenshot.OnPreShowWindow;
 begin
+  inherited;
+
+  FScreenshotImage.Draw(SGT.Window.Width-1, 3, 0.25, 0, WHITE, haRight, vaTop);
+end;
+
+procedure TScreenshot.OnScreenshot(const aFilename: string);
+begin
+  inherited;
+
   // get the filename of last screenshot image
   FFilename := aFilename;
 
   // load in this image
   FScreenshotImage.Load(nil, FFilename, nil);
 end;
+
 
 end.

@@ -66,7 +66,7 @@ type
     FUnicodeFont: TFont;
   public
     procedure OnSetSettings(var aSettings: TGameSettings); override;
-    function  OnStartup: Boolean; override;
+    procedure OnStartup; override;
     procedure OnShutdown; override;
     procedure OnRenderHUD; override;
   end;
@@ -77,24 +77,24 @@ implementation
 procedure TFontEx.OnSetSettings(var aSettings: TGameSettings);
 begin
   inherited;
+
   aSettings.WindowTitle := 'Spark - Font';
   aSettings.ArchivePassword := cArchivePassword;
   aSettings.ArchiveFilename := cArchiveFilename;
 end;
 
-function  TFontEx.OnStartup: Boolean;
+procedure TFontEx.OnStartup;
 begin
   inherited;
 
   FUnicodeFont := TFont.Create;
   FUnicodeFont.Load(Archive, 16, 'arc/fonts/mono.ttf');
-
-  Result := True;
 end;
 
 procedure TFontEx.OnShutdown;
 begin
-  FreeNilObject(@FUnicodeFont);
+  FreeNilObject(FUnicodeFont);
+
   inherited;
 end;
 
@@ -102,8 +102,9 @@ procedure TFontEx.OnRenderHUD;
 begin
   inherited;
 
-  FUnicodeFont.PrintText(Window.Width div 2, Window.Height div 2, YELLOW, haCenter, ' en   zh      ja       ko        de   es   pt     fr      vi    id', []);
-  FUnicodeFont.PrintText(Window.Width div 2, (Window.Height div 2)+18, GREEN, haCenter, 'Hello|你好|こんにちは|안녕하세요|Hallo|Hola|Olá|Bonjour|Xin chào|Halo', []);
+  FUnicodeFont.PrintText(SGT.Window.Width div 2, SGT.Window.Height div 2, YELLOW, haCenter, ' en   zh      ja       ko        de   es   pt     fr      vi    id', []);
+  FUnicodeFont.PrintText(SGT.Window.Width div 2, (SGT.Window.Height div 2)+18, GREEN, haCenter, 'Hello|你好|こんにちは|안녕하세요|Hallo|Hola|Olá|Bonjour|Xin chào|Halo', []);
 end;
+
 
 end.
