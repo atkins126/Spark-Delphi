@@ -58,10 +58,9 @@ program Video;
 {$R *.res}
 
 uses
-  Spark in '..\..\sources\Spark.pas',
-  uCommon in '..\Common\uCommon.pas',
+  Spark,
   uVideo in 'uVideo.pas';
 
 begin
-  RunGame(TVideoExample);
+  RunGame(TVideoEx);
 end.

@@ -58,10 +58,9 @@ program HelloWorld;
 {$R *.res}
 
 uses
-  Spark in '..\..\sources\Spark.pas',
-  uCommon in '..\Common\uCommon.pas',
+  Spark,
   uHelloWorld in 'uHelloWorld.pas';
 
 begin
-  RunGame(THelloWorldExample);
+  RunGame(THelloWorldEx);
 end.

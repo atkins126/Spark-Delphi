@@ -58,10 +58,9 @@ program Testbed;
 {$R *.res}
 
 uses
-  Spark in '..\..\sources\Spark.pas',
-  uCommon in '..\Common\uCommon.pas',
+  Spark,
   uTestbed in 'uTestbed.pas';
 
 begin
-  RunGame(TTemplate);
+  RunGame(TTestbed);
 end.

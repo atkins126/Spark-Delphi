@@ -51,7 +51,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 ============================================================================= }
 
-unit uTestbed;
+unit uCmdConsole;
 
 interface
 
@@ -60,120 +60,141 @@ uses
   uCommon;
 
 type
-  { TTestbed }
-  TTestbed = class(TGame)
+  { TCmdConsoleEx }
+  TCmdConsoleEx = class(TGame)
   protected
+    FStarfield: TStarfield;
+    FShowStarfield: Boolean;
   public
-    procedure OnInit; override;
-    procedure OnDone; override;
     procedure OnSetSettings(var aSettings: TGameSettings); override;
     procedure OnStartup; override;
     procedure OnShutdown; override;
-    procedure OnReady(aReady: Boolean); override;
     procedure OnUpdate(aDeltaTime: Double); override;
-    procedure OnFixedUpdate; override;
-    procedure OnClearWindow; override;
-    procedure OnShowWindow; override;
     procedure OnRender; override;
     procedure OnRenderHUD; override;
-    procedure OnPreShowWindow; override;
-    procedure OnPostShowWindow; override;
-    procedure OnCmdConsoleState(aState: TCmdConsoleState); override;
-    procedure OnVideoState(aState: TVideoState; aFilename: string); override;
-    procedure OnScreenshot(const aFilename: string); override;
-
+    procedure CustCmd1;
+    procedure CustCmd2;
   end;
 
 implementation
 
-{ TTestbed }
-procedure TTestbed.OnInit;
-begin
-  inherited;
-end;
-
-procedure TTestbed.OnDone;
-begin
-  inherited;
-end;
-
-procedure TTestbed.OnSetSettings(var aSettings: TGameSettings);
+{ TCmdConsoleEx }
+procedure TCmdConsoleEx.OnSetSettings(var aSettings: TGameSettings);
 begin
   inherited;
 
-  aSettings.WindowTitle := 'Spark - Testbed';
+  aSettings.WindowTitle := 'Spark - CmdConsole';
+  aSettings.WindowClearColor := BLACK;
+
   aSettings.ArchivePassword := cArchivePassword;
   aSettings.ArchiveFilename := cArchiveFilename;
 end;
 
-procedure TTestbed.OnStartup;
+procedure TCmdConsoleEx.OnStartup;
 begin
+  inherited;
+
+  FStarfield := TStarfield.Create;
+  FShowStarfield := False;
+
+  SGT.CmdConsole.AddCommand('Starfield', 'ON | OFF', CustCmd1);
+  SGT.CmdConsole.AddCommand('ClearColor', 'BLACK | DARKSLATEBROWN | SKYBLUE', CustCmd2);
+end;
+
+procedure TCmdConsoleEx.OnShutdown;
+begin
+  FreeNilObject(FStarfield);
+
   inherited;
 end;
 
-procedure TTestbed.OnShutdown;
+procedure TCmdConsoleEx.OnUpdate(aDeltaTime: Double);
 begin
   inherited;
+
+  if FShowStarfield then
+    FStarfield.Update(aDeltaTime);
 end;
 
-procedure TTestbed.OnReady(aReady: Boolean);
+procedure TCmdConsoleEx.OnRender;
 begin
   inherited;
+
+  if FShowStarfield then
+    FStarfield.Render;
 end;
 
-procedure TTestbed.OnUpdate(aDeltaTime: Double);
+procedure TCmdConsoleEx.OnRenderHUD;
 begin
   inherited;
+
+  HudText(Font, GREEN, haLeft, HudTextItem('~', 'Toggle console'), []);
 end;
 
-procedure TTestbed.OnFixedUpdate;
+procedure TCmdConsoleEx.CustCmd1;
+var
+  S,P: string;
+
+  procedure Error;
+  begin
+    SGT.CmdConsole.AddTextLine('Invalid parameter, usage: starfield on | off', []);
+  end;
+
 begin
-  inherited;
+  s := 'Starfiled ';
+  if SGT.CmdConsole.ParamCount < 1 then
+  begin
+    Error;
+    Exit;
+  end;
+
+  P := SGT.CmdConsole.ParamStr(0);
+  if SameText(P, 'ON') then
+    FShowStarfield := True
+  else
+  if SameText(P, 'OFF') then
+    FShowStarfield := False
+  else
+    begin
+      Error;
+      Exit;
+    end;
+
+  SGT.CmdConsole.AddTextLine(s + P, []);
 end;
 
-procedure TTestbed.OnClearWindow;
-begin
-  inherited;
-end;
+procedure TCmdConsoleEx.CustCmd2;
+var
+  S,P: string;
 
-procedure TTestbed.OnShowWindow;
-begin
-  inherited;
-end;
+  procedure Error;
+  begin
+    SGT.CmdConsole.AddTextLine('Invalid parameter, usage: clearcolor BLACK | DARKSLATEBROWN | SKYBLUE', []);
+  end;
 
-procedure TTestbed.OnRender;
 begin
-  inherited;
-end;
+  s := 'ClearColor ';
+  if SGT.CmdConsole.ParamCount < 1 then
+  begin
+    Error;
+    Exit;
+  end;
 
-procedure TTestbed.OnRenderHUD;
-begin
-  inherited;
-end;
-
-procedure TTestbed.OnPreShowWindow;
-begin
-  inherited;
-end;
-
-procedure TTestbed.OnPostShowWindow;
-begin
-  inherited;
-end;
-
-procedure TTestbed.OnCmdConsoleState(aState: TCmdConsoleState);
-begin
-  inherited;
-end;
-
-procedure TTestbed.OnVideoState(aState: TVideoState; aFilename: string);
-begin
-  inherited;
-end;
-
-procedure TTestbed.OnScreenshot(const aFilename: string);
-begin
-  inherited;
+  P := SGT.CmdConsole.ParamStr(0);
+  if SameText(P, 'BLACK') then
+    FSettings.WindowClearColor := BLACK
+  else
+  if SameText(P, 'DARKSLATEBROWN') then
+    FSettings.WindowClearColor := DARKSLATEBROWN
+  else
+  if SameText(P, 'SKYBLUE') then
+    FSettings.WindowClearColor := SKYBLUE
+  else
+    begin
+      Error;
+      Exit;
+    end;
+  SGT.CmdConsole.AddTextLine(s + P, []);
 end;
 
 

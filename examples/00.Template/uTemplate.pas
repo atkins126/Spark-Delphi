@@ -64,38 +64,59 @@ type
   TTemplate = class(TGame)
   protected
   public
+    procedure OnInit; override;
+    procedure OnDone; override;
     procedure OnSetSettings(var aSettings: TGameSettings); override;
-    function  OnStartup: Boolean; override;
+    procedure OnStartup; override;
     procedure OnShutdown; override;
+    procedure OnReady(aReady: Boolean); override;
     procedure OnUpdate(aDeltaTime: Double); override;
     procedure OnFixedUpdate; override;
+    procedure OnClearWindow; override;
+    procedure OnShowWindow; override;
     procedure OnRender; override;
     procedure OnRenderHUD; override;
-    procedure OnReady(aReady: Boolean); override;
-    procedure OnVideoState(aState: TVideoState; const aFilename: string); override;
-    procedure OnOpenCmdConsole; override;
-    procedure OnCloseCmdConsole; override;
+    procedure OnPreShowWindow; override;
+    procedure OnPostShowWindow; override;
+    procedure OnCmdConsoleState(aState: TCmdConsoleState); override;
+    procedure OnVideoState(aState: TVideoState; aFilename: string); override;
+    procedure OnScreenshot(const aFilename: string); override;
+
   end;
 
 implementation
 
 { TTemplate }
+procedure TTemplate.OnInit;
+begin
+  inherited;
+end;
+
+procedure TTemplate.OnDone;
+begin
+  inherited;
+end;
+
 procedure TTemplate.OnSetSettings(var aSettings: TGameSettings);
 begin
   inherited;
+
   aSettings.WindowTitle := 'Spark - Template';
   aSettings.ArchivePassword := cArchivePassword;
   aSettings.ArchiveFilename := cArchiveFilename;
 end;
 
-function  TTemplate.OnStartup: Boolean;
+procedure TTemplate.OnStartup;
 begin
   inherited;
-
-  Result := True;
 end;
 
 procedure TTemplate.OnShutdown;
+begin
+  inherited;
+end;
+
+procedure TTemplate.OnReady(aReady: Boolean);
 begin
   inherited;
 end;
@@ -110,6 +131,16 @@ begin
   inherited;
 end;
 
+procedure TTemplate.OnClearWindow;
+begin
+  inherited;
+end;
+
+procedure TTemplate.OnShowWindow;
+begin
+  inherited;
+end;
+
 procedure TTemplate.OnRender;
 begin
   inherited;
@@ -120,24 +151,30 @@ begin
   inherited;
 end;
 
-procedure TTemplate.OnReady(aReady: Boolean);
+procedure TTemplate.OnPreShowWindow;
 begin
   inherited;
 end;
 
-procedure TTemplate.OnVideoState(aState: TVideoState; const aFilename: string);
+procedure TTemplate.OnPostShowWindow;
 begin
   inherited;
 end;
 
-procedure TTemplate.OnOpenCmdConsole;
+procedure TTemplate.OnCmdConsoleState(aState: TCmdConsoleState);
 begin
   inherited;
 end;
 
-procedure TTemplate.OnCloseCmdConsole;
+procedure TTemplate.OnVideoState(aState: TVideoState; aFilename: string);
 begin
   inherited;
 end;
+
+procedure TTemplate.OnScreenshot(const aFilename: string);
+begin
+  inherited;
+end;
+
 
 end.

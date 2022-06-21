@@ -60,52 +60,50 @@ uses
   uCommon;
 
 type
-  { THelloWorldExample }
-  THelloWorldExample = class(TGame)
+  { THelloWorldEx }
+  THelloWorldEx = class(TGame)
   protected
     FBigFont: TFont;
   public
     procedure OnSetSettings(var aSettings: TGameSettings); override;
-    function  OnStartup: Boolean; override;
+    procedure OnStartup; override;
     procedure OnShutdown; override;
     procedure OnRenderHUD; override;
   end;
 
 implementation
 
-{ THelloWorldExample }
-procedure THelloWorldExample.OnSetSettings(var aSettings: TGameSettings);
+{ THelloWorldEx }
+procedure THelloWorldEx.OnSetSettings(var aSettings: TGameSettings);
 begin
   inherited;
 
-  aSettings.WindowTitle := 'Spark - Hello World';
+  aSettings.WindowTitle := 'Spark - Hello, World!';
   aSettings.ArchivePassword := cArchivePassword;
   aSettings.ArchiveFilename := cArchiveFilename;
 end;
 
-function  THelloWorldExample.OnStartup: Boolean;
-
+procedure THelloWorldEx.OnStartup;
 begin
   inherited;
 
   FBigFont := TFont.Create;
   FBigFont.Load(Archive, 34, 'arc/fonts/Kenney Bold.ttf');
 
-  Result := True;
 end;
 
-procedure THelloWorldExample.OnShutdown;
+procedure THelloWorldEx.OnShutdown;
 begin
-  FreeNilObject(@FBigFont);
+  FreeNilObject(FBigFont);
 
   inherited;
 end;
 
-procedure THelloWorldExample.OnRenderHUD;
+procedure THelloWorldEx.OnRenderHUD;
 begin
   inherited;
 
-  FBigFont.PrintText(Window.Width/2, Window.Height/2, RED2, haCenter, 'Welcome to Spark Game Toolkit!', []);
+  FBigFont.PrintText(SGT.Window.Width/2, SGT.Window.Height/2, RED2, haCenter, 'Welcome to Spark Game Toolkit!', []);
 end;
 
 end.

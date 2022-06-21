@@ -1,4 +1,5 @@
-﻿{==============================================================================
+<?php
+/******************************************************************************
   ____                   _
  / ___| _ __   __ _ _ __| | __
  \___ \| '_ \ / _` | '__| |/ /
@@ -49,18 +50,50 @@ INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
 CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
-============================================================================= }
+-------------------------------------------------------------------------------
+Based on:
+  https://github.com/telecube/mysql-api
+  
+******************************************************************************/
 
-program Shader;
+// ensure this definition exists before running the script.
+if(!defined('MAIN_INCLUDED'))
+	exit("Not allowed here!");
 
-{$APPTYPE CONSOLE}
+// the master db for write/read
+$master_db_host = "";
+$master_db_port = "";
+$master_db_user = "";
+$master_db_pass = "";
 
-{$R *.res}
+// readonly slaves
+$db_slaves = array(
+		// readonly slave 1
+		array(
+				"db_host" => "",
+				"db_port" => "",
+				"db_user" => "",
+				"db_pass" => "",
+			),
+		// readonly slave 2
+		array(
+				"db_host" => "",
+				"db_port" => "",
+				"db_user" => "",
+				"db_pass" => "",
+			),
+		// etc ..
+	);
 
-uses
-  Spark,
-  uShader in 'uShader.pas';
+// set strong keys here - a good key generator can be found at: https://www.grc.com/passwords.htm
+$apikey 			= "";
 
-begin
-  RunGame(TShaderEx);
-end.
+// http basic auth settings
+$http_auth_enable 	= true; // enable|disable http auth by setting true|false
+$http_auth_realm 	= "MySQL API";
+$http_auth_user 	= "";
+$http_auth_pass 	= "";
+
+
+
+

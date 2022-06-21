@@ -58,10 +58,9 @@ program Starfield;
 {$R *.res}
 
 uses
-  Spark in '..\..\sources\Spark.pas',
-  uCommon in '..\Common\uCommon.pas',
+  Spark,
   uStarfield in 'uStarfield.pas';
 
 begin
-  RunGame(TStarfieldExample);
+  RunGame(TStarfieldEx);
 end.

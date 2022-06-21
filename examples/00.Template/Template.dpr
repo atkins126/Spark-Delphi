@@ -58,8 +58,7 @@ program Template;
 {$R *.res}
 
 uses
-  Spark in '..\..\sources\Spark.pas',
-  uCommon in '..\Common\uCommon.pas',
+  Spark,
   uTemplate in 'uTemplate.pas';
 
 begin

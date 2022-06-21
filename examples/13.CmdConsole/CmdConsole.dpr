@@ -51,7 +51,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 ============================================================================= }
 
-program Shader;
+program CmdConsole;
 
 {$APPTYPE CONSOLE}
 
@@ -59,8 +59,8 @@ program Shader;
 
 uses
   Spark,
-  uShader in 'uShader.pas';
+  uCmdConsole in 'uCmdConsole.pas';
 
 begin
-  RunGame(TShaderEx);
+  RunGame(TCmdConsoleEx);
 end.

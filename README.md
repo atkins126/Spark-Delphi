@@ -34,7 +34,7 @@ It's robust, designed for easy use and suitable for making all types of 2D games
 
 ## Minimum System Requirements
 - Any Delphi version with unicode, advanced records and win64 support
-- Microsoft Windows 10, 64 bits
+- Microsoft Windows 8.1, 64 bits
 - OpenGL 3
 
 ## How to use in Delphi
@@ -44,11 +44,13 @@ It's robust, designed for easy use and suitable for making all types of 2D games
 - Compile and use `ZipArc` utility for making archive files (standard password protected zip format). Running the `makearc.bat` in `installdir\bin` will build `Data.arc` that is used by the examples.
 - Compile and run the various examples which will showcase the toolkit features and how to use them.
 - See examples in the `installdir\examples` for more information about usage.
+- You must include `Spark.dll` in your project distribution.
 
 ## Known Issues
 - This project is in active development so changes will be frequent 
 - Documentation is WIP. They will continue to evolve
 - More examples will continually be added over time
+- When you run the font example it will seem like it is hung, give it a moment and it will startup. The mono.ttf used in the example has a very large number of glyphs which we use for testing unicode support. We will continue to investigate this.
 
 ## A Tour of Spark Game Toolkit
 ### Game Object
@@ -124,7 +126,7 @@ To run your game, call
 ```pascal
 RunGame(TMyGame);
 ```
-**NOTE:** For a Spark game to work properly, execution MUST start with `RunGame(...)`. This call will property setup/shutdown the library and log and handle errors. Only one Spark app instance is allowed to run and will safely terminated if more than one is detected.
+**NOTE:** For a Spark game to work properly, execution MUST start with `RunGame(...)`.
 
 See the examples for more information on usage.
 

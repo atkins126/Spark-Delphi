@@ -51,16 +51,77 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 ============================================================================= }
 
-program Shader;
+unit uScreenshake;
 
-{$APPTYPE CONSOLE}
-
-{$R *.res}
+interface
 
 uses
   Spark,
-  uShader in 'uShader.pas';
+  uCommon;
 
+type
+  { TScreenshakeEx }
+  TScreenshakeEx = class(TGame)
+  protected
+    FStarfield: TStarfield;
+  public
+    procedure OnSetSettings(var aSettings: TGameSettings); override;
+    procedure OnStartup; override;
+    procedure OnShutdown; override;
+    procedure OnUpdate(aDeltaTime: Double); override;
+    procedure OnRender; override;
+    procedure OnRenderHUD; override;
+  end;
+
+implementation
+
+{ TScreenshakeEx }
+procedure TScreenshakeEx.OnSetSettings(var aSettings: TGameSettings);
 begin
-  RunGame(TShaderEx);
+  inherited;
+
+  aSettings.WindowTitle := 'Spark - Screenshake';
+  aSettings.WindowClearColor := BLACK;
+  aSettings.ArchivePassword := cArchivePassword;
+  aSettings.ArchiveFilename := cArchiveFilename;
+end;
+
+procedure TScreenshakeEx.OnStartup;
+begin
+  inherited;
+
+  FStarfield := TStarfield.Create;
+end;
+
+procedure TScreenshakeEx.OnShutdown;
+begin
+  FreeNilObject(FStarfield);
+
+  inherited;
+end;
+
+procedure TScreenshakeEx.OnUpdate(aDeltaTime: Double);
+begin
+  inherited;
+
+   if SGT.Input.KeyPressed(KEY_S) then
+    SGT.Screenshake.Start(60, 5);
+
+  FStarfield.Update(aDeltaTime);
+end;
+
+procedure TScreenshakeEx.OnRender;
+begin
+  inherited;
+
+  FStarfield.Render;
+end;
+
+procedure TScreenshakeEx.OnRenderHUD;
+begin
+  inherited;
+
+  HudText(Font, GREEN, haLeft, HudTextItem('S', 'Screenshake'), []);
+end;
+
 end.

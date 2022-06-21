@@ -60,42 +60,44 @@ uses
   uCommon;
 
 type
-  { TVideoExample }
-  TVideoExample = class(TGame)
+  { TVideoEx }
+  TVideoEx = class(TGame)
   protected
     FFilename: array[0..2] of string;
     FNum: Integer;
     procedure Play(aNum: Integer; aVolume: Single);
   public
     procedure OnSetSettings(var aSettings: TGameSettings); override;
-    function  OnStartup: Boolean; override;
+    procedure OnStartup; override;
     procedure OnShutdown; override;
     procedure OnUpdate(aDeltaTime: Double); override;
     procedure OnRender; override;
     procedure OnRenderHUD; override;
-    procedure OnVideoState(aState: TVideoState; const aFilename: string); override;
+    procedure OnVideoState(aState: TVideoState; aFilename: string); override;
+
   end;
 
 implementation
 
-{ TVideoExample }
-procedure TVideoExample.Play(aNum: Integer; aVolume: Single);
+{ TVideoEx }
+procedure TVideoEx.Play(aNum: Integer; aVolume: Single);
 begin
   if (aNum < Low(FFilename)) or (aNum > High(FFilename)) then Exit;
   if  (aNum = FNum) then Exit;
   FNum := aNum;
-  PlayVideo(Archive, 'arc/videos/'+FFilename[FNum], True, aVolume);
+  SGT.Video.Play(Archive, 'arc/videos/'+FFilename[FNum], True, aVolume);
 end;
 
-procedure TVideoExample.OnSetSettings(var aSettings: TGameSettings);
+procedure TVideoEx.OnSetSettings(var aSettings: TGameSettings);
 begin
   inherited;
+
   aSettings.WindowTitle := 'Spark - Video';
   aSettings.ArchivePassword := cArchivePassword;
   aSettings.ArchiveFilename := cArchiveFilename;
 end;
 
-function  TVideoExample.OnStartup: Boolean;
+procedure TVideoEx.OnStartup;
 begin
   inherited;
 
@@ -104,51 +106,51 @@ begin
   FFilename[2] := 'spark2.ogv';
   FNum := -1;
   Play(0, 1);
-
-  Result := True;
 end;
 
-procedure TVideoExample.OnShutdown;
+procedure TVideoEx.OnShutdown;
 begin
-  UnloadVideo;
+  SGT.Video.Unload;
 
   inherited;
 end;
 
-procedure TVideoExample.OnUpdate(aDeltaTime: Double);
+procedure TVideoEx.OnUpdate(aDeltaTime: Double);
 begin
   inherited;
 
-  if KeyPressed(KEY_1) then Play(0, 0.5)
+  if SGT.Input.KeyPressed(KEY_1) then Play(0, 0.5)
   else
-  if KeyPressed(KEY_2) then Play(1, 0.5)
+  if SGT.Input.KeyPressed(KEY_2) then Play(1, 0.5)
   else
-  if KeyPressed(KEY_3) then Play(2, 0.5);
+  if SGT.Input.KeyPressed(KEY_3) then Play(2, 0.5);
 
 end;
 
-procedure TVideoExample.OnRender;
+procedure TVideoEx.OnRender;
 begin
   inherited;
 
-  DrawVideo(0, 0, 0.50);
+  SGT.Video.Draw(0, 0, 0.50);
 end;
 
-procedure TVideoExample.OnRenderHUD;
+procedure TVideoEx.OnRenderHUD;
 begin
   inherited;
 
   HudText(Font, GREEN, haLeft, HudTextItem('1-3', 'Video (#s)'), [FFilename[FNum]]);
 end;
 
-procedure TVideoExample.OnVideoState(aState: TVideoState; const aFilename: string);
+procedure TVideoEx.OnVideoState(aState: TVideoState; aFilename: string);
 begin
+  inherited;
+
   case aState of
-    vsLoad    : WriteLn('Load video: ', aFilename);
-    vsUnload  : WriteLn('Unload video: ', aFilename);
-    vsPlaying : WriteLn('Playing video: ', aFilename);
-    vsPaused  : WriteLn('Paused video: ', aFilename);
-    vsFinished: WriteLn('Finished video: ', aFilename);
+    vsLoad    : PrintLn('Load video: #s', [aFilename]);
+    vsUnload  : PrintLn('Unload video: #s', [aFilename]);
+    vsPlaying : PrintLn('Playing video: #s', [aFilename]);
+    vsPaused  : PrintLn('Paused video: #s', [aFilename]);
+    vsFinished: PrintLn('Finished video: #s', [aFilename]);
   end;
 end;
 

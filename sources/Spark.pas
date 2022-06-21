@@ -1,12 +1,12 @@
-{==============================================================================
+ï»¿{==============================================================================
   ____                   _
  / ___| _ __   __ _ _ __| | __
  \___ \| '_ \ / _` | '__| |/ /
   ___) | |_) | (_| | |  |   <
  |____/| .__/ \__,_|_|  |_|\_\
-       |_|   Game Toolkit™
+       |_|   Game Toolkitâ„¢
 
- Copyright © 2022 tinyBigGAMES™ LLC
+ Copyright Â© 2022 tinyBigGAMESâ„¢ LLC
  All Rights Reserved.
 
  Website: https://tinybiggames.com
@@ -70,49 +70,48 @@ unit Spark;
 
 interface
 
-// Windows ==================================================================
-{$REGION 'Windows'}
-
+{$REGION 'Spark.WinApi'}
 const
-  MAX_PATH  = 260;
-  RT_RCDATA = PChar(10);
-  SM_CXFULLSCREEN = $10;
-  SM_CYFULLSCREEN = 17;
-  GWL_STYLE = -16;
-  WS_MAXIMIZEBOX = $10000;
-  PM_REMOVE = 1;
-
+  MAX_PATH                 = 260;
+  RT_RCDATA                = PChar(10);
+  SM_CXFULLSCREEN          = $10;
+  SM_CYFULLSCREEN          = 17;
+  GWL_STYLE                = -16;
+  WS_MAXIMIZEBOX           = $10000;
+  PM_REMOVE                = 1;
   FILE_ATTRIBUTE_DIRECTORY = $00000010;
   FILE_ATTRIBUTE_ARCHIVE   = $00000020;
-
-  INVALID_HANDLE_VALUE = THandle(-1);
-  STD_OUTPUT_HANDLE = System.FixedUInt(-11);
-  INVALID_FILE_ATTRIBUTES = System.FixedUInt($FFFFFFFF);
-
-  CP_UTF8                  = 65001;         { UTF-8 translation }
+  INVALID_HANDLE_VALUE     = THandle(-1);
+  STD_OUTPUT_HANDLE        = System.FixedUInt(-11);
+  INVALID_FILE_ATTRIBUTES  = System.FixedUInt($FFFFFFFF);
+  ERROR_FILE_NOT_FOUND     = 2;
+  CP_UTF8                  = 65001; { UTF-8 translation }
+  DISPLAY_DEFAULT_DPI      = 96;
 
 type
-  BOOL    = System.LongBool;
-  DWORD   = System.FixedUInt;
-  HWND    = System.NativeUInt;
-  LPCWSTR = System.PWideChar;
-  LPWSTR  = System.PWideChar;
-  HGLOBAL = System.THandle;
-  HINST   = System.HINST;
-  UINT    = System.LongWord;
-  HMODULE = HINST;
-  FARPROC = Pointer;
-  LPCSTR  = PAnsiChar;
+  BOOL     = System.LongBool;
+  DWORD    = System.FixedUInt;
+  HWND     = System.NativeUInt;
+  LPCWSTR  = System.PWideChar;
+  LPWSTR   = System.PWideChar;
+  HGLOBAL  = System.THandle;
+  HINST    = System.HINST;
+  UINT     = System.LongWord;
+  HMODULE  = HINST;
+  FARPROC  = Pointer;
+  LPCSTR   = PAnsiChar;
   LONG_PTR = NativeInt;
   WPARAM   = NativeUInt;
   LPARAM   = NativeInt;
 
+  { TPoint }
   PPoint = ^TPoint;
   TPoint = record
     X: LongInt;
     Y: LongInt;
   end;
 
+  { TMsg }
   PMsg = ^TMsg;
   TMsg = record
     hwnd: HWND;
@@ -123,12 +122,14 @@ type
     pt: TPoint;
   end;
 
+  { TFileTime }
   TFileTime = record
     dwLowDateTime: DWORD;
     dwHighDateTime: DWORD;
   end;
 
-  TWIN32FindDataW = record
+  { TFindDataW }
+  TFindDataW = record
     dwFileAttributes: DWORD;
     ftCreationTime: TFileTime;
     ftLastAccessTime: TFileTime;
@@ -141,7 +142,18 @@ type
     cAlternateFileName: array[0..13] of WideChar;
   end;
 
-// kernel32
+  { TSecurityAttributes }
+  PSecurityAttributes = ^TSecurityAttributes;
+  TSecurityAttributes = record
+    nLength: DWORD;
+    lpSecurityDescriptor: Pointer;
+    bInheritHandle: BOOL;
+  end;
+
+// --- kernel32 -------------------------------------------------------------
+function  LoadLibraryW(lpLibFileName: LPCWSTR): HMODULE; stdcall; external 'kernel32';
+function  FreeLibrary(hLibModule: HMODULE): BOOL; stdcall; external 'kernel32';
+function  GetProcAddress(hModule: HMODULE; lpProcName: LPCSTR): FARPROC; stdcall; external 'kernel32';
 function  FindResourceW(hModule: HMODULE; lpName, lpType: LPCWSTR): HRSRC; stdcall; external 'kernel32';
 function  LoadResource(hModule: HINST; hResInfo: HRSRC): HGLOBAL; stdcall; stdcall; external 'kernel32';
 function  SizeofResource(hModule: HINST; hResInfo: HRSRC): DWORD; stdcall; stdcall; external 'kernel32';
@@ -150,21 +162,19 @@ function  FreeResource(hResData: HGLOBAL): BOOL; stdcall; stdcall; external 'ker
 function  GetTempFileNameW(lpPathName, lpPrefixString: LPCWSTR; uUnique: UINT; lpTempFileName: LPWSTR): UINT; stdcall; external 'kernel32';
 function  GetTempPathW(nBufferLength: DWORD; lpBuffer: LPWSTR): DWORD; stdcall; external 'kernel32';
 function  GetLongPathNameW(lpszShortPath: LPCWSTR; lpszLongPath: LPWSTR; cchBuffer: DWORD): DWORD; stdcall; external 'kernel32';
-function  LoadLibraryW(lpLibFileName: LPCWSTR): HMODULE; stdcall; external 'kernel32';
-function  FreeLibrary(hLibModule: HMODULE): BOOL; stdcall; external 'kernel32';
-function  GetProcAddress(hModule: HMODULE; lpProcName: LPCSTR): FARPROC; stdcall; external 'kernel32';
 function  MulDiv(nNumber, nNumerator, nDenominator: Integer): Integer; stdcall; external 'kernel32';
 procedure Sleep(dwMilliseconds: DWORD); stdcall; external 'kernel32';
-function  FindFirstFileW(lpFileName: LPCWSTR; var lpFindFileData: TWIN32FindDataW): THandle; stdcall; external 'kernel32';
-function  FindNextFileW(hFindFile: THandle; var lpFindFileData: TWIN32FindDataW): BOOL; stdcall; external 'kernel32';
+function  FindFirstFileW(lpFileName: LPCWSTR; var lpFindFileData: TFindDataW): THandle; stdcall; external 'kernel32';
+function  FindNextFileW(hFindFile: THandle; var lpFindFileData: TFindDataW): BOOL; stdcall; external 'kernel32';
 function  FindClose(hFindFile: THandle): BOOL; stdcall; external 'kernel32';
 function  GetStdHandle(nStdHandle: DWORD): THandle; stdcall; external 'kernel32';
 function  GetFileAttributesW(lpFileName: LPCWSTR): DWORD; stdcall; external 'kernel32';
 function  GetConsoleOutputCP: UINT; stdcall; external 'kernel32';
 function  SetConsoleOutputCP(wCodePageID: UINT): BOOL; stdcall; external 'kernel32';
+function  GetFullPathNameW(lpFileName: LPCWSTR; nBufferLength: DWORD; lpBuffer: LPWSTR; var lpFilePart: LPWSTR): DWORD; stdcall; external 'kernel32';
+function  CreateDirectoryW(lpPathName: LPCWSTR; lpSecurityAttributes: PSecurityAttributes): BOOL; stdcall; external 'kernel32';
 
-// user32
-function  GetDpiForWindow(hwnd: HWND): UINT; stdcall; external 'user32';
+// --- user32 ---------------------------------------------------------------
 function  GetSystemMetrics(nIndex: Integer): Integer; stdcall; external 'user32';
 function  SetWindowLongPtrW(hWnd: HWND; nIndex: Integer; dwNewLong: LONG_PTR): LONG_PTR; stdcall; external 'user32';
 function  GetWindowLongPtrW(hWnd: HWND; nIndex: Integer): LONG_PTR; stdcall; external 'user32';
@@ -174,52 +184,9 @@ function  DispatchMessageW(const lpMsg: TMsg): Longint; stdcall; external 'user3
 
 {$ENDREGION}
 
-// ZLib =====================================================================
-{$REGION 'ZLib'}
+{$REGION 'Spark.Allegro'}
 const
-  Z_DEFLATED = 8;
-  Z_DEFAULT_STRATEGY = 0;
-  APPEND_STATUS_CREATE = 0;
-  Z_OK = 0;
-
-type
-  Ptm_zip_s = ^tm_zip_s;
-  Pzip_fileinfo = ^zip_fileinfo;
-
-  tm_zip_s = record
-    tm_sec: Integer;
-    tm_min: Integer;
-    tm_hour: Integer;
-    tm_mday: Integer;
-    tm_mon: Integer;
-    tm_year: Integer;
-  end;
-
-  tm_zip = tm_zip_s;
-
-  zip_fileinfo = record
-    tmz_date: tm_zip;
-    dosDate: Cardinal;
-    internal_fa: Cardinal;
-    external_fa: Cardinal;
-  end;
-
-  zipFile = Pointer;
-
-var
-  crc32: function(crc: Cardinal; const buf: PByte; len: Cardinal): Cardinal; cdecl;
-  zipOpen: function(const pathname: PUTF8Char; append: Integer): zipFile; cdecl;
-  zipOpenNewFileInZip3: function(file_: zipFile; const filename: PUTF8Char; const zipfi: Pzip_fileinfo; const extrafield_local: Pointer; intsize_extrafield_local: Cardinal; const extrafield_global: Pointer; intsize_extrafield_global: Cardinal; const comment: PUTF8Char; method: Integer; level: Integer; raw: Integer; windowBits: Integer; memLevel: Integer; strategy: Integer; const password: PUTF8Char; crcForCrypting: Cardinal): Integer; cdecl;
-  zipWriteInFileInZip: function(file_: zipFile; const buf: Pointer; len: Cardinal): Integer; cdecl;
-  zipCloseFileInZip: function(file_: zipFile): Integer; cdecl;
-  zipClose: function(file_: zipFile; const global_comment: PUTF8Char): Integer; cdecl;
-
-{$ENDREGION}
-
-// Allegro ==================================================================
-{$REGION 'Allegro'}
-const
-  ALLEGRO_DLL = 'allegro_monolith-5.2.dll';
+  SPARK_DLL = 'Spark.dll';
 
   INT32_MIN = (-2147483647-1);
 
@@ -240,14 +207,15 @@ const
 
   EOF = (-1);
 
+  // Joystick
   _AL_MAX_JOYSTICK_AXES = 3;
   _AL_MAX_JOYSTICK_STICKS = 16;
   _AL_MAX_JOYSTICK_BUTTONS = 32;
 
   ALLEGRO_MOUSE_MAX_EXTRA_AXES = 4;
-
   ALLEGRO_TOUCH_INPUT_MAX_TOUCH_COUNT = 16;
 
+  // Shader
   ALLEGRO_SHADER_VAR_COLOR = 'al_color';
   ALLEGRO_SHADER_VAR_POS = 'al_pos';
   ALLEGRO_SHADER_VAR_PROJVIEW_MATRIX = 'al_projview_matrix';
@@ -268,10 +236,12 @@ const
 
   ALLEGRO_PRIM_QUALITY = 10;
 
+  // TTF
   ALLEGRO_TTF_NO_KERNING = 1;
   ALLEGRO_TTF_MONOCHROME = 2;
   ALLEGRO_TTF_NO_AUTOHINT = 4;
 
+  // Pixel format
   ALLEGRO_PIXEL_FORMAT_ANY = 0;
   ALLEGRO_PIXEL_FORMAT_ANY_NO_ALPHA = 1;
   ALLEGRO_PIXEL_FORMAT_ANY_WITH_ALPHA = 2;
@@ -305,10 +275,11 @@ const
   ALLEGRO_PIXEL_FORMAT_COMPRESSED_RGBA_DXT5 = 30;
   ALLEGRO_NUM_PIXEL_FORMATS = 31;
 
+  // Bitmap
   ALLEGRO_BITMAP_WRAP_DEFAULT = 0;
   ALLEGRO_BITMAP_WRAP_REPEAT = 1;
   ALLEGRO_BITMAP_WRAP_CLAMP = 2;
-  ALLEGRO_BITMAP_WRAP_MIRROR = 3; 
+  ALLEGRO_BITMAP_WRAP_MIRROR = 3;
 
   ALLEGRO_MEMORY_BITMAP = 1;
   _ALLEGRO_KEEP_BITMAP_FORMAT = 2;
@@ -321,11 +292,12 @@ const
   ALLEGRO_MIPMAP = 256;
   _ALLEGRO_NO_PREMULTIPLIED_ALPHA = 512;
   ALLEGRO_VIDEO_BITMAP = 1024;
-  ALLEGRO_CONVERT_BITMAP = 4096; 
+  ALLEGRO_CONVERT_BITMAP = 4096;
 
   ALLEGRO_FLIP_HORIZONTAL = 1;
-  ALLEGRO_FLIP_VERTICAL = 2; 
+  ALLEGRO_FLIP_VERTICAL = 2;
 
+  // Seek
   ALLEGRO_SEEK_SET = 0;
   ALLEGRO_SEEK_CUR = 1;
   ALLEGRO_SEEK_END = 2;
@@ -355,6 +327,7 @@ const
   ALLEGRO_DEST_MINUS_SRC = 2;
   ALLEGRO_NUM_BLEND_OPERATIONS = 3;  
 
+  // Event
   ALLEGRO_EVENT_JOYSTICK_AXIS = 1;
   ALLEGRO_EVENT_JOYSTICK_BUTTON_DOWN = 2;
   ALLEGRO_EVENT_JOYSTICK_BUTTON_UP = 3;
@@ -408,6 +381,7 @@ const
   ALLEGRO_REQUIRE = 1;
   ALLEGRO_SUGGEST = 2;
 
+  // Display orientation
   ALLEGRO_DISPLAY_ORIENTATION_UNKNOWN = 0;
   ALLEGRO_DISPLAY_ORIENTATION_0_DEGREES = 1;
   ALLEGRO_DISPLAY_ORIENTATION_90_DEGREES = 2;
@@ -419,8 +393,9 @@ const
   ALLEGRO_DISPLAY_ORIENTATION_FACE_UP = 16;
   ALLEGRO_DISPLAY_ORIENTATION_FACE_DOWN = 32;
 
-  _ALLEGRO_PRIM_MAX_USER_ATTR = 10; 
+  _ALLEGRO_PRIM_MAX_USER_ATTR = 10;
 
+  // Filemode
   ALLEGRO_FILEMODE_READ = 1;
   ALLEGRO_FILEMODE_WRITE = 2;
   ALLEGRO_FILEMODE_EXECUTE = 4;
@@ -436,6 +411,7 @@ const
   ALLEGRO_JOYFLAG_DIGITAL = 1;
   ALLEGRO_JOYFLAG_ANALOGUE = 2;
 
+  // Keyboard constants
   ALLEGRO_KEY_A = 1;
   ALLEGRO_KEY_B = 2;
   ALLEGRO_KEY_C = 3;
@@ -602,6 +578,7 @@ const
   ALLEGRO_MOUSE_EMULATION_EXCLUSIVE = 3;
   ALLEGRO_MOUSE_EMULATION_5_0_x = 4;
 
+  // Haptic
   ALLEGRO_HAPTIC_RUMBLE = 1;
   ALLEGRO_HAPTIC_PERIODIC = 2;
   ALLEGRO_HAPTIC_CONSTANT = 4;
@@ -624,6 +601,7 @@ const
 
   ALLEGRO_DEFAULT_DISPLAY_ADAPTER = -1;
 
+  // Mouse cursor
   ALLEGRO_SYSTEM_MOUSE_CURSOR_NONE = 0;
   ALLEGRO_SYSTEM_MOUSE_CURSOR_DEFAULT = 1;
   ALLEGRO_SYSTEM_MOUSE_CURSOR_ARROW = 2;
@@ -646,6 +624,7 @@ const
   ALLEGRO_SYSTEM_MOUSE_CURSOR_UNAVAILABLE = 19;
   ALLEGRO_NUM_SYSTEM_MOUSE_CURSORS = 20;
 
+  // Color Mask
   ALLEGRO_MASK_RED = 1;
   ALLEGRO_MASK_GREEN = 2;
   ALLEGRO_MASK_BLUE = 4;
@@ -654,6 +633,7 @@ const
   ALLEGRO_MASK_RGB = 7;
   ALLEGRO_MASK_RGBA = 15;
 
+  // Render
   ALLEGRO_RENDER_NEVER = 0;
   ALLEGRO_RENDER_ALWAYS = 1;
   ALLEGRO_RENDER_LESS = 2;
@@ -666,6 +646,7 @@ const
   ALLEGRO_VERTEX_SHADER = 1;
   ALLEGRO_PIXEL_SHADER = 2;
 
+  // Sharder
   ALLEGRO_SHADER_AUTO = 0;
   ALLEGRO_SHADER_GLSL = 1;
   ALLEGRO_SHADER_HLSL = 2;
@@ -674,6 +655,7 @@ const
   ALLEGRO_SHADER_HLSL_MINIMAL = 5;
   ALLEGRO_SHADER_HLSL_SM_3_0 = 6;
 
+  // System Id
   ALLEGRO_SYSTEM_ID_UNKNOWN = 0;
   ALLEGRO_SYSTEM_ID_XGLX = 1481067608;
   ALLEGRO_SYSTEM_ID_WINDOWS = 1464421956;
@@ -684,6 +666,7 @@ const
   ALLEGRO_SYSTEM_ID_RASPBERRYPI = 1380012880;
   ALLEGRO_SYSTEM_ID_SDL = 1396984882;
 
+  // System Paths
   ALLEGRO_RESOURCES_PATH = 0;
   ALLEGRO_TEMP_PATH = 1;
   ALLEGRO_USER_DATA_PATH = 2;
@@ -693,6 +676,7 @@ const
   ALLEGRO_EXENAME_PATH = 6;
   ALLEGRO_LAST_PATH = 7;
 
+  // State
   ALLEGRO_STATE_NEW_DISPLAY_PARAMETERS = 1;
   ALLEGRO_STATE_NEW_BITMAP_PARAMETERS = 2;
   ALLEGRO_STATE_DISPLAY = 4;
@@ -814,15 +798,18 @@ const
   ALLEGRO_LINE_CAP_TRIANGLE = 3;
   ALLEGRO_LINE_CAP_CLOSED = 4;
 
+  // Primitive buffer
   ALLEGRO_PRIM_BUFFER_STREAM = 1;
   ALLEGRO_PRIM_BUFFER_STATIC = 2;
   ALLEGRO_PRIM_BUFFER_DYNAMIC = 4;
   ALLEGRO_PRIM_BUFFER_READWRITE = 8;
 
+  // Event
   ALLEGRO_EVENT_VIDEO_FRAME_SHOW = 550;
   ALLEGRO_EVENT_VIDEO_FINISHED = 551;
   _ALLEGRO_EVENT_VIDEO_SEEK = 552;
 
+  // Video
   ALLEGRO_VIDEO_POSITION_ACTUAL = 0;
   ALLEGRO_VIDEO_POSITION_VIDEO_DECODE = 1;
   ALLEGRO_VIDEO_POSITION_AUDIO_DECODE = 2;
@@ -872,163 +859,367 @@ const
   ALLEGRO_ALPHA_FUNCTION = 20;
   ALLEGRO_ALPHA_TEST_VALUE = 21;
 
+  // ZLib
+  Z_DEFLATED = 8;
+  Z_DEFAULT_STRATEGY = 0;
+  APPEND_STATUS_CREATE = 0;
+  Z_OK = 0;
+
 type
+
+  { ALLEGRO_PIXEL_FORMAT }
   ALLEGRO_PIXEL_FORMAT = Integer;
+
+  { PALLEGRO_PIXEL_FORMAT }
   PALLEGRO_PIXEL_FORMAT = ^ALLEGRO_PIXEL_FORMAT;
 
+  { ALLEGRO_BITMAP_WRAP }
   ALLEGRO_BITMAP_WRAP = Integer;
+
+  { PALLEGRO_BITMAP_WRAP }
   PALLEGRO_BITMAP_WRAP = ^ALLEGRO_BITMAP_WRAP;
 
+  { ALLEGRO_SEEK }
   ALLEGRO_SEEK = Integer;
+
+  { PALLEGRO_SEEK }
   PALLEGRO_SEEK = ^ALLEGRO_SEEK;
 
+  { ALLEGRO_BLEND_MODE }
   ALLEGRO_BLEND_MODE = Integer;
+
+  { PALLEGRO_BLEND_MODE }
   PALLEGRO_BLEND_MODE = ^ALLEGRO_BLEND_MODE;
 
+  { ALLEGRO_BLEND_OPERATIONS }
   ALLEGRO_BLEND_OPERATIONS = Integer;
+
+  { PALLEGRO_BLEND_OPERATIONS }
   PALLEGRO_BLEND_OPERATIONS = ^ALLEGRO_BLEND_OPERATIONS;
 
+  { ALLEGRO_DISPLAY_OPTIONS }
   ALLEGRO_DISPLAY_OPTIONS = Integer;
+
+  { PALLEGRO_DISPLAY_OPTIONS }
   PALLEGRO_DISPLAY_OPTIONS = ^ALLEGRO_DISPLAY_OPTIONS;
 
+  { ALLEGRO_DISPLAY_ORIENTATION }
   ALLEGRO_DISPLAY_ORIENTATION = Integer;
+
+  { PALLEGRO_DISPLAY_ORIENTATION }
   PALLEGRO_DISPLAY_ORIENTATION = ^ALLEGRO_DISPLAY_ORIENTATION;
 
+  { ALLEGRO_FILE_MODE }
   ALLEGRO_FILE_MODE = Integer;
+
+  { PALLEGRO_FILE_MODE }
   PALLEGRO_FILE_MODE = ^ALLEGRO_FILE_MODE;
 
+  { ALLEGRO_FOR_EACH_FS_ENTRY_RESULT }
   ALLEGRO_FOR_EACH_FS_ENTRY_RESULT = Integer;
+
+  { PALLEGRO_FOR_EACH_FS_ENTRY_RESULT }
   PALLEGRO_FOR_EACH_FS_ENTRY_RESULT = ^ALLEGRO_FOR_EACH_FS_ENTRY_RESULT;
 
+  { ALLEGRO_JOYFLAGS }
   ALLEGRO_JOYFLAGS = Integer;
+
+  { PALLEGRO_JOYFLAGS }
   PALLEGRO_JOYFLAGS = ^ALLEGRO_JOYFLAGS;
 
+  { ALLEGRO_MOUSE_EMULATION_MODE }
   ALLEGRO_MOUSE_EMULATION_MODE = Integer;
+
+  { PALLEGRO_MOUSE_EMULATION_MODE }
   PALLEGRO_MOUSE_EMULATION_MODE = ^ALLEGRO_MOUSE_EMULATION_MODE;
 
+  { ALLEGRO_HAPTIC_CONSTANTS }
   ALLEGRO_HAPTIC_CONSTANTS = Integer;
+
+  { PALLEGRO_HAPTIC_CONSTANTS }
   PALLEGRO_HAPTIC_CONSTANTS = ^ALLEGRO_HAPTIC_CONSTANTS;
 
+  { ALLEGRO_SYSTEM_MOUSE_CURSOR }
   ALLEGRO_SYSTEM_MOUSE_CURSOR = Integer;
+
+  { PALLEGRO_SYSTEM_MOUSE_CURSOR }
   PALLEGRO_SYSTEM_MOUSE_CURSOR = ^ALLEGRO_SYSTEM_MOUSE_CURSOR;
 
+  { ALLEGRO_RENDER_STATE }
   ALLEGRO_RENDER_STATE = Integer;
+
+  { PALLEGRO_RENDER_STATE }
   PALLEGRO_RENDER_STATE = ^ALLEGRO_RENDER_STATE;
 
+  { ALLEGRO_RENDER_FUNCTION }
   ALLEGRO_RENDER_FUNCTION = Integer;
+
+  { PALLEGRO_RENDER_FUNCTION }
   PALLEGRO_RENDER_FUNCTION = ^ALLEGRO_RENDER_FUNCTION;
 
+  { ALLEGRO_WRITE_MASK_FLAGS }
   ALLEGRO_WRITE_MASK_FLAGS = Integer;
+
+  { PALLEGRO_WRITE_MASK_FLAGS }
   PALLEGRO_WRITE_MASK_FLAGS = ^ALLEGRO_WRITE_MASK_FLAGS;
 
+  { ALLEGRO_SHADER_TYPE }
   ALLEGRO_SHADER_TYPE = Integer;
+
+  { PALLEGRO_SHADER_TYPE }
   PALLEGRO_SHADER_TYPE = ^ALLEGRO_SHADER_TYPE;
 
+  { ALLEGRO_SHADER_PLATFORM }
   ALLEGRO_SHADER_PLATFORM = Integer;
+
+  { PALLEGRO_SHADER_PLATFORM }
   PALLEGRO_SHADER_PLATFORM = ^ALLEGRO_SHADER_PLATFORM;
 
+  { ALLEGRO_SYSTEM_ID }
   ALLEGRO_SYSTEM_ID = Integer;
+
+  { PALLEGRO_SYSTEM_ID }
   PALLEGRO_SYSTEM_ID = ^ALLEGRO_SYSTEM_ID;
 
+  { ALLEGRO_STATE_FLAGS }
   ALLEGRO_STATE_FLAGS = Integer;
+
+  { PALLEGRO_STATE_FLAGS }
   PALLEGRO_STATE_FLAGS = ^ALLEGRO_STATE_FLAGS;
 
+  { ALLEGRO_AUDIO_EVENT_TYPE }
   ALLEGRO_AUDIO_EVENT_TYPE = Integer;
+
+  { PALLEGRO_AUDIO_EVENT_TYPE }
   PALLEGRO_AUDIO_EVENT_TYPE = ^ALLEGRO_AUDIO_EVENT_TYPE;
 
+  { ALLEGRO_AUDIO_DEPTH }
   ALLEGRO_AUDIO_DEPTH = Integer;
+
+  { PALLEGRO_AUDIO_DEPTH }
   PALLEGRO_AUDIO_DEPTH = ^ALLEGRO_AUDIO_DEPTH;
 
+  { ALLEGRO_CHANNEL_CONF }
   ALLEGRO_CHANNEL_CONF = Integer;
+
+  { PALLEGRO_CHANNEL_CONF }
   PALLEGRO_CHANNEL_CONF = ^ALLEGRO_CHANNEL_CONF;
 
+  { ALLEGRO_PLAYMODE }
   ALLEGRO_PLAYMODE = Integer;
+
+  { PALLEGRO_PLAYMODE }
   PALLEGRO_PLAYMODE = ^ALLEGRO_PLAYMODE;
 
+  { ALLEGRO_MIXER_QUALITY }
   ALLEGRO_MIXER_QUALITY = Integer;
+
+  { PALLEGRO_MIXER_QUALITY }
   PALLEGRO_MIXER_QUALITY = ^ALLEGRO_MIXER_QUALITY;
 
+  { ALLEGRO_PRIM_TYPE }
   ALLEGRO_PRIM_TYPE = Integer;
+
+  { PALLEGRO_PRIM_TYPE }
   PALLEGRO_PRIM_TYPE = ^ALLEGRO_PRIM_TYPE;
 
+  { ALLEGRO_PRIM_ATTR }
   ALLEGRO_PRIM_ATTR = Integer;
+
+  { PALLEGRO_PRIM_ATTR }
   PALLEGRO_PRIM_ATTR = ^ALLEGRO_PRIM_ATTR;
 
+  { ALLEGRO_PRIM_STORAGE }
   ALLEGRO_PRIM_STORAGE = Integer;
+
+  { PALLEGRO_PRIM_STORAGE }
   PALLEGRO_PRIM_STORAGE = ^ALLEGRO_PRIM_STORAGE;
 
+  { ALLEGRO_LINE_JOIN }
   ALLEGRO_LINE_JOIN = Integer;
+
+  { PALLEGRO_LINE_JOIN }
   PALLEGRO_LINE_JOIN = ^ALLEGRO_LINE_JOIN;
 
+  { ALLEGRO_LINE_CAP }
   ALLEGRO_LINE_CAP = Integer;
+
+  { PALLEGRO_LINE_CAP }
   PALLEGRO_LINE_CAP = ^ALLEGRO_LINE_CAP;
 
+  { ALLEGRO_PRIM_BUFFER_FLAGS }
   ALLEGRO_PRIM_BUFFER_FLAGS = Integer;
+
+  { PALLEGRO_PRIM_BUFFER_FLAGS }
   PALLEGRO_PRIM_BUFFER_FLAGS = ^ALLEGRO_PRIM_BUFFER_FLAGS;
 
+  { ALLEGRO_VIDEO_EVENT_TYPE }
   ALLEGRO_VIDEO_EVENT_TYPE = Integer;
+
+  { PALLEGRO_VIDEO_EVENT_TYPE }
   PALLEGRO_VIDEO_EVENT_TYPE = ^ALLEGRO_VIDEO_EVENT_TYPE;
 
+  { ALLEGRO_VIDEO_POSITION_TYPE }
   ALLEGRO_VIDEO_POSITION_TYPE = Integer;
+
+  { PALLEGRO_VIDEO_POSITION_TYPE }
   PALLEGRO_VIDEO_POSITION_TYPE = ^ALLEGRO_VIDEO_POSITION_TYPE;
 
+  { PPUTF8Char }
   PPUTF8Char = ^PUTF8Char;
+
+  { PUInt16 }
   PUInt16 = ^UInt16;
-  
+
+  { PALLEGRO_USER_EVENT_DESCRIPTOR }
   PALLEGRO_USER_EVENT_DESCRIPTOR = Pointer;
+
+  { PPALLEGRO_USER_EVENT_DESCRIPTOR }
   PPALLEGRO_USER_EVENT_DESCRIPTOR = ^PALLEGRO_USER_EVENT_DESCRIPTOR;
+
+  { PALLEGRO_JOYSTICK_DRIVER }
   PALLEGRO_JOYSTICK_DRIVER = Pointer;
+
+  { PPALLEGRO_JOYSTICK_DRIVER }
   PPALLEGRO_JOYSTICK_DRIVER = ^PALLEGRO_JOYSTICK_DRIVER;
+
+  { PALLEGRO_HAPTIC_DRIVER }
   PALLEGRO_HAPTIC_DRIVER = Pointer;
+
+  { PPALLEGRO_HAPTIC_DRIVER }
   PPALLEGRO_HAPTIC_DRIVER = ^PALLEGRO_HAPTIC_DRIVER;
+
+  { PALLEGRO_TIMEOUT }
   PALLEGRO_TIMEOUT = ^ALLEGRO_TIMEOUT;
+
+  { PALLEGRO_COLOR }
   PALLEGRO_COLOR = ^ALLEGRO_COLOR;
+
+  { P_al_tagbstring }
   P_al_tagbstring = ^_al_tagbstring;
+
+  { PALLEGRO_FILE_INTERFACE }
   PALLEGRO_FILE_INTERFACE = ^ALLEGRO_FILE_INTERFACE;
+
+  { PALLEGRO_LOCKED_REGION }
   PALLEGRO_LOCKED_REGION = ^ALLEGRO_LOCKED_REGION;
+
+  { PALLEGRO_EVENT_SOURCE }
   PALLEGRO_EVENT_SOURCE = ^ALLEGRO_EVENT_SOURCE;
+
+  { PALLEGRO_ANY_EVENT }
   PALLEGRO_ANY_EVENT = ^ALLEGRO_ANY_EVENT;
+
+  { PALLEGRO_DISPLAY_EVENT }
   PALLEGRO_DISPLAY_EVENT = ^ALLEGRO_DISPLAY_EVENT;
+
+  { PALLEGRO_JOYSTICK_EVENT }
   PALLEGRO_JOYSTICK_EVENT = ^ALLEGRO_JOYSTICK_EVENT;
+
+  { PALLEGRO_KEYBOARD_EVENT }
   PALLEGRO_KEYBOARD_EVENT = ^ALLEGRO_KEYBOARD_EVENT;
+
+  { PALLEGRO_MOUSE_EVENT }
   PALLEGRO_MOUSE_EVENT = ^ALLEGRO_MOUSE_EVENT;
+
+  { PALLEGRO_TIMER_EVENT }
   PALLEGRO_TIMER_EVENT = ^ALLEGRO_TIMER_EVENT;
+
+  { PALLEGRO_TOUCH_EVENT }
   PALLEGRO_TOUCH_EVENT = ^ALLEGRO_TOUCH_EVENT;
+
+  { PALLEGRO_USER_EVENT }
   PALLEGRO_USER_EVENT = ^ALLEGRO_USER_EVENT;
+
+  { PALLEGRO_FS_ENTRY }
   PALLEGRO_FS_ENTRY = ^ALLEGRO_FS_ENTRY;
+
+  { PALLEGRO_FS_INTERFACE }
   PALLEGRO_FS_INTERFACE = ^ALLEGRO_FS_INTERFACE;
+
+  { PALLEGRO_DISPLAY_MODE }
   PALLEGRO_DISPLAY_MODE = ^ALLEGRO_DISPLAY_MODE;
+
+  { PALLEGRO_JOYSTICK_STATE }
   PALLEGRO_JOYSTICK_STATE = ^ALLEGRO_JOYSTICK_STATE;
+
+  { PALLEGRO_KEYBOARD_STATE }
   PALLEGRO_KEYBOARD_STATE = ^ALLEGRO_KEYBOARD_STATE;
+
+  { PALLEGRO_MOUSE_STATE }
   PALLEGRO_MOUSE_STATE = ^ALLEGRO_MOUSE_STATE;
+
+  { PALLEGRO_TOUCH_STATE }
   PALLEGRO_TOUCH_STATE = ^ALLEGRO_TOUCH_STATE;
   PALLEGRO_TOUCH_INPUT_STATE = ^ALLEGRO_TOUCH_INPUT_STATE;
+
+  { PALLEGRO_HAPTIC_DIRECTION }
   PALLEGRO_HAPTIC_DIRECTION = ^ALLEGRO_HAPTIC_DIRECTION;
+
+  { PALLEGRO_HAPTIC_REPLAY }
   PALLEGRO_HAPTIC_REPLAY = ^ALLEGRO_HAPTIC_REPLAY;
+
+  { PALLEGRO_HAPTIC_ENVELOPE }
   PALLEGRO_HAPTIC_ENVELOPE = ^ALLEGRO_HAPTIC_ENVELOPE;
+
+  { PALLEGRO_HAPTIC_CONSTANT_EFFECT }
   PALLEGRO_HAPTIC_CONSTANT_EFFECT = ^ALLEGRO_HAPTIC_CONSTANT_EFFECT;
+
+  { PALLEGRO_HAPTIC_RAMP_EFFECT }
   PALLEGRO_HAPTIC_RAMP_EFFECT = ^ALLEGRO_HAPTIC_RAMP_EFFECT;
+
+  { PALLEGRO_HAPTIC_CONDITION_EFFECT }
   PALLEGRO_HAPTIC_CONDITION_EFFECT = ^ALLEGRO_HAPTIC_CONDITION_EFFECT;
+
+  { PALLEGRO_HAPTIC_PERIODIC_EFFECT }
   PALLEGRO_HAPTIC_PERIODIC_EFFECT = ^ALLEGRO_HAPTIC_PERIODIC_EFFECT;
+
+  { PALLEGRO_HAPTIC_RUMBLE_EFFECT }
   PALLEGRO_HAPTIC_RUMBLE_EFFECT = ^ALLEGRO_HAPTIC_RUMBLE_EFFECT;
+
+  { PALLEGRO_HAPTIC_EFFECT }
   PALLEGRO_HAPTIC_EFFECT = ^ALLEGRO_HAPTIC_EFFECT;
+
+  { PALLEGRO_HAPTIC_EFFECT_ID }
   PALLEGRO_HAPTIC_EFFECT_ID = ^ALLEGRO_HAPTIC_EFFECT_ID;
+
+  { PALLEGRO_MEMORY_INTERFACE }
   PALLEGRO_MEMORY_INTERFACE = ^ALLEGRO_MEMORY_INTERFACE;
+
+  { PALLEGRO_MONITOR_INFO }
   PALLEGRO_MONITOR_INFO = ^ALLEGRO_MONITOR_INFO;
+
+  { PALLEGRO_TRANSFORM }
   PALLEGRO_TRANSFORM = ^ALLEGRO_TRANSFORM;
+
+  { PALLEGRO_STATE }
   PALLEGRO_STATE = ^ALLEGRO_STATE;
+
+  { PALLEGRO_AUDIO_RECORDER_EVENT }
   PALLEGRO_AUDIO_RECORDER_EVENT = ^ALLEGRO_AUDIO_RECORDER_EVENT;
+
+  { PALLEGRO_SAMPLE_ID }
   PALLEGRO_SAMPLE_ID = ^ALLEGRO_SAMPLE_ID;
+
+  { PALLEGRO_GLYPH }
   PALLEGRO_GLYPH = ^ALLEGRO_GLYPH;
+
+  { PALLEGRO_MENU_INFO }
   PALLEGRO_MENU_INFO = ^ALLEGRO_MENU_INFO;
+
+  { PALLEGRO_VERTEX_ELEMENT }
   PALLEGRO_VERTEX_ELEMENT = ^ALLEGRO_VERTEX_ELEMENT;
+
+  { PALLEGRO_VERTEX }
   PALLEGRO_VERTEX = ^ALLEGRO_VERTEX;
 
+  { ALLEGRO_TIMEOUT  }
   ALLEGRO_TIMEOUT = record
     __pad1__: UInt64;
     __pad2__: UInt64;
   end;
 
+  { ALLEGRO_COLOR }
   ALLEGRO_COLOR = record
     r: Single;
     g: Single;
@@ -1036,26 +1227,45 @@ type
     a: Single;
   end;
 
+  { PALLEGRO_BITMAP }
   PALLEGRO_BITMAP = Pointer;
   PPALLEGRO_BITMAP = ^PALLEGRO_BITMAP;
+
+  { PALLEGRO_USTR }
   PALLEGRO_USTR = ^ALLEGRO_USTR;
 
+  { _al_tagbstring }
   _al_tagbstring = record
     mlen: Integer;
     slen: Integer;
     data: PByte;
   end;
+
+  { PALLEGRO_USTR_INFO }
   PALLEGRO_USTR_INFO = ^ALLEGRO_USTR_INFO;
+
+  { ALLEGRO_USTR_INFO }
   ALLEGRO_USTR_INFO = _al_tagbstring;
+
+  { ALLEGRO_USTR }
   ALLEGRO_USTR = _al_tagbstring;
 
+  { PALLEGRO_PATH }
   PALLEGRO_PATH = Pointer;
+
+  { PPALLEGRO_PATH }
   PPALLEGRO_PATH = ^PALLEGRO_PATH;
+
+  { PALLEGRO_FILE }
   PALLEGRO_FILE = Pointer;
+
+  { PPALLEGRO_FILE }
   PPALLEGRO_FILE = ^PALLEGRO_FILE;
 
+  { off_t }
   off_t = longint;
 
+  { ALLEGRO_FILE_INTERFACE }
   ALLEGRO_FILE_INTERFACE = record
     fi_fopen: function(const path: PUTF8Char; const mode: PUTF8Char): Pointer; cdecl;
     fi_fclose: function(handle: PALLEGRO_FILE): Boolean; cdecl;
@@ -1072,16 +1282,22 @@ type
     fi_fsize: function(f: PALLEGRO_FILE): off_t; cdecl;
   end;
 
+  { ALLEGRO_IIO_LOADER_FUNCTION }
   ALLEGRO_IIO_LOADER_FUNCTION = function(const filename: PUTF8Char; flags: Integer): PALLEGRO_BITMAP; cdecl;
 
+  { ALLEGRO_IIO_FS_LOADER_FUNCTION }
   ALLEGRO_IIO_FS_LOADER_FUNCTION = function(fp: PALLEGRO_FILE; flags: Integer): PALLEGRO_BITMAP; cdecl;
 
+  { ALLEGRO_IIO_SAVER_FUNCTION }
   ALLEGRO_IIO_SAVER_FUNCTION = function(const filename: PUTF8Char; bitmap: PALLEGRO_BITMAP): Boolean; cdecl;
 
+  { ALLEGRO_IIO_FS_SAVER_FUNCTION }
   ALLEGRO_IIO_FS_SAVER_FUNCTION = function(fp: PALLEGRO_FILE; bitmap: PALLEGRO_BITMAP): Boolean; cdecl;
 
+  { ALLEGRO_IIO_IDENTIFIER_FUNCTION }
   ALLEGRO_IIO_IDENTIFIER_FUNCTION = function(f: PALLEGRO_FILE): Boolean; cdecl;
 
+  { ALLEGRO_LOCKED_REGION }
   ALLEGRO_LOCKED_REGION = record
     data: Pointer;
     format: Integer;
@@ -1089,31 +1305,56 @@ type
     pixel_size: Integer;
   end;
 
+  { ALLEGRO_EVENT_TYPE }
   ALLEGRO_EVENT_TYPE = Cardinal;
 
+  { ALLEGRO_EVENT_SOURCE }
   ALLEGRO_EVENT_SOURCE = record
     __pad: array [0..31] of Integer;
   end;
 
+  { ALLEGRO_ANY_EVENT }
   ALLEGRO_ANY_EVENT = record
     type_: ALLEGRO_EVENT_TYPE;
     source: PALLEGRO_EVENT_SOURCE;
     timestamp: Double;
   end;
 
+  { PALLEGRO_DISPLAY }
   PALLEGRO_DISPLAY = Pointer;
   PPALLEGRO_DISPLAY = ^PALLEGRO_DISPLAY;
+
+  { PALLEGRO_JOYSTICK }
   PALLEGRO_JOYSTICK = Pointer;
+
+  { PPALLEGRO_JOYSTICK }
   PPALLEGRO_JOYSTICK = ^PALLEGRO_JOYSTICK;
+
+  { PALLEGRO_KEYBOARD }
   PALLEGRO_KEYBOARD = Pointer;
+
+  { PPALLEGRO_KEYBOARD }
   PPALLEGRO_KEYBOARD = ^PALLEGRO_KEYBOARD;
+
+  { PALLEGRO_MOUSE }
   PALLEGRO_MOUSE = Pointer;
+
+  { PPALLEGRO_MOUSE }
   PPALLEGRO_MOUSE = ^PALLEGRO_MOUSE;
+
+  { PALLEGRO_TIMER }
   PALLEGRO_TIMER = Pointer;
+
+  { PPALLEGRO_TIMER }
   PPALLEGRO_TIMER = ^PALLEGRO_TIMER;
+
+  { PALLEGRO_TOUCH_INPUT }
   PALLEGRO_TOUCH_INPUT = Pointer;
+
+  { PPALLEGRO_TOUCH_INPUT }
   PPALLEGRO_TOUCH_INPUT = ^PALLEGRO_TOUCH_INPUT;
 
+  { ALLEGRO_DISPLAY_EVENT }
   ALLEGRO_DISPLAY_EVENT = record
     type_: ALLEGRO_EVENT_TYPE;
     source: PALLEGRO_DISPLAY;
@@ -1125,6 +1366,7 @@ type
     orientation: Integer;
   end;
 
+  { ALLEGRO_JOYSTICK_EVENT }
   ALLEGRO_JOYSTICK_EVENT = record
     type_: ALLEGRO_EVENT_TYPE;
     source: PALLEGRO_JOYSTICK;
@@ -1136,6 +1378,7 @@ type
     button: Integer;
   end;
 
+  { ALLEGRO_KEYBOARD_EVENT }
   ALLEGRO_KEYBOARD_EVENT = record
     type_: ALLEGRO_EVENT_TYPE;
     source: PALLEGRO_KEYBOARD;
@@ -1147,6 +1390,7 @@ type
     repeat_: Boolean;
   end;
 
+  { ALLEGRO_MOUSE_EVENT }
   ALLEGRO_MOUSE_EVENT = record
     type_: ALLEGRO_EVENT_TYPE;
     source: PALLEGRO_MOUSE;
@@ -1164,6 +1408,7 @@ type
     pressure: Single;
   end;
 
+  { ALLEGRO_TIMER_EVENT }
   ALLEGRO_TIMER_EVENT = record
     type_: ALLEGRO_EVENT_TYPE;
     source: PALLEGRO_TIMER;
@@ -1172,6 +1417,7 @@ type
     error: Double;
   end;
 
+  { ALLEGRO_TOUCH_EVENT }
   ALLEGRO_TOUCH_EVENT = record
     type_: ALLEGRO_EVENT_TYPE;
     source: PALLEGRO_TOUCH_INPUT;
@@ -1185,6 +1431,7 @@ type
     primary: Boolean;
   end;
 
+  { ALLEGRO_USER_EVENT }
   ALLEGRO_USER_EVENT = record
     type_: ALLEGRO_EVENT_TYPE;
     source: PALLEGRO_EVENT_SOURCE;
@@ -1196,7 +1443,10 @@ type
     data4: IntPtr;
   end;
 
+  { PALLEGRO_EVENT }
   PALLEGRO_EVENT = ^ALLEGRO_EVENT;
+
+  { ALLEGRO_EVENT }
   ALLEGRO_EVENT = record
     case Integer of
       0: (type_: ALLEGRO_EVENT_TYPE);
@@ -1210,20 +1460,39 @@ type
       8: (user: ALLEGRO_USER_EVENT);
   end;
 
+  { PALLEGRO_EVENT_QUEUE }
   PALLEGRO_EVENT_QUEUE = Pointer;
+
+  { PPALLEGRO_EVENT_QUEUE }
   PPALLEGRO_EVENT_QUEUE = ^PALLEGRO_EVENT_QUEUE;
+
+  { PALLEGRO_CONFIG }
   PALLEGRO_CONFIG = Pointer;
+
+  { PPALLEGRO_CONFIG }
   PPALLEGRO_CONFIG = ^PALLEGRO_CONFIG;
+
+  { PALLEGRO_CONFIG_SECTION }
   PALLEGRO_CONFIG_SECTION = Pointer;
+
+  { PPALLEGRO_CONFIG_SECTION }
   PPALLEGRO_CONFIG_SECTION = ^PALLEGRO_CONFIG_SECTION;
+
+  { PALLEGRO_CONFIG_ENTRY }
   PALLEGRO_CONFIG_ENTRY = Pointer;
+
+  { PPALLEGRO_CONFIG_ENTRY }
   PPALLEGRO_CONFIG_ENTRY = ^PALLEGRO_CONFIG_ENTRY;
+
+  { al_fixed }
   al_fixed = Int32;
 
+  { ALLEGRO_FS_ENTRY }
   ALLEGRO_FS_ENTRY = record
     vtable: PALLEGRO_FS_INTERFACE;
   end;
 
+  { ALLEGRO_FS_INTERFACE }
   ALLEGRO_FS_INTERFACE = record
     fs_create_entry: function(const path: PUTF8Char): PALLEGRO_FS_ENTRY; cdecl;
     fs_destroy_entry: procedure(e: PALLEGRO_FS_ENTRY); cdecl;
@@ -1247,6 +1516,7 @@ type
     fs_open_file: function(e: PALLEGRO_FS_ENTRY; const mode: PUTF8Char): PALLEGRO_FILE; cdecl;
   end;
 
+  { ALLEGRO_DISPLAY_MODE }
   ALLEGRO_DISPLAY_MODE = record
     width: Integer;
     height: Integer;
@@ -1254,20 +1524,24 @@ type
     refresh_rate: Integer;
   end;
 
+  { ALLEGRO_JOYSTICK_STATE_AXIS }
   ALLEGRO_JOYSTICK_STATE_AXIS = record
     axis: array [0..2] of Single;
   end;
 
+  { ALLEGRO_JOYSTICK_STATE }
   ALLEGRO_JOYSTICK_STATE = record
     stick: array [0..15] of ALLEGRO_JOYSTICK_STATE_AXIS;
     button: array [0..31] of Integer;
   end;
 
+  { ALLEGRO_KEYBOARD_STATE }
   ALLEGRO_KEYBOARD_STATE = record
     display: PALLEGRO_DISPLAY;
     __key_down__internal__: array [0..7] of Cardinal;
   end;
 
+  { ALLEGRO_MOUSE_STATE }
   ALLEGRO_MOUSE_STATE = record
     x: Integer;
     y: Integer;
@@ -1279,6 +1553,7 @@ type
     display: PALLEGRO_DISPLAY;
   end;
 
+  { ALLEGRO_TOUCH_STATE }
   ALLEGRO_TOUCH_STATE = record
     id: Integer;
     x: Single;
@@ -1289,24 +1564,31 @@ type
     display: PALLEGRO_DISPLAY;
   end;
 
+  { ALLEGRO_TOUCH_INPUT_STATE }
   ALLEGRO_TOUCH_INPUT_STATE = record
     touches: array [0..15] of ALLEGRO_TOUCH_STATE;
   end;
 
+  { PALLEGRO_HAPTIC }
   PALLEGRO_HAPTIC = Pointer;
+
+  { PPALLEGRO_HAPTIC }
   PPALLEGRO_HAPTIC = ^PALLEGRO_HAPTIC;
 
+  { ALLEGRO_HAPTIC_DIRECTION }
   ALLEGRO_HAPTIC_DIRECTION = record
     angle: Double;
     radius: Double;
     azimuth: Double;
   end;
 
+  { ALLEGRO_HAPTIC_REPLAY }
   ALLEGRO_HAPTIC_REPLAY = record
     length: Double;
     delay: Double;
   end;
 
+  { ALLEGRO_HAPTIC_ENVELOPE }
   ALLEGRO_HAPTIC_ENVELOPE = record
     attack_length: Double;
     attack_level: Double;
@@ -1314,17 +1596,20 @@ type
     fade_level: Double;
   end;
 
+  { ALLEGRO_HAPTIC_CONSTANT_EFFECT }
   ALLEGRO_HAPTIC_CONSTANT_EFFECT = record
     level: Double;
     envelope: ALLEGRO_HAPTIC_ENVELOPE;
   end;
 
+  { ALLEGRO_HAPTIC_RAMP_EFFECT }
   ALLEGRO_HAPTIC_RAMP_EFFECT = record
     start_level: Double;
     end_level: Double;
     envelope: ALLEGRO_HAPTIC_ENVELOPE;
   end;
 
+  { ALLEGRO_HAPTIC_CONDITION_EFFECT }
   ALLEGRO_HAPTIC_CONDITION_EFFECT = record
     right_saturation: Double;
     left_saturation: Double;
@@ -1334,6 +1619,7 @@ type
     center: Double;
   end;
 
+  { ALLEGRO_HAPTIC_PERIODIC_EFFECT }
   ALLEGRO_HAPTIC_PERIODIC_EFFECT = record
     waveform: Integer;
     period: Double;
@@ -1345,11 +1631,13 @@ type
     custom_data: PDouble;
   end;
 
+  { ALLEGRO_HAPTIC_RUMBLE_EFFECT }
   ALLEGRO_HAPTIC_RUMBLE_EFFECT = record
     strong_magnitude: Double;
     weak_magnitude: Double;
   end;
 
+  { ALLEGRO_HAPTIC_EFFECT_UNION }
   ALLEGRO_HAPTIC_EFFECT_UNION = record
     case Integer of
       0: (constant: ALLEGRO_HAPTIC_CONSTANT_EFFECT);
@@ -1359,6 +1647,7 @@ type
       4: (rumble: ALLEGRO_HAPTIC_RUMBLE_EFFECT);
   end;
 
+  { ALLEGRO_HAPTIC_EFFECT }
   ALLEGRO_HAPTIC_EFFECT = record
     type_: Integer;
     direction: ALLEGRO_HAPTIC_DIRECTION;
@@ -1366,6 +1655,7 @@ type
     data: ALLEGRO_HAPTIC_EFFECT_UNION;
   end;
 
+  { ALLEGRO_HAPTIC_EFFECT_ID }
   ALLEGRO_HAPTIC_EFFECT_ID = record
     _haptic: PALLEGRO_HAPTIC;
     _id: Integer;
@@ -1378,6 +1668,7 @@ type
     driver: Pointer;
   end;
 
+  { ALLEGRO_MEMORY_INTERFACE }
   ALLEGRO_MEMORY_INTERFACE = record
     mi_malloc: function(n: NativeUInt; line: Integer; const file_: PUTF8Char; const func: PUTF8Char): Pointer; cdecl;
     mi_free: procedure(ptr: Pointer; line: Integer; const file_: PUTF8Char; const func: PUTF8Char); cdecl;
@@ -1385,6 +1676,7 @@ type
     mi_calloc: function(count: NativeUInt; n: NativeUInt; line: Integer; const file_: PUTF8Char; const func: PUTF8Char): Pointer; cdecl;
   end;
 
+  { ALLEGRO_MONITOR_INFO }
   ALLEGRO_MONITOR_INFO = record
     x1: Integer;
     y1: Integer;
@@ -1392,30 +1684,59 @@ type
     y2: Integer;
   end;
 
+  { PALLEGRO_MOUSE_CURSOR }
   PALLEGRO_MOUSE_CURSOR = Pointer;
+
+  { PPALLEGRO_MOUSE_CURSOR }
   PPALLEGRO_MOUSE_CURSOR = ^PALLEGRO_MOUSE_CURSOR;
 
+  { ALLEGRO_TRANSFORM }
   ALLEGRO_TRANSFORM = record
     m: array [0..3] of array [0..3] of Single;
   end;
 
+  { PALLEGRO_SHADER }
   PALLEGRO_SHADER = Pointer;
+
+  { PPALLEGRO_SHADER }
   PPALLEGRO_SHADER = ^PALLEGRO_SHADER;
+
+  { PALLEGRO_SYSTEM }
   PALLEGRO_SYSTEM = Pointer;
+
+  { PPALLEGRO_SYSTEM }
   PPALLEGRO_SYSTEM = ^PALLEGRO_SYSTEM;
+
+  { PALLEGRO_THREAD }
   PALLEGRO_THREAD = Pointer;
+
+  { PPALLEGRO_THREAD }
   PPALLEGRO_THREAD = ^PALLEGRO_THREAD;
+
+  { PALLEGRO_MUTEX }
   PALLEGRO_MUTEX = Pointer;
+
+  { PPALLEGRO_MUTEX }
   PPALLEGRO_MUTEX = ^PALLEGRO_MUTEX;
+
+  { PALLEGRO_COND }
   PALLEGRO_COND = Pointer;
+
+  { PPALLEGRO_COND }
   PPALLEGRO_COND = ^PALLEGRO_COND;
 
+  { ALLEGRO_STATE }
   ALLEGRO_STATE = record
     _tls: array [0..1023] of UTF8Char;
   end;
 
+  { PALLEGRO_AUDIO_RECORDER }
   PALLEGRO_AUDIO_RECORDER = Pointer;
+
+  { PPALLEGRO_AUDIO_RECORDER }
   PPALLEGRO_AUDIO_RECORDER = ^PALLEGRO_AUDIO_RECORDER;
+
+  { ALLEGRO_AUDIO_RECORDER_EVENT }
   ALLEGRO_AUDIO_RECORDER_EVENT = record
     type_: ALLEGRO_EVENT_TYPE;
     source: PALLEGRO_AUDIO_RECORDER;
@@ -1425,27 +1746,55 @@ type
     samples: Cardinal;
   end;
 
+  { PALLEGRO_SAMPLE }
   PALLEGRO_SAMPLE = Pointer;
+
+  { PPALLEGRO_SAMPLE }
   PPALLEGRO_SAMPLE = ^PALLEGRO_SAMPLE;
 
+  { ALLEGRO_SAMPLE_ID }
   ALLEGRO_SAMPLE_ID = record
     _index: Integer;
     _id: Integer;
   end;
 
+  { PALLEGRO_SAMPLE_INSTANCE }
   PALLEGRO_SAMPLE_INSTANCE = Pointer;
+
+  { PPALLEGRO_SAMPLE_INSTANCE }
   PPALLEGRO_SAMPLE_INSTANCE = ^PALLEGRO_SAMPLE_INSTANCE;
+
+  { PALLEGRO_AUDIO_STREAM }
   PALLEGRO_AUDIO_STREAM = Pointer;
+
+  { PPALLEGRO_AUDIO_STREAM }
   PPALLEGRO_AUDIO_STREAM = ^PALLEGRO_AUDIO_STREAM;
+
+  { PALLEGRO_MIXER }
   PALLEGRO_MIXER = Pointer;
+
+  { PPALLEGRO_MIXER }
   PPALLEGRO_MIXER = ^PALLEGRO_MIXER;
+
+  { PALLEGRO_VOICE }
   PALLEGRO_VOICE = Pointer;
+
+  { PPALLEGRO_VOICE }
   PPALLEGRO_VOICE = ^PALLEGRO_VOICE;
+
+  { PALLEGRO_AUDIO_DEVICE }
   PALLEGRO_AUDIO_DEVICE = Pointer;
+
+  { PPALLEGRO_AUDIO_DEVICE }
   PPALLEGRO_AUDIO_DEVICE = ^PALLEGRO_AUDIO_DEVICE;
+
+  { PALLEGRO_FONT }
   PALLEGRO_FONT = Pointer;
+
+  { PPALLEGRO_FONT }
   PPALLEGRO_FONT = ^PALLEGRO_FONT;
 
+  { ALLEGRO_GLYPH }
   ALLEGRO_GLYPH = record
     bitmap: PALLEGRO_BITMAP;
     x: Integer;
@@ -1458,13 +1807,25 @@ type
     advance: Integer;
   end;
 
+  { PALLEGRO_FILECHOOSER }
   PALLEGRO_FILECHOOSER = Pointer;
+
+  { PPALLEGRO_FILECHOOSER }
   PPALLEGRO_FILECHOOSER = ^PALLEGRO_FILECHOOSER;
+
+  { PALLEGRO_TEXTLOG }
   PALLEGRO_TEXTLOG = Pointer;
+
+  { PPALLEGRO_TEXTLOG }
   PPALLEGRO_TEXTLOG = ^PALLEGRO_TEXTLOG;
+
+  { PALLEGRO_MENU }
   PALLEGRO_MENU = Pointer;
+
+  { PPALLEGRO_MENU }
   PPALLEGRO_MENU = ^PALLEGRO_MENU;
 
+  { ALLEGRO_MENU_INFO }
   ALLEGRO_MENU_INFO = record
     caption: PUTF8Char;
     id: UInt16;
@@ -1472,15 +1833,20 @@ type
     icon: PALLEGRO_BITMAP;
   end;
 
+  { ALLEGRO_VERTEX_ELEMENT }
   ALLEGRO_VERTEX_ELEMENT = record
     attribute: Integer;
     storage: Integer;
     offset: Integer;
   end;
 
+  { PALLEGRO_VERTEX_DECL }
   PALLEGRO_VERTEX_DECL = Pointer;
+
+  { PPALLEGRO_VERTEX_DECL }
   PPALLEGRO_VERTEX_DECL = ^PALLEGRO_VERTEX_DECL;
 
+  { ALLEGRO_VERTEX }
   ALLEGRO_VERTEX = record
     x: Single;
     y: Single;
@@ -1490,1001 +1856,1924 @@ type
     color: ALLEGRO_COLOR;
   end;
 
+  { PALLEGRO_VERTEX_BUFFER }
   PALLEGRO_VERTEX_BUFFER = Pointer;
+
+  { PPALLEGRO_VERTEX_BUFFER }
   PPALLEGRO_VERTEX_BUFFER = ^PALLEGRO_VERTEX_BUFFER;
+
+  { PALLEGRO_INDEX_BUFFER }
   PALLEGRO_INDEX_BUFFER = Pointer;
+
+  { PPALLEGRO_INDEX_BUFFER }
   PPALLEGRO_INDEX_BUFFER = ^PALLEGRO_INDEX_BUFFER;
+
+  { PALLEGRO_VIDEO }
   PALLEGRO_VIDEO = Pointer;
+
+  { PPALLEGRO_VIDEO }
   PPALLEGRO_VIDEO = ^PALLEGRO_VIDEO;
 
-  al_emit_user_event_dtor = procedure(p1: PALLEGRO_USER_EVENT); cdecl;  
+  { al_emit_user_event_dtor }
+  al_emit_user_event_dtor = procedure(p1: PALLEGRO_USER_EVENT); cdecl;
+
+  { al_register_assert_handler_handler }
   al_register_assert_handler_handler = procedure(const expr: PUTF8Char; const file_: PUTF8Char; line: Integer; const func: PUTF8Char); cdecl;
-  al_register_trace_handler_handler = procedure(const p1: PUTF8Char); cdecl;  
+
+  { al_register_trace_handler_handler }
+  al_register_trace_handler_handler = procedure(const p1: PUTF8Char); cdecl;
+
+  { al_for_each_fs_entry_callback }
   al_for_each_fs_entry_callback = function(entry: PALLEGRO_FS_ENTRY; extra: Pointer): Integer; cdecl;
+
+  { atexit_ptr_ }
   atexit_ptr_ = Pointer;
-  al_install_system_atexit_ptr = function(p1: atexit_ptr_): Integer; cdecl;  
-  al_create_thread_proc = function(thread: PALLEGRO_THREAD; arg: Pointer): Pointer; cdecl;  
-  al_create_thread_with_stacksize_proc = function(thread: PALLEGRO_THREAD; arg: Pointer): Pointer; cdecl;  
+
+  { al_install_system_atexit_ptr }
+  al_install_system_atexit_ptr = function(p1: atexit_ptr_): Integer; cdecl;
+
+  { al_create_thread_proc }
+  al_create_thread_proc = function(thread: PALLEGRO_THREAD; arg: Pointer): Pointer; cdecl;
+
+  { al_create_thread_with_stacksize_proc }
+  al_create_thread_with_stacksize_proc = function(thread: PALLEGRO_THREAD; arg: Pointer): Pointer; cdecl;
+
+  { al_run_detached_thread_proc }
   al_run_detached_thread_proc = function(arg: Pointer): Pointer; cdecl;
-  al_set_mixer_postprocess_callback_cb = procedure(buf: Pointer; samples: Cardinal; data: Pointer); cdecl;  
-  al_register_sample_loader_loader = function(const filename: PUTF8Char): PALLEGRO_SAMPLE; cdecl;  
-  al_register_sample_saver_saver = function(const filename: PUTF8Char; spl: PALLEGRO_SAMPLE): Boolean; cdecl;  
+
+  { al_set_mixer_postprocess_callback_cb  }
+  al_set_mixer_postprocess_callback_cb = procedure(buf: Pointer; samples: Cardinal; data: Pointer); cdecl;
+
+  { al_register_sample_loader_loader }
+  al_register_sample_loader_loader = function(const filename: PUTF8Char): PALLEGRO_SAMPLE; cdecl;
+
+  { al_register_sample_saver_saver }
+  al_register_sample_saver_saver = function(const filename: PUTF8Char; spl: PALLEGRO_SAMPLE): Boolean; cdecl;
+
+  { al_register_audio_stream_loader_stream_loader }
   al_register_audio_stream_loader_stream_loader = function(const filename: PUTF8Char; buffer_count: NativeUInt; samples: Cardinal): PALLEGRO_AUDIO_STREAM; cdecl;
+
+  { al_register_sample_loader_f_loader }
   al_register_sample_loader_f_loader = function(fp: PALLEGRO_FILE): PALLEGRO_SAMPLE; cdecl;
-  al_register_sample_saver_f_saver = function(fp: PALLEGRO_FILE; spl: PALLEGRO_SAMPLE): Boolean; cdecl;  
+
+  { al_register_sample_saver_f_saver }
+  al_register_sample_saver_f_saver = function(fp: PALLEGRO_FILE; spl: PALLEGRO_SAMPLE): Boolean; cdecl;
+
+  { al_register_audio_stream_loader_f_stream_loader }
   al_register_audio_stream_loader_f_stream_loader = function(fp: PALLEGRO_FILE; buffer_count: NativeUInt; samples: Cardinal): PALLEGRO_AUDIO_STREAM; cdecl;
+
+  { al_register_sample_identifier_identifier }
   al_register_sample_identifier_identifier = function(fp: PALLEGRO_FILE): Boolean; cdecl;
+
+  { al_register_font_loader_load }
   al_register_font_loader_load = function(const filename: PUTF8Char; size: Integer; flags: Integer): PALLEGRO_FONT; cdecl;
+
+  { al_do_multiline_text_cb }
   al_do_multiline_text_cb = function(line_num: Integer; const line: PUTF8Char; size: Integer; extra: Pointer): Boolean; cdecl;
+
+  { al_do_multiline_ustr_cb }
   al_do_multiline_ustr_cb = function(line_num: Integer; const line: PALLEGRO_USTR; extra: Pointer): Boolean; cdecl;
+
+  { al_triangulate_polygon_emit_triangle }
   al_triangulate_polygon_emit_triangle = procedure(p1: Integer; p2: Integer; p3: Integer; p4: Pointer); cdecl;
+
+  { al_draw_soft_triangle_init }
   al_draw_soft_triangle_init = procedure(p1: UIntPtr; p2: PALLEGRO_VERTEX; p3: PALLEGRO_VERTEX; p4: PALLEGRO_VERTEX); cdecl;
+
+  { al_draw_soft_triangle_first }
   al_draw_soft_triangle_first = procedure(p1: UIntPtr; p2: Integer; p3: Integer; p4: Integer; p5: Integer); cdecl;
+
+  { al_draw_soft_triangle_step }
   al_draw_soft_triangle_step = procedure(p1: UIntPtr; p2: Integer); cdecl;
+
+  { al_draw_soft_triangle_draw }
   al_draw_soft_triangle_draw = procedure(p1: UIntPtr; p2: Integer; p3: Integer; p4: Integer); cdecl;
+
+  { al_draw_soft_line_first }
   al_draw_soft_line_first = procedure(p1: UIntPtr; p2: Integer; p3: Integer; p4: PALLEGRO_VERTEX; p5: PALLEGRO_VERTEX); cdecl;
+
+  { al_draw_soft_line_step }
   al_draw_soft_line_step = procedure(p1: UIntPtr; p2: Integer); cdecl;
+
+  { al_draw_soft_line_draw }
   al_draw_soft_line_draw = procedure(p1: UIntPtr; p2: Integer; p3: Integer); cdecl;
 
-var
-  al_get_allegro_version: function(): UInt32; cdecl;
-  al_get_time: function(): Double; cdecl;
-  al_rest: procedure(seconds: Double); cdecl;
-  al_init_timeout: procedure(timeout: PALLEGRO_TIMEOUT; seconds: Double); cdecl;
-  al_map_rgb: function(r: Byte; g: Byte; b: Byte): ALLEGRO_COLOR; cdecl;
-  al_map_rgba: function(r: Byte; g: Byte; b: Byte; a: Byte): ALLEGRO_COLOR; cdecl;
-  al_map_rgb_f: function(r: Single; g: Single; b: Single): ALLEGRO_COLOR; cdecl;
-  al_map_rgba_f: function(r: Single; g: Single; b: Single; a: Single): ALLEGRO_COLOR; cdecl;
-  al_premul_rgba: function(r: Byte; g: Byte; b: Byte; a: Byte): ALLEGRO_COLOR; cdecl;
-  al_premul_rgba_f: function(r: Single; g: Single; b: Single; a: Single): ALLEGRO_COLOR; cdecl;
-  al_unmap_rgb: procedure(color: ALLEGRO_COLOR; r: PByte; g: PByte; b: PByte); cdecl;
-  al_unmap_rgba: procedure(color: ALLEGRO_COLOR; r: PByte; g: PByte; b: PByte; a: PByte); cdecl;
-  al_unmap_rgb_f: procedure(color: ALLEGRO_COLOR; r: PSingle; g: PSingle; b: PSingle); cdecl;
-  al_unmap_rgba_f: procedure(color: ALLEGRO_COLOR; r: PSingle; g: PSingle; b: PSingle; a: PSingle); cdecl;
-  al_get_pixel_size: function(format: Integer): Integer; cdecl;
-  al_get_pixel_format_bits: function(format: Integer): Integer; cdecl;
-  al_get_pixel_block_size: function(format: Integer): Integer; cdecl;
-  al_get_pixel_block_width: function(format: Integer): Integer; cdecl;
-  al_get_pixel_block_height: function(format: Integer): Integer; cdecl;
-  al_set_new_bitmap_format: procedure(format: Integer); cdecl;
-  al_set_new_bitmap_flags: procedure(flags: Integer); cdecl;
-  al_get_new_bitmap_format: function(): Integer; cdecl;
-  al_get_new_bitmap_flags: function(): Integer; cdecl;
-  al_add_new_bitmap_flag: procedure(flag: Integer); cdecl;
-  al_get_new_bitmap_depth: function(): Integer; cdecl;
-  al_set_new_bitmap_depth: procedure(depth: Integer); cdecl;
-  al_get_new_bitmap_samples: function(): Integer; cdecl;
-  al_set_new_bitmap_samples: procedure(samples: Integer); cdecl;
-  al_get_new_bitmap_wrap: procedure(u: PALLEGRO_BITMAP_WRAP; v: PALLEGRO_BITMAP_WRAP); cdecl;
-  al_set_new_bitmap_wrap: procedure(u: ALLEGRO_BITMAP_WRAP; v: ALLEGRO_BITMAP_WRAP); cdecl;
-  al_get_bitmap_width: function(bitmap: PALLEGRO_BITMAP): Integer; cdecl;
-  al_get_bitmap_height: function(bitmap: PALLEGRO_BITMAP): Integer; cdecl;
-  al_get_bitmap_format: function(bitmap: PALLEGRO_BITMAP): Integer; cdecl;
-  al_get_bitmap_flags: function(bitmap: PALLEGRO_BITMAP): Integer; cdecl;
-  al_get_bitmap_depth: function(bitmap: PALLEGRO_BITMAP): Integer; cdecl;
-  al_get_bitmap_samples: function(bitmap: PALLEGRO_BITMAP): Integer; cdecl;
-  al_create_bitmap: function(w: Integer; h: Integer): PALLEGRO_BITMAP; cdecl;
-  al_destroy_bitmap: procedure(bitmap: PALLEGRO_BITMAP); cdecl;
-  al_put_pixel: procedure(x: Integer; y: Integer; color: ALLEGRO_COLOR); cdecl;
-  al_put_blended_pixel: procedure(x: Integer; y: Integer; color: ALLEGRO_COLOR); cdecl;
-  al_get_pixel: function(bitmap: PALLEGRO_BITMAP; x: Integer; y: Integer): ALLEGRO_COLOR; cdecl;
-  al_convert_mask_to_alpha: procedure(bitmap: PALLEGRO_BITMAP; mask_color: ALLEGRO_COLOR); cdecl;
-  al_get_bitmap_blend_color: function(): ALLEGRO_COLOR; cdecl;
-  al_get_bitmap_blender: procedure(op: PInteger; src: PInteger; dst: PInteger); cdecl;
-  al_get_separate_bitmap_blender: procedure(op: PInteger; src: PInteger; dst: PInteger; alpha_op: PInteger; alpha_src: PInteger; alpha_dst: PInteger); cdecl;
-  al_set_bitmap_blend_color: procedure(color: ALLEGRO_COLOR); cdecl;
-  al_set_bitmap_blender: procedure(op: Integer; src: Integer; dst: Integer); cdecl;
-  al_set_separate_bitmap_blender: procedure(op: Integer; src: Integer; dst: Integer; alpha_op: Integer; alpha_src: Integer; alpha_dst: Integer); cdecl;
-  al_reset_bitmap_blender: procedure(); cdecl;
-  al_set_clipping_rectangle: procedure(x: Integer; y: Integer; width: Integer; height: Integer); cdecl;
-  al_reset_clipping_rectangle: procedure(); cdecl;
-  al_get_clipping_rectangle: procedure(x: PInteger; y: PInteger; w: PInteger; h: PInteger); cdecl;
-  al_create_sub_bitmap: function(parent: PALLEGRO_BITMAP; x: Integer; y: Integer; w: Integer; h: Integer): PALLEGRO_BITMAP; cdecl;
-  al_is_sub_bitmap: function(bitmap: PALLEGRO_BITMAP): Boolean; cdecl;
-  al_get_parent_bitmap: function(bitmap: PALLEGRO_BITMAP): PALLEGRO_BITMAP; cdecl;
-  al_get_bitmap_x: function(bitmap: PALLEGRO_BITMAP): Integer; cdecl;
-  al_get_bitmap_y: function(bitmap: PALLEGRO_BITMAP): Integer; cdecl;
-  al_reparent_bitmap: procedure(bitmap: PALLEGRO_BITMAP; parent: PALLEGRO_BITMAP; x: Integer; y: Integer; w: Integer; h: Integer); cdecl;
-  al_clone_bitmap: function(bitmap: PALLEGRO_BITMAP): PALLEGRO_BITMAP; cdecl;
-  al_convert_bitmap: procedure(bitmap: PALLEGRO_BITMAP); cdecl;
-  al_convert_memory_bitmaps: procedure(); cdecl;
-  al_backup_dirty_bitmap: procedure(bitmap: PALLEGRO_BITMAP); cdecl;
-  al_draw_bitmap: procedure(bitmap: PALLEGRO_BITMAP; dx: Single; dy: Single; flags: Integer); cdecl;
-  al_draw_bitmap_region: procedure(bitmap: PALLEGRO_BITMAP; sx: Single; sy: Single; sw: Single; sh: Single; dx: Single; dy: Single; flags: Integer); cdecl;
-  al_draw_scaled_bitmap: procedure(bitmap: PALLEGRO_BITMAP; sx: Single; sy: Single; sw: Single; sh: Single; dx: Single; dy: Single; dw: Single; dh: Single; flags: Integer); cdecl;
-  al_draw_rotated_bitmap: procedure(bitmap: PALLEGRO_BITMAP; cx: Single; cy: Single; dx: Single; dy: Single; angle: Single; flags: Integer); cdecl;
-  al_draw_scaled_rotated_bitmap: procedure(bitmap: PALLEGRO_BITMAP; cx: Single; cy: Single; dx: Single; dy: Single; xscale: Single; yscale: Single; angle: Single; flags: Integer); cdecl;
-  al_draw_tinted_bitmap: procedure(bitmap: PALLEGRO_BITMAP; tint: ALLEGRO_COLOR; dx: Single; dy: Single; flags: Integer); cdecl;
-  al_draw_tinted_bitmap_region: procedure(bitmap: PALLEGRO_BITMAP; tint: ALLEGRO_COLOR; sx: Single; sy: Single; sw: Single; sh: Single; dx: Single; dy: Single; flags: Integer); cdecl;
-  al_draw_tinted_scaled_bitmap: procedure(bitmap: PALLEGRO_BITMAP; tint: ALLEGRO_COLOR; sx: Single; sy: Single; sw: Single; sh: Single; dx: Single; dy: Single; dw: Single; dh: Single; flags: Integer); cdecl;
-  al_draw_tinted_rotated_bitmap: procedure(bitmap: PALLEGRO_BITMAP; tint: ALLEGRO_COLOR; cx: Single; cy: Single; dx: Single; dy: Single; angle: Single; flags: Integer); cdecl;
-  al_draw_tinted_scaled_rotated_bitmap: procedure(bitmap: PALLEGRO_BITMAP; tint: ALLEGRO_COLOR; cx: Single; cy: Single; dx: Single; dy: Single; xscale: Single; yscale: Single; angle: Single; flags: Integer); cdecl;
-  al_draw_tinted_scaled_rotated_bitmap_region: procedure(bitmap: PALLEGRO_BITMAP; sx: Single; sy: Single; sw: Single; sh: Single; tint: ALLEGRO_COLOR; cx: Single; cy: Single; dx: Single; dy: Single; xscale: Single; yscale: Single; angle: Single; flags: Integer); cdecl;
-  al_ustr_new: function(const s: PUTF8Char): PALLEGRO_USTR; cdecl;
-  al_ustr_new_from_buffer: function(const s: PUTF8Char; size: NativeUInt): PALLEGRO_USTR; cdecl;
-  al_ustr_newf: function(const fmt: PUTF8Char): PALLEGRO_USTR varargs; cdecl;
-  al_ustr_free: procedure(us: PALLEGRO_USTR); cdecl;
-  al_cstr: function(const us: PALLEGRO_USTR): PUTF8Char; cdecl;
-  al_ustr_to_buffer: procedure(const us: PALLEGRO_USTR; buffer: PUTF8Char; size: Integer); cdecl;
-  al_cstr_dup: function(const us: PALLEGRO_USTR): PUTF8Char; cdecl;
-  al_ustr_dup: function(const us: PALLEGRO_USTR): PALLEGRO_USTR; cdecl;
-  al_ustr_dup_substr: function(const us: PALLEGRO_USTR; start_pos: Integer; end_pos: Integer): PALLEGRO_USTR; cdecl;
-  al_ustr_empty_string: function(): PALLEGRO_USTR; cdecl;
-  al_ref_cstr: function(info: PALLEGRO_USTR_INFO; const s: PUTF8Char): PALLEGRO_USTR; cdecl;
-  al_ref_buffer: function(info: PALLEGRO_USTR_INFO; const s: PUTF8Char; size: NativeUInt): PALLEGRO_USTR; cdecl;
-  al_ref_ustr: function(info: PALLEGRO_USTR_INFO; const us: PALLEGRO_USTR; start_pos: Integer; end_pos: Integer): PALLEGRO_USTR; cdecl;
-  al_ustr_size: function(const us: PALLEGRO_USTR): NativeUInt; cdecl;
-  al_ustr_length: function(const us: PALLEGRO_USTR): NativeUInt; cdecl;
-  al_ustr_offset: function(const us: PALLEGRO_USTR; index: Integer): Integer; cdecl;
-  al_ustr_next: function(const us: PALLEGRO_USTR; pos: PInteger): Boolean; cdecl;
-  al_ustr_prev: function(const us: PALLEGRO_USTR; pos: PInteger): Boolean; cdecl;
-  al_ustr_get: function(const us: PALLEGRO_USTR; pos: Integer): Int32; cdecl;
-  al_ustr_get_next: function(const us: PALLEGRO_USTR; pos: PInteger): Int32; cdecl;
-  al_ustr_prev_get: function(const us: PALLEGRO_USTR; pos: PInteger): Int32; cdecl;
-  al_ustr_insert: function(us1: PALLEGRO_USTR; pos: Integer; const us2: PALLEGRO_USTR): Boolean; cdecl;
-  al_ustr_insert_cstr: function(us: PALLEGRO_USTR; pos: Integer; const us2: PUTF8Char): Boolean; cdecl;
-  al_ustr_insert_chr: function(us: PALLEGRO_USTR; pos: Integer; c: Int32): NativeUInt; cdecl;
-  al_ustr_append: function(us1: PALLEGRO_USTR; const us2: PALLEGRO_USTR): Boolean; cdecl;
-  al_ustr_append_cstr: function(us: PALLEGRO_USTR; const s: PUTF8Char): Boolean; cdecl;
-  al_ustr_append_chr: function(us: PALLEGRO_USTR; c: Int32): NativeUInt; cdecl;
-  al_ustr_appendf: function(us: PALLEGRO_USTR; const fmt: PUTF8Char): Boolean varargs; cdecl;
-  al_ustr_vappendf: function(us: PALLEGRO_USTR; const fmt: PUTF8Char; ap: Pointer): Boolean; cdecl;
-  al_ustr_remove_chr: function(us: PALLEGRO_USTR; pos: Integer): Boolean; cdecl;
-  al_ustr_remove_range: function(us: PALLEGRO_USTR; start_pos: Integer; end_pos: Integer): Boolean; cdecl;
-  al_ustr_truncate: function(us: PALLEGRO_USTR; start_pos: Integer): Boolean; cdecl;
-  al_ustr_ltrim_ws: function(us: PALLEGRO_USTR): Boolean; cdecl;
-  al_ustr_rtrim_ws: function(us: PALLEGRO_USTR): Boolean; cdecl;
-  al_ustr_trim_ws: function(us: PALLEGRO_USTR): Boolean; cdecl;
-  al_ustr_assign: function(us1: PALLEGRO_USTR; const us2: PALLEGRO_USTR): Boolean; cdecl;
-  al_ustr_assign_substr: function(us1: PALLEGRO_USTR; const us2: PALLEGRO_USTR; start_pos: Integer; end_pos: Integer): Boolean; cdecl;
-  al_ustr_assign_cstr: function(us1: PALLEGRO_USTR; const s: PUTF8Char): Boolean; cdecl;
-  al_ustr_set_chr: function(us: PALLEGRO_USTR; pos: Integer; c: Int32): NativeUInt; cdecl;
-  al_ustr_replace_range: function(us1: PALLEGRO_USTR; start_pos1: Integer; end_pos1: Integer; const us2: PALLEGRO_USTR): Boolean; cdecl;
-  al_ustr_find_chr: function(const us: PALLEGRO_USTR; start_pos: Integer; c: Int32): Integer; cdecl;
-  al_ustr_rfind_chr: function(const us: PALLEGRO_USTR; start_pos: Integer; c: Int32): Integer; cdecl;
-  al_ustr_find_set: function(const us: PALLEGRO_USTR; start_pos: Integer; const accept: PALLEGRO_USTR): Integer; cdecl;
-  al_ustr_find_set_cstr: function(const us: PALLEGRO_USTR; start_pos: Integer; const accept: PUTF8Char): Integer; cdecl;
-  al_ustr_find_cset: function(const us: PALLEGRO_USTR; start_pos: Integer; const reject: PALLEGRO_USTR): Integer; cdecl;
-  al_ustr_find_cset_cstr: function(const us: PALLEGRO_USTR; start_pos: Integer; const reject: PUTF8Char): Integer; cdecl;
-  al_ustr_find_str: function(const haystack: PALLEGRO_USTR; start_pos: Integer; const needle: PALLEGRO_USTR): Integer; cdecl;
-  al_ustr_find_cstr: function(const haystack: PALLEGRO_USTR; start_pos: Integer; const needle: PUTF8Char): Integer; cdecl;
-  al_ustr_rfind_str: function(const haystack: PALLEGRO_USTR; start_pos: Integer; const needle: PALLEGRO_USTR): Integer; cdecl;
-  al_ustr_rfind_cstr: function(const haystack: PALLEGRO_USTR; start_pos: Integer; const needle: PUTF8Char): Integer; cdecl;
-  al_ustr_find_replace: function(us: PALLEGRO_USTR; start_pos: Integer; const find: PALLEGRO_USTR; const replace: PALLEGRO_USTR): Boolean; cdecl;
-  al_ustr_find_replace_cstr: function(us: PALLEGRO_USTR; start_pos: Integer; const find: PUTF8Char; const replace: PUTF8Char): Boolean; cdecl;
-  al_ustr_equal: function(const us1: PALLEGRO_USTR; const us2: PALLEGRO_USTR): Boolean; cdecl;
-  al_ustr_compare: function(const u: PALLEGRO_USTR; const v: PALLEGRO_USTR): Integer; cdecl;
-  al_ustr_ncompare: function(const us1: PALLEGRO_USTR; const us2: PALLEGRO_USTR; n: Integer): Integer; cdecl;
-  al_ustr_has_prefix: function(const u: PALLEGRO_USTR; const v: PALLEGRO_USTR): Boolean; cdecl;
-  al_ustr_has_prefix_cstr: function(const u: PALLEGRO_USTR; const s: PUTF8Char): Boolean; cdecl;
-  al_ustr_has_suffix: function(const u: PALLEGRO_USTR; const v: PALLEGRO_USTR): Boolean; cdecl;
-  al_ustr_has_suffix_cstr: function(const us1: PALLEGRO_USTR; const s: PUTF8Char): Boolean; cdecl;
-  al_utf8_width: function(c: Int32): NativeUInt; cdecl;
-  al_utf8_encode: function(s: PUTF8Char; c: Int32): NativeUInt; cdecl;
-  al_ustr_new_from_utf16: function(const s: PUInt16): PALLEGRO_USTR; cdecl;
-  al_ustr_size_utf16: function(const us: PALLEGRO_USTR): NativeUInt; cdecl;
-  al_ustr_encode_utf16: function(const us: PALLEGRO_USTR; s: PUInt16; n: NativeUInt): NativeUInt; cdecl;
-  al_utf16_width: function(c: Integer): NativeUInt; cdecl;
-  al_utf16_encode: function(s: PUInt16; c: Int32): NativeUInt; cdecl;
-  al_create_path: function(const str: PUTF8Char): PALLEGRO_PATH; cdecl;
-  al_create_path_for_directory: function(const str: PUTF8Char): PALLEGRO_PATH; cdecl;
-  al_clone_path: function(const path: PALLEGRO_PATH): PALLEGRO_PATH; cdecl;
-  al_get_path_num_components: function(const path: PALLEGRO_PATH): Integer; cdecl;
-  al_get_path_component: function(const path: PALLEGRO_PATH; i: Integer): PUTF8Char; cdecl;
-  al_replace_path_component: procedure(path: PALLEGRO_PATH; i: Integer; const s: PUTF8Char); cdecl;
-  al_remove_path_component: procedure(path: PALLEGRO_PATH; i: Integer); cdecl;
-  al_insert_path_component: procedure(path: PALLEGRO_PATH; i: Integer; const s: PUTF8Char); cdecl;
-  al_get_path_tail: function(const path: PALLEGRO_PATH): PUTF8Char; cdecl;
-  al_drop_path_tail: procedure(path: PALLEGRO_PATH); cdecl;
-  al_append_path_component: procedure(path: PALLEGRO_PATH; const s: PUTF8Char); cdecl;
-  al_join_paths: function(path: PALLEGRO_PATH; const tail: PALLEGRO_PATH): Boolean; cdecl;
-  al_rebase_path: function(const head: PALLEGRO_PATH; tail: PALLEGRO_PATH): Boolean; cdecl;
-  al_path_cstr: function(const path: PALLEGRO_PATH; delim: UTF8Char): PUTF8Char; cdecl;
-  al_path_ustr: function(const path: PALLEGRO_PATH; delim: UTF8Char): PALLEGRO_USTR; cdecl;
-  al_destroy_path: procedure(path: PALLEGRO_PATH); cdecl;
-  al_set_path_drive: procedure(path: PALLEGRO_PATH; const drive: PUTF8Char); cdecl;
-  al_get_path_drive: function(const path: PALLEGRO_PATH): PUTF8Char; cdecl;
-  al_set_path_filename: procedure(path: PALLEGRO_PATH; const filename: PUTF8Char); cdecl;
-  al_get_path_filename: function(const path: PALLEGRO_PATH): PUTF8Char; cdecl;
-  al_get_path_extension: function(const path: PALLEGRO_PATH): PUTF8Char; cdecl;
-  al_set_path_extension: function(path: PALLEGRO_PATH; const extension: PUTF8Char): Boolean; cdecl;
-  al_get_path_basename: function(const path: PALLEGRO_PATH): PUTF8Char; cdecl;
-  al_make_path_canonical: function(path: PALLEGRO_PATH): Boolean; cdecl;
-  al_fopen: function(const path: PUTF8Char; const mode: PUTF8Char): PALLEGRO_FILE; cdecl;
-  al_fopen_interface: function(const vt: PALLEGRO_FILE_INTERFACE; const path: PUTF8Char; const mode: PUTF8Char): PALLEGRO_FILE; cdecl;
-  al_create_file_handle: function(const vt: PALLEGRO_FILE_INTERFACE; userdata: Pointer): PALLEGRO_FILE; cdecl;
-  al_fclose: function(f: PALLEGRO_FILE): Boolean; cdecl;
-  al_fread: function(f: PALLEGRO_FILE; ptr: Pointer; size: NativeUInt): NativeUInt; cdecl;
-  al_fwrite: function(f: PALLEGRO_FILE; const ptr: Pointer; size: NativeUInt): NativeUInt; cdecl;
-  al_fflush: function(f: PALLEGRO_FILE): Boolean; cdecl;
-  al_ftell: function(f: PALLEGRO_FILE): Int64; cdecl;
-  al_fseek: function(f: PALLEGRO_FILE; offset: Int64; whence: Integer): Boolean; cdecl;
-  al_feof: function(f: PALLEGRO_FILE): Boolean; cdecl;
-  al_ferror: function(f: PALLEGRO_FILE): Integer; cdecl;
-  al_ferrmsg: function(f: PALLEGRO_FILE): PUTF8Char; cdecl;
-  al_fclearerr: procedure(f: PALLEGRO_FILE); cdecl;
-  al_fungetc: function(f: PALLEGRO_FILE; c: Integer): Integer; cdecl;
-  al_fsize: function(f: PALLEGRO_FILE): Int64; cdecl;
-  al_fgetc: function(f: PALLEGRO_FILE): Integer; cdecl;
-  al_fputc: function(f: PALLEGRO_FILE; c: Integer): Integer; cdecl;
-  al_fread16le: function(f: PALLEGRO_FILE): Int16; cdecl;
-  al_fread16be: function(f: PALLEGRO_FILE): Int16; cdecl;
-  al_fwrite16le: function(f: PALLEGRO_FILE; w: Int16): NativeUInt; cdecl;
-  al_fwrite16be: function(f: PALLEGRO_FILE; w: Int16): NativeUInt; cdecl;
-  al_fread32le: function(f: PALLEGRO_FILE): Int32; cdecl;
-  al_fread32be: function(f: PALLEGRO_FILE): Int32; cdecl;
-  al_fwrite32le: function(f: PALLEGRO_FILE; l: Int32): NativeUInt; cdecl;
-  al_fwrite32be: function(f: PALLEGRO_FILE; l: Int32): NativeUInt; cdecl;
-  al_fgets: function(f: PALLEGRO_FILE; const p: PUTF8Char; max: NativeUInt): PUTF8Char; cdecl;
-  al_fget_ustr: function(f: PALLEGRO_FILE): PALLEGRO_USTR; cdecl;
-  al_fputs: function(f: PALLEGRO_FILE; const p: PUTF8Char): Integer; cdecl;
-  al_fprintf: function(f: PALLEGRO_FILE; const format: PUTF8Char): Integer varargs; cdecl;
-  //al_vfprintf: function(f: PALLEGRO_FILE; const format: PUTF8Char; args: Pointer): Integer; cdecl; varargs;
-  al_fopen_fd: function(fd: Integer; const mode: PUTF8Char): PALLEGRO_FILE; cdecl;
-  al_make_temp_file: function(const tmpl: PUTF8Char; ret_path: PPALLEGRO_PATH): PALLEGRO_FILE; cdecl;
-  al_fopen_slice: function(fp: PALLEGRO_FILE; initial_size: NativeUInt; const mode: PUTF8Char): PALLEGRO_FILE; cdecl;
-  al_get_new_file_interface: function(): PALLEGRO_FILE_INTERFACE; cdecl;
-  al_set_new_file_interface: procedure(const file_interface: PALLEGRO_FILE_INTERFACE); cdecl;
-  al_set_standard_file_interface: procedure(); cdecl;
-  al_get_file_userdata: function(f: PALLEGRO_FILE): Pointer; cdecl;
-  al_register_bitmap_loader: function(const ext: PUTF8Char; loader: ALLEGRO_IIO_LOADER_FUNCTION): Boolean; cdecl;
-  al_register_bitmap_saver: function(const ext: PUTF8Char; saver: ALLEGRO_IIO_SAVER_FUNCTION): Boolean; cdecl;
-  al_register_bitmap_loader_f: function(const ext: PUTF8Char; fs_loader: ALLEGRO_IIO_FS_LOADER_FUNCTION): Boolean; cdecl;
-  al_register_bitmap_saver_f: function(const ext: PUTF8Char; fs_saver: ALLEGRO_IIO_FS_SAVER_FUNCTION): Boolean; cdecl;
-  al_register_bitmap_identifier: function(const ext: PUTF8Char; identifier: ALLEGRO_IIO_IDENTIFIER_FUNCTION): Boolean; cdecl;
-  al_load_bitmap: function(const filename: PUTF8Char): PALLEGRO_BITMAP; cdecl;
-  al_load_bitmap_flags: function(const filename: PUTF8Char; flags: Integer): PALLEGRO_BITMAP; cdecl;
-  al_load_bitmap_f: function(fp: PALLEGRO_FILE; const ident: PUTF8Char): PALLEGRO_BITMAP; cdecl;
-  al_load_bitmap_flags_f: function(fp: PALLEGRO_FILE; const ident: PUTF8Char; flags: Integer): PALLEGRO_BITMAP; cdecl;
-  al_save_bitmap: function(const filename: PUTF8Char; bitmap: PALLEGRO_BITMAP): Boolean; cdecl;
-  al_save_bitmap_f: function(fp: PALLEGRO_FILE; const ident: PUTF8Char; bitmap: PALLEGRO_BITMAP): Boolean; cdecl;
-  al_identify_bitmap_f: function(fp: PALLEGRO_FILE): PUTF8Char; cdecl;
-  al_identify_bitmap: function(const filename: PUTF8Char): PUTF8Char; cdecl;
-  al_lock_bitmap: function(bitmap: PALLEGRO_BITMAP; format: Integer; flags: Integer): PALLEGRO_LOCKED_REGION; cdecl;
-  al_lock_bitmap_region: function(bitmap: PALLEGRO_BITMAP; x: Integer; y: Integer; width: Integer; height: Integer; format: Integer; flags: Integer): PALLEGRO_LOCKED_REGION; cdecl;
-  al_lock_bitmap_blocked: function(bitmap: PALLEGRO_BITMAP; flags: Integer): PALLEGRO_LOCKED_REGION; cdecl;
-  al_lock_bitmap_region_blocked: function(bitmap: PALLEGRO_BITMAP; x_block: Integer; y_block: Integer; width_block: Integer; height_block: Integer; flags: Integer): PALLEGRO_LOCKED_REGION; cdecl;
-  al_unlock_bitmap: procedure(bitmap: PALLEGRO_BITMAP); cdecl;
-  al_is_bitmap_locked: function(bitmap: PALLEGRO_BITMAP): Boolean; cdecl;
-  al_set_blender: procedure(op: Integer; source: Integer; dest: Integer); cdecl;
-  al_set_blend_color: procedure(color: ALLEGRO_COLOR); cdecl;
-  al_get_blender: procedure(op: PInteger; source: PInteger; dest: PInteger); cdecl;
-  al_get_blend_color: function(): ALLEGRO_COLOR; cdecl;
-  al_set_separate_blender: procedure(op: Integer; source: Integer; dest: Integer; alpha_op: Integer; alpha_source: Integer; alpha_dest: Integer); cdecl;
-  al_get_separate_blender: procedure(op: PInteger; source: PInteger; dest: PInteger; alpha_op: PInteger; alpha_src: PInteger; alpha_dest: PInteger); cdecl;
-  al_init_user_event_source: procedure(p1: PALLEGRO_EVENT_SOURCE); cdecl;
-  al_destroy_user_event_source: procedure(p1: PALLEGRO_EVENT_SOURCE); cdecl;
-  al_emit_user_event: function(p1: PALLEGRO_EVENT_SOURCE; p2: PALLEGRO_EVENT; dtor: al_emit_user_event_dtor): Boolean; cdecl;
-  al_unref_user_event: procedure(p1: PALLEGRO_USER_EVENT); cdecl;
-  al_set_event_source_data: procedure(p1: PALLEGRO_EVENT_SOURCE; data: IntPtr); cdecl;
-  al_get_event_source_data: function(const p1: PALLEGRO_EVENT_SOURCE): IntPtr; cdecl;
-  al_create_event_queue: function(): PALLEGRO_EVENT_QUEUE; cdecl;
-  al_destroy_event_queue: procedure(p1: PALLEGRO_EVENT_QUEUE); cdecl;
-  al_is_event_source_registered: function(p1: PALLEGRO_EVENT_QUEUE; p2: PALLEGRO_EVENT_SOURCE): Boolean; cdecl;
-  al_register_event_source: procedure(p1: PALLEGRO_EVENT_QUEUE; p2: PALLEGRO_EVENT_SOURCE); cdecl;
-  al_unregister_event_source: procedure(p1: PALLEGRO_EVENT_QUEUE; p2: PALLEGRO_EVENT_SOURCE); cdecl;
-  al_pause_event_queue: procedure(p1: PALLEGRO_EVENT_QUEUE; p2: Boolean); cdecl;
-  al_is_event_queue_paused: function(const p1: PALLEGRO_EVENT_QUEUE): Boolean; cdecl;
-  al_is_event_queue_empty: function(p1: PALLEGRO_EVENT_QUEUE): Boolean; cdecl;
-  al_get_next_event: function(p1: PALLEGRO_EVENT_QUEUE; ret_event: PALLEGRO_EVENT): Boolean; cdecl;
-  al_peek_next_event: function(p1: PALLEGRO_EVENT_QUEUE; ret_event: PALLEGRO_EVENT): Boolean; cdecl;
-  al_drop_next_event: function(p1: PALLEGRO_EVENT_QUEUE): Boolean; cdecl;
-  al_flush_event_queue: procedure(p1: PALLEGRO_EVENT_QUEUE); cdecl;
-  al_wait_for_event: procedure(p1: PALLEGRO_EVENT_QUEUE; ret_event: PALLEGRO_EVENT); cdecl;
-  al_wait_for_event_timed: function(p1: PALLEGRO_EVENT_QUEUE; ret_event: PALLEGRO_EVENT; secs: Single): Boolean; cdecl;
-  al_wait_for_event_until: function(queue: PALLEGRO_EVENT_QUEUE; ret_event: PALLEGRO_EVENT; timeout: PALLEGRO_TIMEOUT): Boolean; cdecl;
-  al_set_new_display_refresh_rate: procedure(refresh_rate: Integer); cdecl;
-  al_set_new_display_flags: procedure(flags: Integer); cdecl;
-  al_get_new_display_refresh_rate: function(): Integer; cdecl;
-  al_get_new_display_flags: function(): Integer; cdecl;
-  al_set_new_window_title: procedure(const title: PUTF8Char); cdecl;
-  al_get_new_window_title: function(): PUTF8Char; cdecl;
-  al_get_display_width: function(display: PALLEGRO_DISPLAY): Integer; cdecl;
-  al_get_display_height: function(display: PALLEGRO_DISPLAY): Integer; cdecl;
-  al_get_display_format: function(display: PALLEGRO_DISPLAY): Integer; cdecl;
-  al_get_display_refresh_rate: function(display: PALLEGRO_DISPLAY): Integer; cdecl;
-  al_get_display_flags: function(display: PALLEGRO_DISPLAY): Integer; cdecl;
-  al_get_display_orientation: function(display: PALLEGRO_DISPLAY): Integer; cdecl;
-  al_set_display_flag: function(display: PALLEGRO_DISPLAY; flag: Integer; onoff: Boolean): Boolean; cdecl;
-  al_create_display: function(w: Integer; h: Integer): PALLEGRO_DISPLAY; cdecl;
-  al_destroy_display: procedure(display: PALLEGRO_DISPLAY); cdecl;
-  al_get_current_display: function(): PALLEGRO_DISPLAY; cdecl;
-  al_set_target_bitmap: procedure(bitmap: PALLEGRO_BITMAP); cdecl;
-  al_set_target_backbuffer: procedure(display: PALLEGRO_DISPLAY); cdecl;
-  al_get_backbuffer: function(display: PALLEGRO_DISPLAY): PALLEGRO_BITMAP; cdecl;
-  al_get_target_bitmap: function(): PALLEGRO_BITMAP; cdecl;
-  al_acknowledge_resize: function(display: PALLEGRO_DISPLAY): Boolean; cdecl;
-  al_resize_display: function(display: PALLEGRO_DISPLAY; width: Integer; height: Integer): Boolean; cdecl;
-  al_flip_display: procedure(); cdecl;
-  al_update_display_region: procedure(x: Integer; y: Integer; width: Integer; height: Integer); cdecl;
-  al_is_compatible_bitmap: function(bitmap: PALLEGRO_BITMAP): Boolean; cdecl;
-  al_wait_for_vsync: function(): Boolean; cdecl;
-  al_get_display_event_source: function(display: PALLEGRO_DISPLAY): PALLEGRO_EVENT_SOURCE; cdecl;
-  al_set_display_icon: procedure(display: PALLEGRO_DISPLAY; icon: PALLEGRO_BITMAP); cdecl;
-  al_set_display_icons: procedure(display: PALLEGRO_DISPLAY; num_icons: Integer; icons: PPALLEGRO_BITMAP); cdecl;
-  al_get_new_display_adapter: function(): Integer; cdecl;
-  al_set_new_display_adapter: procedure(adapter: Integer); cdecl;
-  al_set_new_window_position: procedure(x: Integer; y: Integer); cdecl;
-  al_get_new_window_position: procedure(x: PInteger; y: PInteger); cdecl;
-  al_set_window_position: procedure(display: PALLEGRO_DISPLAY; x: Integer; y: Integer); cdecl;
-  al_get_window_position: procedure(display: PALLEGRO_DISPLAY; x: PInteger; y: PInteger); cdecl;
-  al_set_window_constraints: function(display: PALLEGRO_DISPLAY; min_w: Integer; min_h: Integer; max_w: Integer; max_h: Integer): Boolean; cdecl;
-  al_get_window_constraints: function(display: PALLEGRO_DISPLAY; min_w: PInteger; min_h: PInteger; max_w: PInteger; max_h: PInteger): Boolean; cdecl;
-  al_apply_window_constraints: procedure(display: PALLEGRO_DISPLAY; onoff: Boolean); cdecl;
-  al_set_window_title: procedure(display: PALLEGRO_DISPLAY; const title: PUTF8Char); cdecl;
-  al_set_new_display_option: procedure(option: Integer; value: Integer; importance: Integer); cdecl;
-  al_get_new_display_option: function(option: Integer; importance: PInteger): Integer; cdecl;
-  al_reset_new_display_options: procedure(); cdecl;
-  al_set_display_option: procedure(display: PALLEGRO_DISPLAY; option: Integer; value: Integer); cdecl;
-  al_get_display_option: function(display: PALLEGRO_DISPLAY; option: Integer): Integer; cdecl;
-  al_hold_bitmap_drawing: procedure(hold: Boolean); cdecl;
-  al_is_bitmap_drawing_held: function(): Boolean; cdecl;
-  al_acknowledge_drawing_halt: procedure(display: PALLEGRO_DISPLAY); cdecl;
-  al_acknowledge_drawing_resume: procedure(display: PALLEGRO_DISPLAY); cdecl;
-  al_backup_dirty_bitmaps: procedure(display: PALLEGRO_DISPLAY); cdecl;
-  al_get_clipboard_text: function(display: PALLEGRO_DISPLAY): PUTF8Char; cdecl;
-  al_set_clipboard_text: function(display: PALLEGRO_DISPLAY; const text: PUTF8Char): Boolean; cdecl;
-  al_clipboard_has_text: function(display: PALLEGRO_DISPLAY): Boolean; cdecl;
-  al_create_config: function(): PALLEGRO_CONFIG; cdecl;
-  al_add_config_section: procedure(config: PALLEGRO_CONFIG; const name: PUTF8Char); cdecl;
-  al_set_config_value: procedure(config: PALLEGRO_CONFIG; const section: PUTF8Char; const key: PUTF8Char; const value: PUTF8Char); cdecl;
-  al_add_config_comment: procedure(config: PALLEGRO_CONFIG; const section: PUTF8Char; const comment: PUTF8Char); cdecl;
-  al_get_config_value: function(const config: PALLEGRO_CONFIG; const section: PUTF8Char; const key: PUTF8Char): PUTF8Char; cdecl;
-  al_load_config_file: function(const filename: PUTF8Char): PALLEGRO_CONFIG; cdecl;
-  al_load_config_file_f: function(filename: PALLEGRO_FILE): PALLEGRO_CONFIG; cdecl;
-  al_save_config_file: function(const filename: PUTF8Char; const config: PALLEGRO_CONFIG): Boolean; cdecl;
-  al_save_config_file_f: function(file_: PALLEGRO_FILE; const config: PALLEGRO_CONFIG): Boolean; cdecl;
-  al_merge_config_into: procedure(master: PALLEGRO_CONFIG; const add: PALLEGRO_CONFIG); cdecl;
-  al_merge_config: function(const cfg1: PALLEGRO_CONFIG; const cfg2: PALLEGRO_CONFIG): PALLEGRO_CONFIG; cdecl;
-  al_destroy_config: procedure(config: PALLEGRO_CONFIG); cdecl;
-  al_remove_config_section: function(config: PALLEGRO_CONFIG; const section: PUTF8Char): Boolean; cdecl;
-  al_remove_config_key: function(config: PALLEGRO_CONFIG; const section: PUTF8Char; const key: PUTF8Char): Boolean; cdecl;
-  al_get_first_config_section: function(const config: PALLEGRO_CONFIG; iterator: PPALLEGRO_CONFIG_SECTION): PUTF8Char; cdecl;
-  al_get_next_config_section: function(iterator: PPALLEGRO_CONFIG_SECTION): PUTF8Char; cdecl;
-  al_get_first_config_entry: function(const config: PALLEGRO_CONFIG; const section: PUTF8Char; iterator: PPALLEGRO_CONFIG_ENTRY): PUTF8Char; cdecl;
-  al_get_next_config_entry: function(iterator: PPALLEGRO_CONFIG_ENTRY): PUTF8Char; cdecl;
-  al_get_cpu_count: function(): Integer; cdecl;
-  al_get_ram_size: function(): Integer; cdecl;
-  _al_trace_prefix: function(const channel: PUTF8Char; level: Integer; const file_: PUTF8Char; line: Integer; const function_: PUTF8Char): Boolean; cdecl;
-  _al_trace_suffix: procedure(const msg: PUTF8Char) varargs; cdecl;
-  al_register_assert_handler: procedure(handler: al_register_assert_handler_handler); cdecl;
-  al_register_trace_handler: procedure(handler: al_register_trace_handler_handler); cdecl;
-  al_clear_to_color: procedure(color: ALLEGRO_COLOR); cdecl;
-  al_clear_depth_buffer: procedure(x: Single); cdecl;
-  al_draw_pixel: procedure(x: Single; y: Single; color: ALLEGRO_COLOR); cdecl;
-  al_get_errno: function(): Integer; cdecl;
-  al_set_errno: procedure(errnum: Integer); cdecl;
-  al_fixsqrt: function(x: al_fixed): al_fixed; cdecl;
-  al_fixhypot: function(x: al_fixed; y: al_fixed): al_fixed; cdecl;
-  al_fixatan: function(x: al_fixed): al_fixed; cdecl;
-  al_fixatan2: function(y: al_fixed; x: al_fixed): al_fixed; cdecl;
-  al_create_fs_entry: function(const path: PUTF8Char): PALLEGRO_FS_ENTRY; cdecl;
-  al_destroy_fs_entry: procedure(e: PALLEGRO_FS_ENTRY); cdecl;
-  al_get_fs_entry_name: function(e: PALLEGRO_FS_ENTRY): PUTF8Char; cdecl;
-  al_update_fs_entry: function(e: PALLEGRO_FS_ENTRY): Boolean; cdecl;
-  al_get_fs_entry_mode: function(e: PALLEGRO_FS_ENTRY): UInt32; cdecl;
-  al_get_fs_entry_atime: function(e: PALLEGRO_FS_ENTRY): Longint; cdecl;
-  al_get_fs_entry_mtime: function(e: PALLEGRO_FS_ENTRY): Longint; cdecl;
-  al_get_fs_entry_ctime: function(e: PALLEGRO_FS_ENTRY): Longint; cdecl;
-  al_get_fs_entry_size: function(e: PALLEGRO_FS_ENTRY): off_t; cdecl;
-  al_fs_entry_exists: function(e: PALLEGRO_FS_ENTRY): Boolean; cdecl;
-  al_remove_fs_entry: function(e: PALLEGRO_FS_ENTRY): Boolean; cdecl;
-  al_open_directory: function(e: PALLEGRO_FS_ENTRY): Boolean; cdecl;
-  al_read_directory: function(e: PALLEGRO_FS_ENTRY): PALLEGRO_FS_ENTRY; cdecl;
-  al_close_directory: function(e: PALLEGRO_FS_ENTRY): Boolean; cdecl;
-  al_filename_exists: function(const path: PUTF8Char): Boolean; cdecl;
-  al_remove_filename: function(const path: PUTF8Char): Boolean; cdecl;
-  al_get_current_directory: function(): PUTF8Char; cdecl;
-  al_change_directory: function(const path: PUTF8Char): Boolean; cdecl;
-  al_make_directory: function(const path: PUTF8Char): Boolean; cdecl;
-  al_open_fs_entry: function(e: PALLEGRO_FS_ENTRY; const mode: PUTF8Char): PALLEGRO_FILE; cdecl;
-  al_for_each_fs_entry: function(dir: PALLEGRO_FS_ENTRY; callback: al_for_each_fs_entry_callback; extra: Pointer): Integer; cdecl;
-  al_get_fs_interface: function(): PALLEGRO_FS_INTERFACE; cdecl;
-  al_set_fs_interface: procedure(const vtable: PALLEGRO_FS_INTERFACE); cdecl;
-  al_set_standard_fs_interface: procedure(); cdecl;
-  al_get_num_display_modes: function(): Integer; cdecl;
-  al_get_display_mode: function(index: Integer; mode: PALLEGRO_DISPLAY_MODE): PALLEGRO_DISPLAY_MODE; cdecl;
-  al_install_joystick: function(): Boolean; cdecl;
-  al_uninstall_joystick: procedure(); cdecl;
-  al_is_joystick_installed: function(): Boolean; cdecl;
-  al_reconfigure_joysticks: function(): Boolean; cdecl;
-  al_get_num_joysticks: function(): Integer; cdecl;
-  al_get_joystick: function(joyn: Integer): PALLEGRO_JOYSTICK; cdecl;
-  al_release_joystick: procedure(p1: PALLEGRO_JOYSTICK); cdecl;
-  al_get_joystick_active: function(p1: PALLEGRO_JOYSTICK): Boolean; cdecl;
-  al_get_joystick_name: function(p1: PALLEGRO_JOYSTICK): PUTF8Char; cdecl;
-  al_get_joystick_num_sticks: function(p1: PALLEGRO_JOYSTICK): Integer; cdecl;
-  al_get_joystick_stick_flags: function(p1: PALLEGRO_JOYSTICK; stick: Integer): Integer; cdecl;
-  al_get_joystick_stick_name: function(p1: PALLEGRO_JOYSTICK; stick: Integer): PUTF8Char; cdecl;
-  al_get_joystick_num_axes: function(p1: PALLEGRO_JOYSTICK; stick: Integer): Integer; cdecl;
-  al_get_joystick_axis_name: function(p1: PALLEGRO_JOYSTICK; stick: Integer; axis: Integer): PUTF8Char; cdecl;
-  al_get_joystick_num_buttons: function(p1: PALLEGRO_JOYSTICK): Integer; cdecl;
-  al_get_joystick_button_name: function(p1: PALLEGRO_JOYSTICK; buttonn: Integer): PUTF8Char; cdecl;
-  al_get_joystick_state: procedure(p1: PALLEGRO_JOYSTICK; ret_state: PALLEGRO_JOYSTICK_STATE); cdecl;
-  al_get_joystick_event_source: function(): PALLEGRO_EVENT_SOURCE; cdecl;
-  al_is_keyboard_installed: function(): Boolean; cdecl;
-  al_install_keyboard: function(): Boolean; cdecl;
-  al_uninstall_keyboard: procedure(); cdecl;
-  al_set_keyboard_leds: function(leds: Integer): Boolean; cdecl;
-  al_keycode_to_name: function(keycode: Integer): PUTF8Char; cdecl;
-  al_get_keyboard_state: procedure(ret_state: PALLEGRO_KEYBOARD_STATE); cdecl;
-  al_clear_keyboard_state: procedure(display: PALLEGRO_DISPLAY); cdecl;
-  al_key_down: function(const p1: PALLEGRO_KEYBOARD_STATE; keycode: Integer): Boolean; cdecl;
-  al_get_keyboard_event_source: function(): PALLEGRO_EVENT_SOURCE; cdecl;
-  al_is_mouse_installed: function(): Boolean; cdecl;
-  al_install_mouse: function(): Boolean; cdecl;
-  al_uninstall_mouse: procedure(); cdecl;
-  al_get_mouse_num_buttons: function(): Cardinal; cdecl;
-  al_get_mouse_num_axes: function(): Cardinal; cdecl;
-  al_set_mouse_xy: function(display: PALLEGRO_DISPLAY; x: Integer; y: Integer): Boolean; cdecl;
-  al_set_mouse_z: function(z: Integer): Boolean; cdecl;
-  al_set_mouse_w: function(w: Integer): Boolean; cdecl;
-  al_set_mouse_axis: function(axis: Integer; value: Integer): Boolean; cdecl;
-  al_get_mouse_state: procedure(ret_state: PALLEGRO_MOUSE_STATE); cdecl;
-  al_mouse_button_down: function(const state: PALLEGRO_MOUSE_STATE; button: Integer): Boolean; cdecl;
-  al_get_mouse_state_axis: function(const state: PALLEGRO_MOUSE_STATE; axis: Integer): Integer; cdecl;
-  al_get_mouse_cursor_position: function(ret_x: PInteger; ret_y: PInteger): Boolean; cdecl;
-  al_grab_mouse: function(display: PALLEGRO_DISPLAY): Boolean; cdecl;
-  al_ungrab_mouse: function(): Boolean; cdecl;
-  al_set_mouse_wheel_precision: procedure(precision: Integer); cdecl;
-  al_get_mouse_wheel_precision: function(): Integer; cdecl;
-  al_get_mouse_event_source: function(): PALLEGRO_EVENT_SOURCE; cdecl;
-  al_is_touch_input_installed: function(): Boolean; cdecl;
-  al_install_touch_input: function(): Boolean; cdecl;
-  al_uninstall_touch_input: procedure(); cdecl;
-  al_get_touch_input_state: procedure(ret_state: PALLEGRO_TOUCH_INPUT_STATE); cdecl;
-  al_get_touch_input_event_source: function(): PALLEGRO_EVENT_SOURCE; cdecl;
-  al_set_mouse_emulation_mode: procedure(mode: Integer); cdecl;
-  al_get_mouse_emulation_mode: function(): Integer; cdecl;
-  al_get_touch_input_mouse_emulation_event_source: function(): PALLEGRO_EVENT_SOURCE; cdecl;
-  al_install_haptic: function(): Boolean; cdecl;
-  al_uninstall_haptic: procedure(); cdecl;
-  al_is_haptic_installed: function(): Boolean; cdecl;
-  al_is_mouse_haptic: function(p1: PALLEGRO_MOUSE): Boolean; cdecl;
-  al_is_joystick_haptic: function(p1: PALLEGRO_JOYSTICK): Boolean; cdecl;
-  al_is_keyboard_haptic: function(p1: PALLEGRO_KEYBOARD): Boolean; cdecl;
-  al_is_display_haptic: function(p1: PALLEGRO_DISPLAY): Boolean; cdecl;
-  al_is_touch_input_haptic: function(p1: PALLEGRO_TOUCH_INPUT): Boolean; cdecl;
-  al_get_haptic_from_mouse: function(p1: PALLEGRO_MOUSE): PALLEGRO_HAPTIC; cdecl;
-  al_get_haptic_from_joystick: function(p1: PALLEGRO_JOYSTICK): PALLEGRO_HAPTIC; cdecl;
-  al_get_haptic_from_keyboard: function(p1: PALLEGRO_KEYBOARD): PALLEGRO_HAPTIC; cdecl;
-  al_get_haptic_from_display: function(p1: PALLEGRO_DISPLAY): PALLEGRO_HAPTIC; cdecl;
-  al_get_haptic_from_touch_input: function(p1: PALLEGRO_TOUCH_INPUT): PALLEGRO_HAPTIC; cdecl;
-  al_release_haptic: function(p1: PALLEGRO_HAPTIC): Boolean; cdecl;
-  al_is_haptic_active: function(p1: PALLEGRO_HAPTIC): Boolean; cdecl;
-  al_get_haptic_capabilities: function(p1: PALLEGRO_HAPTIC): Integer; cdecl;
-  al_is_haptic_capable: function(p1: PALLEGRO_HAPTIC; p2: Integer): Boolean; cdecl;
-  al_set_haptic_gain: function(p1: PALLEGRO_HAPTIC; p2: Double): Boolean; cdecl;
-  al_get_haptic_gain: function(p1: PALLEGRO_HAPTIC): Double; cdecl;
-  al_set_haptic_autocenter: function(p1: PALLEGRO_HAPTIC; p2: Double): Boolean; cdecl;
-  al_get_haptic_autocenter: function(p1: PALLEGRO_HAPTIC): Double; cdecl;
-  al_get_max_haptic_effects: function(p1: PALLEGRO_HAPTIC): Integer; cdecl;
-  al_is_haptic_effect_ok: function(p1: PALLEGRO_HAPTIC; p2: PALLEGRO_HAPTIC_EFFECT): Boolean; cdecl;
-  al_upload_haptic_effect: function(p1: PALLEGRO_HAPTIC; p2: PALLEGRO_HAPTIC_EFFECT; p3: PALLEGRO_HAPTIC_EFFECT_ID): Boolean; cdecl;
-  al_play_haptic_effect: function(p1: PALLEGRO_HAPTIC_EFFECT_ID; p2: Integer): Boolean; cdecl;
-  al_upload_and_play_haptic_effect: function(p1: PALLEGRO_HAPTIC; p2: PALLEGRO_HAPTIC_EFFECT; p3: PALLEGRO_HAPTIC_EFFECT_ID; p4: Integer): Boolean; cdecl;
-  al_stop_haptic_effect: function(p1: PALLEGRO_HAPTIC_EFFECT_ID): Boolean; cdecl;
-  al_is_haptic_effect_playing: function(p1: PALLEGRO_HAPTIC_EFFECT_ID): Boolean; cdecl;
-  al_release_haptic_effect: function(p1: PALLEGRO_HAPTIC_EFFECT_ID): Boolean; cdecl;
-  al_get_haptic_effect_duration: function(p1: PALLEGRO_HAPTIC_EFFECT): Double; cdecl;
-  al_rumble_haptic: function(p1: PALLEGRO_HAPTIC; p2: Double; p3: Double; p4: PALLEGRO_HAPTIC_EFFECT_ID): Boolean; cdecl;
-  al_set_memory_interface: procedure(iface: PALLEGRO_MEMORY_INTERFACE); cdecl;
-  al_malloc_with_context: function(n: NativeUInt; line: Integer; const file_: PUTF8Char; const func: PUTF8Char): Pointer; cdecl;
-  al_free_with_context: procedure(ptr: Pointer; line: Integer; const file_: PUTF8Char; const func: PUTF8Char); cdecl;
-  al_realloc_with_context: function(ptr: Pointer; n: NativeUInt; line: Integer; const file_: PUTF8Char; const func: PUTF8Char): Pointer; cdecl;
-  al_calloc_with_context: function(count: NativeUInt; n: NativeUInt; line: Integer; const file_: PUTF8Char; const func: PUTF8Char): Pointer; cdecl;
-  al_get_num_video_adapters: function(): Integer; cdecl;
-  al_get_monitor_info: function(adapter: Integer; info: PALLEGRO_MONITOR_INFO): Boolean; cdecl;
-  al_get_monitor_dpi: function(adapter: Integer): Integer; cdecl;
-  al_get_monitor_refresh_rate: function(adapter: Integer): Integer; cdecl;
-  al_create_mouse_cursor: function(sprite: PALLEGRO_BITMAP; xfocus: Integer; yfocus: Integer): PALLEGRO_MOUSE_CURSOR; cdecl;
-  al_destroy_mouse_cursor: procedure(p1: PALLEGRO_MOUSE_CURSOR); cdecl;
-  al_set_mouse_cursor: function(display: PALLEGRO_DISPLAY; cursor: PALLEGRO_MOUSE_CURSOR): Boolean; cdecl;
-  al_set_system_mouse_cursor: function(display: PALLEGRO_DISPLAY; cursor_id: ALLEGRO_SYSTEM_MOUSE_CURSOR): Boolean; cdecl;
-  al_show_mouse_cursor: function(display: PALLEGRO_DISPLAY): Boolean; cdecl;
-  al_hide_mouse_cursor: function(display: PALLEGRO_DISPLAY): Boolean; cdecl;
-  al_set_render_state: procedure(state: ALLEGRO_RENDER_STATE; value: Integer); cdecl;
-  al_use_transform: procedure(const trans: PALLEGRO_TRANSFORM); cdecl;
-  al_use_projection_transform: procedure(const trans: PALLEGRO_TRANSFORM); cdecl;
-  al_copy_transform: procedure(dest: PALLEGRO_TRANSFORM; const src: PALLEGRO_TRANSFORM); cdecl;
-  al_identity_transform: procedure(trans: PALLEGRO_TRANSFORM); cdecl;
-  al_build_transform: procedure(trans: PALLEGRO_TRANSFORM; x: Single; y: Single; sx: Single; sy: Single; theta: Single); cdecl;
-  al_build_camera_transform: procedure(trans: PALLEGRO_TRANSFORM; position_x: Single; position_y: Single; position_z: Single; look_x: Single; look_y: Single; look_z: Single; up_x: Single; up_y: Single; up_z: Single); cdecl;
-  al_translate_transform: procedure(trans: PALLEGRO_TRANSFORM; x: Single; y: Single); cdecl;
-  al_translate_transform_3d: procedure(trans: PALLEGRO_TRANSFORM; x: Single; y: Single; z: Single); cdecl;
-  al_rotate_transform: procedure(trans: PALLEGRO_TRANSFORM; theta: Single); cdecl;
-  al_rotate_transform_3d: procedure(trans: PALLEGRO_TRANSFORM; x: Single; y: Single; z: Single; angle: Single); cdecl;
-  al_scale_transform: procedure(trans: PALLEGRO_TRANSFORM; sx: Single; sy: Single); cdecl;
-  al_scale_transform_3d: procedure(trans: PALLEGRO_TRANSFORM; sx: Single; sy: Single; sz: Single); cdecl;
-  al_transform_coordinates: procedure(const trans: PALLEGRO_TRANSFORM; x: PSingle; y: PSingle); cdecl;
-  al_transform_coordinates_3d: procedure(const trans: PALLEGRO_TRANSFORM; x: PSingle; y: PSingle; z: PSingle); cdecl;
-  al_transform_coordinates_4d: procedure(const trans: PALLEGRO_TRANSFORM; x: PSingle; y: PSingle; z: PSingle; w: PSingle); cdecl;
-  al_transform_coordinates_3d_projective: procedure(const trans: PALLEGRO_TRANSFORM; x: PSingle; y: PSingle; z: PSingle); cdecl;
-  al_compose_transform: procedure(trans: PALLEGRO_TRANSFORM; const other: PALLEGRO_TRANSFORM); cdecl;
-  al_get_current_transform: function(): PALLEGRO_TRANSFORM; cdecl;
-  al_get_current_inverse_transform: function(): PALLEGRO_TRANSFORM; cdecl;
-  al_get_current_projection_transform: function(): PALLEGRO_TRANSFORM; cdecl;
-  al_invert_transform: procedure(trans: PALLEGRO_TRANSFORM); cdecl;
-  al_transpose_transform: procedure(trans: PALLEGRO_TRANSFORM); cdecl;
-  al_check_inverse: function(const trans: PALLEGRO_TRANSFORM; tol: Single): Integer; cdecl;
-  al_orthographic_transform: procedure(trans: PALLEGRO_TRANSFORM; left: Single; top: Single; n: Single; right: Single; bottom: Single; f: Single); cdecl;
-  al_perspective_transform: procedure(trans: PALLEGRO_TRANSFORM; left: Single; top: Single; n: Single; right: Single; bottom: Single; f: Single); cdecl;
-  al_horizontal_shear_transform: procedure(trans: PALLEGRO_TRANSFORM; theta: Single); cdecl;
-  al_vertical_shear_transform: procedure(trans: PALLEGRO_TRANSFORM; theta: Single); cdecl;
-  al_create_shader: function(platform_: ALLEGRO_SHADER_PLATFORM): PALLEGRO_SHADER; cdecl;
-  al_attach_shader_source: function(shader: PALLEGRO_SHADER; type_: ALLEGRO_SHADER_TYPE; const source: PUTF8Char): Boolean; cdecl;
-  al_attach_shader_source_file: function(shader: PALLEGRO_SHADER; type_: ALLEGRO_SHADER_TYPE; const filename: PUTF8Char): Boolean; cdecl;
-  al_build_shader: function(shader: PALLEGRO_SHADER): Boolean; cdecl;
-  al_get_shader_log: function(shader: PALLEGRO_SHADER): PUTF8Char; cdecl;
-  al_get_shader_platform: function(shader: PALLEGRO_SHADER): ALLEGRO_SHADER_PLATFORM; cdecl;
-  al_use_shader: function(shader: PALLEGRO_SHADER): Boolean; cdecl;
-  al_destroy_shader: procedure(shader: PALLEGRO_SHADER); cdecl;
-  al_set_shader_sampler: function(const name: PUTF8Char; bitmap: PALLEGRO_BITMAP; unit_: Integer): Boolean; cdecl;
-  al_set_shader_matrix: function(const name: PUTF8Char; const matrix: PALLEGRO_TRANSFORM): Boolean; cdecl;
-  al_set_shader_int: function(const name: PUTF8Char; i: Integer): Boolean; cdecl;
-  al_set_shader_float: function(const name: PUTF8Char; f: Single): Boolean; cdecl;
-  al_set_shader_int_vector: function(const name: PUTF8Char; num_components: Integer; const i: PInteger; num_elems: Integer): Boolean; cdecl;
-  al_set_shader_float_vector: function(const name: PUTF8Char; num_components: Integer; const f: System.PSingle; num_elems: Integer): Boolean; cdecl;
-  al_set_shader_bool: function(const name: PUTF8Char; b: Boolean): Boolean; cdecl;
-  al_get_default_shader_source: function(platform_: ALLEGRO_SHADER_PLATFORM; type_: ALLEGRO_SHADER_TYPE): PUTF8Char; cdecl;
-  al_install_system: function(version: Integer; atexit_ptr: al_install_system_atexit_ptr): Boolean; cdecl;
-  al_uninstall_system: procedure(); cdecl;
-  al_is_system_installed: function(): Boolean; cdecl;
-  al_get_system_driver: function(): PALLEGRO_SYSTEM; cdecl;
-  al_get_system_config: function(): PALLEGRO_CONFIG; cdecl;
-  al_get_system_id: function(): ALLEGRO_SYSTEM_ID; cdecl;
-  al_get_standard_path: function(id: Integer): PALLEGRO_PATH; cdecl;
-  al_set_exe_name: procedure(const path: PUTF8Char); cdecl;
-  al_set_org_name: procedure(const org_name: PUTF8Char); cdecl;
-  al_set_app_name: procedure(const app_name: PUTF8Char); cdecl;
-  al_get_org_name: function(): PUTF8Char; cdecl;
-  al_get_app_name: function(): PUTF8Char; cdecl;
-  al_inhibit_screensaver: function(inhibit: Boolean): Boolean; cdecl;
-  al_create_thread: function(proc: al_create_thread_proc; arg: Pointer): PALLEGRO_THREAD; cdecl;
-  al_create_thread_with_stacksize: function(proc: al_create_thread_with_stacksize_proc; arg: Pointer; stacksize: NativeUInt): PALLEGRO_THREAD; cdecl;
-  al_start_thread: procedure(outer: PALLEGRO_THREAD); cdecl;
-  al_join_thread: procedure(outer: PALLEGRO_THREAD; ret_value: PPointer); cdecl;
-  al_set_thread_should_stop: procedure(outer: PALLEGRO_THREAD); cdecl;
-  al_get_thread_should_stop: function(outer: PALLEGRO_THREAD): Boolean; cdecl;
-  al_destroy_thread: procedure(thread: PALLEGRO_THREAD); cdecl;
-  al_run_detached_thread: procedure(proc: al_run_detached_thread_proc; arg: Pointer); cdecl;
-  al_create_mutex: function(): PALLEGRO_MUTEX; cdecl;
-  al_create_mutex_recursive: function(): PALLEGRO_MUTEX; cdecl;
-  al_lock_mutex: procedure(mutex: PALLEGRO_MUTEX); cdecl;
-  al_unlock_mutex: procedure(mutex: PALLEGRO_MUTEX); cdecl;
-  al_destroy_mutex: procedure(mutex: PALLEGRO_MUTEX); cdecl;
-  al_create_cond: function(): PALLEGRO_COND; cdecl;
-  al_destroy_cond: procedure(cond: PALLEGRO_COND); cdecl;
-  al_wait_cond: procedure(cond: PALLEGRO_COND; mutex: PALLEGRO_MUTEX); cdecl;
-  al_wait_cond_until: function(cond: PALLEGRO_COND; mutex: PALLEGRO_MUTEX; const timeout: PALLEGRO_TIMEOUT): Integer; cdecl;
-  al_broadcast_cond: procedure(cond: PALLEGRO_COND); cdecl;
-  al_signal_cond: procedure(cond: PALLEGRO_COND); cdecl;
-  al_create_timer: function(speed_secs: Double): PALLEGRO_TIMER; cdecl;
-  al_destroy_timer: procedure(timer: PALLEGRO_TIMER); cdecl;
-  al_start_timer: procedure(timer: PALLEGRO_TIMER); cdecl;
-  al_stop_timer: procedure(timer: PALLEGRO_TIMER); cdecl;
-  al_resume_timer: procedure(timer: PALLEGRO_TIMER); cdecl;
-  al_get_timer_started: function(const timer: PALLEGRO_TIMER): Boolean; cdecl;
-  al_get_timer_speed: function(const timer: PALLEGRO_TIMER): Double; cdecl;
-  al_set_timer_speed: procedure(timer: PALLEGRO_TIMER; speed_secs: Double); cdecl;
-  al_get_timer_count: function(const timer: PALLEGRO_TIMER): Int64; cdecl;
-  al_set_timer_count: procedure(timer: PALLEGRO_TIMER; count: Int64); cdecl;
-  al_add_timer_count: procedure(timer: PALLEGRO_TIMER; diff: Int64); cdecl;
-  al_get_timer_event_source: function(timer: PALLEGRO_TIMER): PALLEGRO_EVENT_SOURCE; cdecl;
-  al_store_state: procedure(state: PALLEGRO_STATE; flags: Integer); cdecl;
-  al_restore_state: procedure(const state: PALLEGRO_STATE); cdecl;
-  al_create_sample: function(buf: Pointer; samples: Cardinal; freq: Cardinal; depth: ALLEGRO_AUDIO_DEPTH; chan_conf: ALLEGRO_CHANNEL_CONF; free_buf: Boolean): PALLEGRO_SAMPLE; cdecl;
-  al_destroy_sample: procedure(spl: PALLEGRO_SAMPLE); cdecl;
-  al_create_sample_instance: function(data: PALLEGRO_SAMPLE): PALLEGRO_SAMPLE_INSTANCE; cdecl;
-  al_destroy_sample_instance: procedure(spl: PALLEGRO_SAMPLE_INSTANCE); cdecl;
-  al_get_sample_frequency: function(const spl: PALLEGRO_SAMPLE): Cardinal; cdecl;
-  al_get_sample_length: function(const spl: PALLEGRO_SAMPLE): Cardinal; cdecl;
-  al_get_sample_depth: function(const spl: PALLEGRO_SAMPLE): ALLEGRO_AUDIO_DEPTH; cdecl;
-  al_get_sample_channels: function(const spl: PALLEGRO_SAMPLE): ALLEGRO_CHANNEL_CONF; cdecl;
-  al_get_sample_data: function(const spl: PALLEGRO_SAMPLE): Pointer; cdecl;
-  al_get_sample_instance_frequency: function(const spl: PALLEGRO_SAMPLE_INSTANCE): Cardinal; cdecl;
-  al_get_sample_instance_length: function(const spl: PALLEGRO_SAMPLE_INSTANCE): Cardinal; cdecl;
-  al_get_sample_instance_position: function(const spl: PALLEGRO_SAMPLE_INSTANCE): Cardinal; cdecl;
-  al_get_sample_instance_speed: function(const spl: PALLEGRO_SAMPLE_INSTANCE): Single; cdecl;
-  al_get_sample_instance_gain: function(const spl: PALLEGRO_SAMPLE_INSTANCE): Single; cdecl;
-  al_get_sample_instance_pan: function(const spl: PALLEGRO_SAMPLE_INSTANCE): Single; cdecl;
-  al_get_sample_instance_time: function(const spl: PALLEGRO_SAMPLE_INSTANCE): Single; cdecl;
-  al_get_sample_instance_depth: function(const spl: PALLEGRO_SAMPLE_INSTANCE): ALLEGRO_AUDIO_DEPTH; cdecl;
-  al_get_sample_instance_channels: function(const spl: PALLEGRO_SAMPLE_INSTANCE): ALLEGRO_CHANNEL_CONF; cdecl;
-  al_get_sample_instance_playmode: function(const spl: PALLEGRO_SAMPLE_INSTANCE): ALLEGRO_PLAYMODE; cdecl;
-  al_get_sample_instance_playing: function(const spl: PALLEGRO_SAMPLE_INSTANCE): Boolean; cdecl;
-  al_get_sample_instance_attached: function(const spl: PALLEGRO_SAMPLE_INSTANCE): Boolean; cdecl;
-  al_set_sample_instance_position: function(spl: PALLEGRO_SAMPLE_INSTANCE; val: Cardinal): Boolean; cdecl;
-  al_set_sample_instance_length: function(spl: PALLEGRO_SAMPLE_INSTANCE; val: Cardinal): Boolean; cdecl;
-  al_set_sample_instance_speed: function(spl: PALLEGRO_SAMPLE_INSTANCE; val: Single): Boolean; cdecl;
-  al_set_sample_instance_gain: function(spl: PALLEGRO_SAMPLE_INSTANCE; val: Single): Boolean; cdecl;
-  al_set_sample_instance_pan: function(spl: PALLEGRO_SAMPLE_INSTANCE; val: Single): Boolean; cdecl;
-  al_set_sample_instance_playmode: function(spl: PALLEGRO_SAMPLE_INSTANCE; val: ALLEGRO_PLAYMODE): Boolean; cdecl;
-  al_set_sample_instance_playing: function(spl: PALLEGRO_SAMPLE_INSTANCE; val: Boolean): Boolean; cdecl;
-  al_detach_sample_instance: function(spl: PALLEGRO_SAMPLE_INSTANCE): Boolean; cdecl;
-  al_set_sample: function(spl: PALLEGRO_SAMPLE_INSTANCE; data: PALLEGRO_SAMPLE): Boolean; cdecl;
-  al_get_sample: function(spl: PALLEGRO_SAMPLE_INSTANCE): PALLEGRO_SAMPLE; cdecl;
-  al_play_sample_instance: function(spl: PALLEGRO_SAMPLE_INSTANCE): Boolean; cdecl;
-  al_stop_sample_instance: function(spl: PALLEGRO_SAMPLE_INSTANCE): Boolean; cdecl;
-  al_set_sample_instance_channel_matrix: function(spl: PALLEGRO_SAMPLE_INSTANCE; const matrix: PSingle): Boolean; cdecl;
-  al_create_audio_stream: function(buffer_count: NativeUInt; samples: Cardinal; freq: Cardinal; depth: ALLEGRO_AUDIO_DEPTH; chan_conf: ALLEGRO_CHANNEL_CONF): PALLEGRO_AUDIO_STREAM; cdecl;
-  al_destroy_audio_stream: procedure(stream: PALLEGRO_AUDIO_STREAM); cdecl;
-  al_drain_audio_stream: procedure(stream: PALLEGRO_AUDIO_STREAM); cdecl;
-  al_get_audio_stream_frequency: function(const stream: PALLEGRO_AUDIO_STREAM): Cardinal; cdecl;
-  al_get_audio_stream_length: function(const stream: PALLEGRO_AUDIO_STREAM): Cardinal; cdecl;
-  al_get_audio_stream_fragments: function(const stream: PALLEGRO_AUDIO_STREAM): Cardinal; cdecl;
-  al_get_available_audio_stream_fragments: function(const stream: PALLEGRO_AUDIO_STREAM): Cardinal; cdecl;
-  al_get_audio_stream_speed: function(const stream: PALLEGRO_AUDIO_STREAM): Single; cdecl;
-  al_get_audio_stream_gain: function(const stream: PALLEGRO_AUDIO_STREAM): Single; cdecl;
-  al_get_audio_stream_pan: function(const stream: PALLEGRO_AUDIO_STREAM): Single; cdecl;
-  al_get_audio_stream_channels: function(const stream: PALLEGRO_AUDIO_STREAM): ALLEGRO_CHANNEL_CONF; cdecl;
-  al_get_audio_stream_depth: function(const stream: PALLEGRO_AUDIO_STREAM): ALLEGRO_AUDIO_DEPTH; cdecl;
-  al_get_audio_stream_playmode: function(const stream: PALLEGRO_AUDIO_STREAM): ALLEGRO_PLAYMODE; cdecl;
-  al_get_audio_stream_playing: function(const spl: PALLEGRO_AUDIO_STREAM): Boolean; cdecl;
-  al_get_audio_stream_attached: function(const spl: PALLEGRO_AUDIO_STREAM): Boolean; cdecl;
-  al_get_audio_stream_played_samples: function(const stream: PALLEGRO_AUDIO_STREAM): UInt64; cdecl;
-  al_get_audio_stream_fragment: function(const stream: PALLEGRO_AUDIO_STREAM): Pointer; cdecl;
-  al_set_audio_stream_speed: function(stream: PALLEGRO_AUDIO_STREAM; val: Single): Boolean; cdecl;
-  al_set_audio_stream_gain: function(stream: PALLEGRO_AUDIO_STREAM; val: Single): Boolean; cdecl;
-  al_set_audio_stream_pan: function(stream: PALLEGRO_AUDIO_STREAM; val: Single): Boolean; cdecl;
-  al_set_audio_stream_playmode: function(stream: PALLEGRO_AUDIO_STREAM; val: ALLEGRO_PLAYMODE): Boolean; cdecl;
-  al_set_audio_stream_playing: function(stream: PALLEGRO_AUDIO_STREAM; val: Boolean): Boolean; cdecl;
-  al_detach_audio_stream: function(stream: PALLEGRO_AUDIO_STREAM): Boolean; cdecl;
-  al_set_audio_stream_fragment: function(stream: PALLEGRO_AUDIO_STREAM; val: Pointer): Boolean; cdecl;
-  al_rewind_audio_stream: function(stream: PALLEGRO_AUDIO_STREAM): Boolean; cdecl;
-  al_seek_audio_stream_secs: function(stream: PALLEGRO_AUDIO_STREAM; time: Double): Boolean; cdecl;
-  al_get_audio_stream_position_secs: function(stream: PALLEGRO_AUDIO_STREAM): Double; cdecl;
-  al_get_audio_stream_length_secs: function(stream: PALLEGRO_AUDIO_STREAM): Double; cdecl;
-  al_set_audio_stream_loop_secs: function(stream: PALLEGRO_AUDIO_STREAM; start: Double; end_: Double): Boolean; cdecl;
-  al_get_audio_stream_event_source: function(stream: PALLEGRO_AUDIO_STREAM): PALLEGRO_EVENT_SOURCE; cdecl;
-  al_set_audio_stream_channel_matrix: function(stream: PALLEGRO_AUDIO_STREAM; const matrix: PSingle): Boolean; cdecl;
-  al_create_mixer: function(freq: Cardinal; depth: ALLEGRO_AUDIO_DEPTH; chan_conf: ALLEGRO_CHANNEL_CONF): PALLEGRO_MIXER; cdecl;
-  al_destroy_mixer: procedure(mixer: PALLEGRO_MIXER); cdecl;
-  al_attach_sample_instance_to_mixer: function(stream: PALLEGRO_SAMPLE_INSTANCE; mixer: PALLEGRO_MIXER): Boolean; cdecl;
-  al_attach_audio_stream_to_mixer: function(stream: PALLEGRO_AUDIO_STREAM; mixer: PALLEGRO_MIXER): Boolean; cdecl;
-  al_attach_mixer_to_mixer: function(stream: PALLEGRO_MIXER; mixer: PALLEGRO_MIXER): Boolean; cdecl;
-  al_set_mixer_postprocess_callback: function(mixer: PALLEGRO_MIXER; cb: al_set_mixer_postprocess_callback_cb; data: Pointer): Boolean; cdecl;
-  al_get_mixer_frequency: function(const mixer: PALLEGRO_MIXER): Cardinal; cdecl;
-  al_get_mixer_channels: function(const mixer: PALLEGRO_MIXER): ALLEGRO_CHANNEL_CONF; cdecl;
-  al_get_mixer_depth: function(const mixer: PALLEGRO_MIXER): ALLEGRO_AUDIO_DEPTH; cdecl;
-  al_get_mixer_quality: function(const mixer: PALLEGRO_MIXER): ALLEGRO_MIXER_QUALITY; cdecl;
-  al_get_mixer_gain: function(const mixer: PALLEGRO_MIXER): Single; cdecl;
-  al_get_mixer_playing: function(const mixer: PALLEGRO_MIXER): Boolean; cdecl;
-  al_get_mixer_attached: function(const mixer: PALLEGRO_MIXER): Boolean; cdecl;
-  al_set_mixer_frequency: function(mixer: PALLEGRO_MIXER; val: Cardinal): Boolean; cdecl;
-  al_set_mixer_quality: function(mixer: PALLEGRO_MIXER; val: ALLEGRO_MIXER_QUALITY): Boolean; cdecl;
-  al_set_mixer_gain: function(mixer: PALLEGRO_MIXER; gain: Single): Boolean; cdecl;
-  al_set_mixer_playing: function(mixer: PALLEGRO_MIXER; val: Boolean): Boolean; cdecl;
-  al_detach_mixer: function(mixer: PALLEGRO_MIXER): Boolean; cdecl;
-  al_create_voice: function(freq: Cardinal; depth: ALLEGRO_AUDIO_DEPTH; chan_conf: ALLEGRO_CHANNEL_CONF): PALLEGRO_VOICE; cdecl;
-  al_destroy_voice: procedure(voice: PALLEGRO_VOICE); cdecl;
-  al_attach_sample_instance_to_voice: function(stream: PALLEGRO_SAMPLE_INSTANCE; voice: PALLEGRO_VOICE): Boolean; cdecl;
-  al_attach_audio_stream_to_voice: function(stream: PALLEGRO_AUDIO_STREAM; voice: PALLEGRO_VOICE): Boolean; cdecl;
-  al_attach_mixer_to_voice: function(mixer: PALLEGRO_MIXER; voice: PALLEGRO_VOICE): Boolean; cdecl;
-  al_detach_voice: procedure(voice: PALLEGRO_VOICE); cdecl;
-  al_get_voice_frequency: function(const voice: PALLEGRO_VOICE): Cardinal; cdecl;
-  al_get_voice_position: function(const voice: PALLEGRO_VOICE): Cardinal; cdecl;
-  al_get_voice_channels: function(const voice: PALLEGRO_VOICE): ALLEGRO_CHANNEL_CONF; cdecl;
-  al_get_voice_depth: function(const voice: PALLEGRO_VOICE): ALLEGRO_AUDIO_DEPTH; cdecl;
-  al_get_voice_playing: function(const voice: PALLEGRO_VOICE): Boolean; cdecl;
-  al_set_voice_position: function(voice: PALLEGRO_VOICE; val: Cardinal): Boolean; cdecl;
-  al_set_voice_playing: function(voice: PALLEGRO_VOICE; val: Boolean): Boolean; cdecl;
-  al_install_audio: function(): Boolean; cdecl;
-  al_uninstall_audio: procedure(); cdecl;
-  al_is_audio_installed: function(): Boolean; cdecl;
-  al_get_allegro_audio_version: function(): UInt32; cdecl;
-  al_get_channel_count: function(conf: ALLEGRO_CHANNEL_CONF): NativeUInt; cdecl;
-  al_get_audio_depth_size: function(conf: ALLEGRO_AUDIO_DEPTH): NativeUInt; cdecl;
-  al_fill_silence: procedure(buf: Pointer; samples: Cardinal; depth: ALLEGRO_AUDIO_DEPTH; chan_conf: ALLEGRO_CHANNEL_CONF); cdecl;
-  al_get_num_audio_output_devices: function(): Integer; cdecl;
-  al_get_audio_output_device: function(index: Integer): PALLEGRO_AUDIO_DEVICE; cdecl;
-  al_get_audio_device_name: function(const device: PALLEGRO_AUDIO_DEVICE): PUTF8Char; cdecl;
-  al_reserve_samples: function(reserve_samples: Integer): Boolean; cdecl;
-  al_get_default_mixer: function(): PALLEGRO_MIXER; cdecl;
-  al_set_default_mixer: function(mixer: PALLEGRO_MIXER): Boolean; cdecl;
-  al_restore_default_mixer: function(): Boolean; cdecl;
-  al_play_sample: function(data: PALLEGRO_SAMPLE; gain: Single; pan: Single; speed: Single; loop: ALLEGRO_PLAYMODE; ret_id: PALLEGRO_SAMPLE_ID): Boolean; cdecl;
-  al_stop_sample: procedure(spl_id: PALLEGRO_SAMPLE_ID); cdecl;
-  al_stop_samples: procedure(); cdecl;
-  al_get_default_voice: function(): PALLEGRO_VOICE; cdecl;
-  al_set_default_voice: procedure(voice: PALLEGRO_VOICE); cdecl;
-  al_lock_sample_id: function(spl_id: PALLEGRO_SAMPLE_ID): PALLEGRO_SAMPLE_INSTANCE; cdecl;
-  al_unlock_sample_id: procedure(spl_id: PALLEGRO_SAMPLE_ID); cdecl;
-  al_register_sample_loader: function(const ext: PUTF8Char; loader: al_register_sample_loader_loader): Boolean; cdecl;
-  al_register_sample_saver: function(const ext: PUTF8Char; saver: al_register_sample_saver_saver): Boolean; cdecl;
-  al_register_audio_stream_loader: function(const ext: PUTF8Char; stream_loader: al_register_audio_stream_loader_stream_loader): Boolean; cdecl;
-  al_register_sample_loader_f: function(const ext: PUTF8Char; loader: al_register_sample_loader_f_loader): Boolean; cdecl;
-  al_register_sample_saver_f: function(const ext: PUTF8Char; saver: al_register_sample_saver_f_saver): Boolean; cdecl;
-  al_register_audio_stream_loader_f: function(const ext: PUTF8Char; stream_loader: al_register_audio_stream_loader_f_stream_loader): Boolean; cdecl;
-  al_register_sample_identifier: function(const ext: PUTF8Char; identifier: al_register_sample_identifier_identifier): Boolean; cdecl;
-  al_load_sample: function(const filename: PUTF8Char): PALLEGRO_SAMPLE; cdecl;
-  al_save_sample: function(const filename: PUTF8Char; spl: PALLEGRO_SAMPLE): Boolean; cdecl;
-  al_load_audio_stream: function(const filename: PUTF8Char; buffer_count: NativeUInt; samples: Cardinal): PALLEGRO_AUDIO_STREAM; cdecl;
-  al_load_sample_f: function(fp: PALLEGRO_FILE; const ident: PUTF8Char): PALLEGRO_SAMPLE; cdecl;
-  al_save_sample_f: function(fp: PALLEGRO_FILE; const ident: PUTF8Char; spl: PALLEGRO_SAMPLE): Boolean; cdecl;
-  al_load_audio_stream_f: function(fp: PALLEGRO_FILE; const ident: PUTF8Char; buffer_count: NativeUInt; samples: Cardinal): PALLEGRO_AUDIO_STREAM; cdecl;
-  al_identify_sample_f: function(fp: PALLEGRO_FILE): PUTF8Char; cdecl;
-  al_identify_sample: function(const filename: PUTF8Char): PUTF8Char; cdecl;
-  al_create_audio_recorder: function(fragment_count: NativeUInt; samples: Cardinal; freq: Cardinal; depth: ALLEGRO_AUDIO_DEPTH; chan_conf: ALLEGRO_CHANNEL_CONF): PALLEGRO_AUDIO_RECORDER; cdecl;
-  al_start_audio_recorder: function(r: PALLEGRO_AUDIO_RECORDER): Boolean; cdecl;
-  al_stop_audio_recorder: procedure(r: PALLEGRO_AUDIO_RECORDER); cdecl;
-  al_is_audio_recorder_recording: function(r: PALLEGRO_AUDIO_RECORDER): Boolean; cdecl;
-  al_get_audio_recorder_event_source: function(r: PALLEGRO_AUDIO_RECORDER): PALLEGRO_EVENT_SOURCE; cdecl;
-  al_get_audio_recorder_event: function(event: PALLEGRO_EVENT): PALLEGRO_AUDIO_RECORDER_EVENT; cdecl;
-  al_destroy_audio_recorder: procedure(r: PALLEGRO_AUDIO_RECORDER); cdecl;
-  al_init_acodec_addon: function(): Boolean; cdecl;
-  al_is_acodec_addon_initialized: function(): Boolean; cdecl;
-  al_get_allegro_acodec_version: function(): UInt32; cdecl;
-  al_get_allegro_color_version: function(): UInt32; cdecl;
-  al_color_hsv_to_rgb: procedure(hue: Single; saturation: Single; value: Single; red: PSingle; green: PSingle; blue: PSingle); cdecl;
-  al_color_rgb_to_hsl: procedure(red: Single; green: Single; blue: Single; hue: PSingle; saturation: PSingle; lightness: PSingle); cdecl;
-  al_color_rgb_to_hsv: procedure(red: Single; green: Single; blue: Single; hue: PSingle; saturation: PSingle; value: PSingle); cdecl;
-  al_color_hsl_to_rgb: procedure(hue: Single; saturation: Single; lightness: Single; red: PSingle; green: PSingle; blue: PSingle); cdecl;
-  al_color_name_to_rgb: function(const name: PUTF8Char; r: PSingle; g: PSingle; b: PSingle): Boolean; cdecl;
-  al_color_rgb_to_name: function(r: Single; g: Single; b: Single): PUTF8Char; cdecl;
-  al_color_cmyk_to_rgb: procedure(cyan: Single; magenta: Single; yellow: Single; key: Single; red: PSingle; green: PSingle; blue: PSingle); cdecl;
-  al_color_rgb_to_cmyk: procedure(red: Single; green: Single; blue: Single; cyan: PSingle; magenta: PSingle; yellow: PSingle; key: PSingle); cdecl;
-  al_color_yuv_to_rgb: procedure(y: Single; u: Single; v: Single; red: PSingle; green: PSingle; blue: PSingle); cdecl;
-  al_color_rgb_to_yuv: procedure(red: Single; green: Single; blue: Single; y: PSingle; u: PSingle; v: PSingle); cdecl;
-  al_color_rgb_to_html: procedure(red: Single; green: Single; blue: Single; string_: PUTF8Char); cdecl;
-  al_color_html_to_rgb: function(const string_: PUTF8Char; red: PSingle; green: PSingle; blue: PSingle): Boolean; cdecl;
-  al_color_yuv: function(y: Single; u: Single; v: Single): ALLEGRO_COLOR; cdecl;
-  al_color_cmyk: function(c: Single; m: Single; y: Single; k: Single): ALLEGRO_COLOR; cdecl;
-  al_color_hsl: function(h: Single; s: Single; l: Single): ALLEGRO_COLOR; cdecl;
-  al_color_hsv: function(h: Single; s: Single; v: Single): ALLEGRO_COLOR; cdecl;
-  al_color_name: function(const name: PUTF8Char): ALLEGRO_COLOR; cdecl;
-  al_color_html: function(const string_: PUTF8Char): ALLEGRO_COLOR; cdecl;
-  al_color_xyz_to_rgb: procedure(x: Single; y: Single; z: Single; red: PSingle; green: PSingle; blue: PSingle); cdecl;
-  al_color_rgb_to_xyz: procedure(red: Single; green: Single; blue: Single; x: PSingle; y: PSingle; z: PSingle); cdecl;
-  al_color_xyz: function(x: Single; y: Single; z: Single): ALLEGRO_COLOR; cdecl;
-  al_color_lab_to_rgb: procedure(l: Single; a: Single; b: Single; red: PSingle; green: PSingle; blue: PSingle); cdecl;
-  al_color_rgb_to_lab: procedure(red: Single; green: Single; blue: Single; l: PSingle; a: PSingle; b: PSingle); cdecl;
-  al_color_lab: function(l: Single; a: Single; b: Single): ALLEGRO_COLOR; cdecl;
-  al_color_xyy_to_rgb: procedure(x: Single; y: Single; y2: Single; red: PSingle; green: PSingle; blue: PSingle); cdecl;
-  al_color_rgb_to_xyy: procedure(red: Single; green: Single; blue: Single; x: PSingle; y: PSingle; y2: PSingle); cdecl;
-  al_color_xyy: function(x: Single; y: Single; y2: Single): ALLEGRO_COLOR; cdecl;
-  al_color_distance_ciede2000: function(c1: ALLEGRO_COLOR; c2: ALLEGRO_COLOR): Double; cdecl;
-  al_color_lch_to_rgb: procedure(l: Single; c: Single; h: Single; red: PSingle; green: PSingle; blue: PSingle); cdecl;
-  al_color_rgb_to_lch: procedure(red: Single; green: Single; blue: Single; l: PSingle; c: PSingle; h: PSingle); cdecl;
-  al_color_lch: function(l: Single; c: Single; h: Single): ALLEGRO_COLOR; cdecl;
-  al_is_color_valid: function(color: ALLEGRO_COLOR): Boolean; cdecl;
-  al_color_oklab_to_rgb: procedure(l: Single; a: Single; b: Single; red: PSingle; green: PSingle; blue: PSingle); cdecl;
-  al_color_rgb_to_oklab: procedure(red: Single; green: Single; blue: Single; l: PSingle; a: PSingle; b: PSingle); cdecl;
-  al_color_oklab: function(l: Single; a: Single; b: Single): ALLEGRO_COLOR; cdecl;
-  al_color_linear_to_rgb: procedure(x: Single; y: Single; z: Single; red: PSingle; green: PSingle; blue: PSingle); cdecl;
-  al_color_rgb_to_linear: procedure(red: Single; green: Single; blue: Single; x: PSingle; y: PSingle; z: PSingle); cdecl;
-  al_color_linear: function(r: Single; g: Single; b: Single): ALLEGRO_COLOR; cdecl;
-  al_register_font_loader: function(const ext: PUTF8Char; load: al_register_font_loader_load): Boolean; cdecl;
-  al_load_bitmap_font: function(const filename: PUTF8Char): PALLEGRO_FONT; cdecl;
-  al_load_bitmap_font_flags: function(const filename: PUTF8Char; flags: Integer): PALLEGRO_FONT; cdecl;
-  al_load_font: function(const filename: PUTF8Char; size: Integer; flags: Integer): PALLEGRO_FONT; cdecl;
-  al_grab_font_from_bitmap: function(bmp: PALLEGRO_BITMAP; n: Integer; ranges: PInteger): PALLEGRO_FONT; cdecl;
-  al_create_builtin_font: function(): PALLEGRO_FONT; cdecl;
-  al_draw_ustr: procedure(const font: PALLEGRO_FONT; color: ALLEGRO_COLOR; x: Single; y: Single; flags: Integer; const ustr: PALLEGRO_USTR); cdecl;
-  al_draw_text: procedure(const font: PALLEGRO_FONT; color: ALLEGRO_COLOR; x: Single; y: Single; flags: Integer; const text: PUTF8Char); cdecl;
-  al_draw_justified_text: procedure(const font: PALLEGRO_FONT; color: ALLEGRO_COLOR; x1: Single; x2: Single; y: Single; diff: Single; flags: Integer; const text: PUTF8Char); cdecl;
-  al_draw_justified_ustr: procedure(const font: PALLEGRO_FONT; color: ALLEGRO_COLOR; x1: Single; x2: Single; y: Single; diff: Single; flags: Integer; const text: PALLEGRO_USTR); cdecl;
-  al_draw_textf: procedure(const font: PALLEGRO_FONT; color: ALLEGRO_COLOR; x: Single; y: Single; flags: Integer; const format: PUTF8Char) varargs; cdecl;
-  al_draw_justified_textf: procedure(const font: PALLEGRO_FONT; color: ALLEGRO_COLOR; x1: Single; x2: Single; y: Single; diff: Single; flags: Integer; const format: PUTF8Char) varargs; cdecl;
-  al_get_text_width: function(const f: PALLEGRO_FONT; const str: PUTF8Char): Integer; cdecl;
-  al_get_ustr_width: function(const f: PALLEGRO_FONT; const ustr: PALLEGRO_USTR): Integer; cdecl;
-  al_get_font_line_height: function(const f: PALLEGRO_FONT): Integer; cdecl;
-  al_get_font_ascent: function(const f: PALLEGRO_FONT): Integer; cdecl;
-  al_get_font_descent: function(const f: PALLEGRO_FONT): Integer; cdecl;
-  al_destroy_font: procedure(f: PALLEGRO_FONT); cdecl;
-  al_get_ustr_dimensions: procedure(const f: PALLEGRO_FONT; const text: PALLEGRO_USTR; bbx: PInteger; bby: PInteger; bbw: PInteger; bbh: PInteger); cdecl;
-  al_get_text_dimensions: procedure(const f: PALLEGRO_FONT; const text: PUTF8Char; bbx: PInteger; bby: PInteger; bbw: PInteger; bbh: PInteger); cdecl;
-  al_init_font_addon: function(): Boolean; cdecl;
-  al_is_font_addon_initialized: function(): Boolean; cdecl;
-  al_shutdown_font_addon: procedure(); cdecl;
-  al_get_allegro_font_version: function(): UInt32; cdecl;
-  al_get_font_ranges: function(font: PALLEGRO_FONT; ranges_count: Integer; ranges: PInteger): Integer; cdecl;
-  al_draw_glyph: procedure(const font: PALLEGRO_FONT; color: ALLEGRO_COLOR; x: Single; y: Single; codepoint: Integer); cdecl;
-  al_get_glyph_width: function(const f: PALLEGRO_FONT; codepoint: Integer): Integer; cdecl;
-  al_get_glyph_dimensions: function(const f: PALLEGRO_FONT; codepoint: Integer; bbx: PInteger; bby: PInteger; bbw: PInteger; bbh: PInteger): Boolean; cdecl;
-  al_get_glyph_advance: function(const f: PALLEGRO_FONT; codepoint1: Integer; codepoint2: Integer): Integer; cdecl;
-  al_get_glyph: function(const f: PALLEGRO_FONT; prev_codepoint: Integer; codepoint: Integer; glyph: PALLEGRO_GLYPH): Boolean; cdecl;
-  al_draw_multiline_text: procedure(const font: PALLEGRO_FONT; color: ALLEGRO_COLOR; x: Single; y: Single; max_width: Single; line_height: Single; flags: Integer; const text: PUTF8Char); cdecl;
-  al_draw_multiline_textf: procedure(const font: PALLEGRO_FONT; color: ALLEGRO_COLOR; x: Single; y: Single; max_width: Single; line_height: Single; flags: Integer; const format: PUTF8Char) varargs; cdecl;
-  al_draw_multiline_ustr: procedure(const font: PALLEGRO_FONT; color: ALLEGRO_COLOR; x: Single; y: Single; max_width: Single; line_height: Single; flags: Integer; const text: PALLEGRO_USTR); cdecl;
-  al_do_multiline_text: procedure(const font: PALLEGRO_FONT; max_width: Single; const text: PUTF8Char; cb: al_do_multiline_text_cb; extra: Pointer); cdecl;
-  al_do_multiline_ustr: procedure(const font: PALLEGRO_FONT; max_width: Single; const ustr: PALLEGRO_USTR; cb: al_do_multiline_ustr_cb; extra: Pointer); cdecl;
-  al_set_fallback_font: procedure(font: PALLEGRO_FONT; fallback: PALLEGRO_FONT); cdecl;
-  al_get_fallback_font: function(font: PALLEGRO_FONT): PALLEGRO_FONT; cdecl;
-  al_init_image_addon: function(): Boolean; cdecl;
-  al_is_image_addon_initialized: function(): Boolean; cdecl;
-  al_shutdown_image_addon: procedure(); cdecl;
-  al_get_allegro_image_version: function(): UInt32; cdecl;
-  al_open_memfile: function(mem: Pointer; size: Int64; const mode: PUTF8Char): PALLEGRO_FILE; cdecl;
-  al_get_allegro_memfile_version: function(): UInt32; cdecl;
-  al_init_native_dialog_addon: function(): Boolean; cdecl;
-  al_is_native_dialog_addon_initialized: function(): Boolean; cdecl;
-  al_shutdown_native_dialog_addon: procedure(); cdecl;
-  al_create_native_file_dialog: function(const initial_path: PUTF8Char; const title: PUTF8Char; const patterns: PUTF8Char; mode: Integer): PALLEGRO_FILECHOOSER; cdecl;
-  al_show_native_file_dialog: function(display: PALLEGRO_DISPLAY; dialog: PALLEGRO_FILECHOOSER): Boolean; cdecl;
-  al_get_native_file_dialog_count: function(const dialog: PALLEGRO_FILECHOOSER): Integer; cdecl;
-  al_get_native_file_dialog_path: function(const dialog: PALLEGRO_FILECHOOSER; index: NativeUInt): PUTF8Char; cdecl;
-  al_destroy_native_file_dialog: procedure(dialog: PALLEGRO_FILECHOOSER); cdecl;
-  al_show_native_message_box: function(display: PALLEGRO_DISPLAY; const title: PUTF8Char; const heading: PUTF8Char; const text: PUTF8Char; const buttons: PUTF8Char; flags: Integer): Integer; cdecl;
-  al_open_native_text_log: function(const title: PUTF8Char; flags: Integer): PALLEGRO_TEXTLOG; cdecl;
-  al_close_native_text_log: procedure(textlog: PALLEGRO_TEXTLOG); cdecl;
-  al_append_native_text_log: procedure(textlog: PALLEGRO_TEXTLOG; const format: PUTF8Char) varargs; cdecl;
-  al_get_native_text_log_event_source: function(textlog: PALLEGRO_TEXTLOG): PALLEGRO_EVENT_SOURCE; cdecl;
-  al_create_menu: function(): PALLEGRO_MENU; cdecl;
-  al_create_popup_menu: function(): PALLEGRO_MENU; cdecl;
-  al_build_menu: function(info: PALLEGRO_MENU_INFO): PALLEGRO_MENU; cdecl;
-  al_append_menu_item: function(parent: PALLEGRO_MENU; const title: PUTF8Char; id: UInt16; flags: Integer; icon: PALLEGRO_BITMAP; submenu: PALLEGRO_MENU): Integer; cdecl;
-  al_insert_menu_item: function(parent: PALLEGRO_MENU; pos: Integer; const title: PUTF8Char; id: UInt16; flags: Integer; icon: PALLEGRO_BITMAP; submenu: PALLEGRO_MENU): Integer; cdecl;
-  al_remove_menu_item: function(menu: PALLEGRO_MENU; pos: Integer): Boolean; cdecl;
-  al_clone_menu: function(menu: PALLEGRO_MENU): PALLEGRO_MENU; cdecl;
-  al_clone_menu_for_popup: function(menu: PALLEGRO_MENU): PALLEGRO_MENU; cdecl;
-  al_destroy_menu: procedure(menu: PALLEGRO_MENU); cdecl;
-  al_get_menu_item_caption: function(menu: PALLEGRO_MENU; pos: Integer): PUTF8Char; cdecl;
-  al_set_menu_item_caption: procedure(menu: PALLEGRO_MENU; pos: Integer; const caption: PUTF8Char); cdecl;
-  al_get_menu_item_flags: function(menu: PALLEGRO_MENU; pos: Integer): Integer; cdecl;
-  al_set_menu_item_flags: procedure(menu: PALLEGRO_MENU; pos: Integer; flags: Integer); cdecl;
-  al_get_menu_item_icon: function(menu: PALLEGRO_MENU; pos: Integer): PALLEGRO_BITMAP; cdecl;
-  al_set_menu_item_icon: procedure(menu: PALLEGRO_MENU; pos: Integer; icon: PALLEGRO_BITMAP); cdecl;
-  al_toggle_menu_item_flags: function(menu: PALLEGRO_MENU; pos: Integer; flags: Integer): Integer; cdecl;
-  al_find_menu: function(haystack: PALLEGRO_MENU; id: UInt16): PALLEGRO_MENU; cdecl;
-  al_find_menu_item: function(haystack: PALLEGRO_MENU; id: UInt16; menu: PPALLEGRO_MENU; index: PInteger): Boolean; cdecl;
-  al_get_default_menu_event_source: function(): PALLEGRO_EVENT_SOURCE; cdecl;
-  al_enable_menu_event_source: function(menu: PALLEGRO_MENU): PALLEGRO_EVENT_SOURCE; cdecl;
-  al_disable_menu_event_source: procedure(menu: PALLEGRO_MENU); cdecl;
-  al_get_display_menu: function(display: PALLEGRO_DISPLAY): PALLEGRO_MENU; cdecl;
-  al_set_display_menu: function(display: PALLEGRO_DISPLAY; menu: PALLEGRO_MENU): Boolean; cdecl;
-  al_popup_menu: function(popup: PALLEGRO_MENU; display: PALLEGRO_DISPLAY): Boolean; cdecl;
-  al_remove_display_menu: function(display: PALLEGRO_DISPLAY): PALLEGRO_MENU; cdecl;
-  al_get_allegro_native_dialog_version: function(): UInt32; cdecl;
-  al_set_physfs_file_interface: procedure(); cdecl;
-  al_get_allegro_physfs_version: function(): UInt32; cdecl;
-  al_get_allegro_primitives_version: function(): UInt32; cdecl;
-  al_init_primitives_addon: function(): Boolean; cdecl;
-  al_is_primitives_addon_initialized: function(): Boolean; cdecl;
-  al_shutdown_primitives_addon: procedure(); cdecl;
-  al_draw_prim: function(const vtxs: Pointer; const decl: PALLEGRO_VERTEX_DECL; texture: PALLEGRO_BITMAP; start: Integer; end_: Integer; type_: Integer): Integer; cdecl;
-  al_draw_indexed_prim: function(const vtxs: Pointer; const decl: PALLEGRO_VERTEX_DECL; texture: PALLEGRO_BITMAP; const indices: PInteger; num_vtx: Integer; type_: Integer): Integer; cdecl;
-  al_draw_vertex_buffer: function(vertex_buffer: PALLEGRO_VERTEX_BUFFER; texture: PALLEGRO_BITMAP; start: Integer; end_: Integer; type_: Integer): Integer; cdecl;
-  al_draw_indexed_buffer: function(vertex_buffer: PALLEGRO_VERTEX_BUFFER; texture: PALLEGRO_BITMAP; index_buffer: PALLEGRO_INDEX_BUFFER; start: Integer; end_: Integer; type_: Integer): Integer; cdecl;
-  al_create_vertex_decl: function(const elements: PALLEGRO_VERTEX_ELEMENT; stride: Integer): PALLEGRO_VERTEX_DECL; cdecl;
-  al_destroy_vertex_decl: procedure(decl: PALLEGRO_VERTEX_DECL); cdecl;
-  al_create_vertex_buffer: function(decl: PALLEGRO_VERTEX_DECL; const initial_data: Pointer; num_vertices: Integer; flags: Integer): PALLEGRO_VERTEX_BUFFER; cdecl;
-  al_destroy_vertex_buffer: procedure(buffer: PALLEGRO_VERTEX_BUFFER); cdecl;
-  al_lock_vertex_buffer: function(buffer: PALLEGRO_VERTEX_BUFFER; offset: Integer; length: Integer; flags: Integer): Pointer; cdecl;
-  al_unlock_vertex_buffer: procedure(buffer: PALLEGRO_VERTEX_BUFFER); cdecl;
-  al_get_vertex_buffer_size: function(buffer: PALLEGRO_VERTEX_BUFFER): Integer; cdecl;
-  al_create_index_buffer: function(index_size: Integer; const initial_data: Pointer; num_indices: Integer; flags: Integer): PALLEGRO_INDEX_BUFFER; cdecl;
-  al_destroy_index_buffer: procedure(buffer: PALLEGRO_INDEX_BUFFER); cdecl;
-  al_lock_index_buffer: function(buffer: PALLEGRO_INDEX_BUFFER; offset: Integer; length: Integer; flags: Integer): Pointer; cdecl;
-  al_unlock_index_buffer: procedure(buffer: PALLEGRO_INDEX_BUFFER); cdecl;
-  al_get_index_buffer_size: function(buffer: PALLEGRO_INDEX_BUFFER): Integer; cdecl;
-  al_triangulate_polygon: function(const vertices: PSingle; vertex_stride: NativeUInt; const vertex_counts: PInteger; emit_triangle: al_triangulate_polygon_emit_triangle; userdata: Pointer): Boolean; cdecl;
-  al_draw_soft_triangle: procedure(v1: PALLEGRO_VERTEX; v2: PALLEGRO_VERTEX; v3: PALLEGRO_VERTEX; state: UIntPtr; init: al_draw_soft_triangle_init; first: al_draw_soft_triangle_first; step: al_draw_soft_triangle_step; draw: al_draw_soft_triangle_draw); cdecl;
-  al_draw_soft_line: procedure(v1: PALLEGRO_VERTEX; v2: PALLEGRO_VERTEX; state: UIntPtr; first: al_draw_soft_line_first; step: al_draw_soft_line_step; draw: al_draw_soft_line_draw); cdecl;
-  al_draw_line: procedure(x1: Single; y1: Single; x2: Single; y2: Single; color: ALLEGRO_COLOR; thickness: Single); cdecl;
-  al_draw_triangle: procedure(x1: Single; y1: Single; x2: Single; y2: Single; x3: Single; y3: Single; color: ALLEGRO_COLOR; thickness: Single); cdecl;
-  al_draw_rectangle: procedure(x1: Single; y1: Single; x2: Single; y2: Single; color: ALLEGRO_COLOR; thickness: Single); cdecl;
-  al_draw_rounded_rectangle: procedure(x1: Single; y1: Single; x2: Single; y2: Single; rx: Single; ry: Single; color: ALLEGRO_COLOR; thickness: Single); cdecl;
-  al_calculate_arc: procedure(dest: PSingle; stride: Integer; cx: Single; cy: Single; rx: Single; ry: Single; start_theta: Single; delta_theta: Single; thickness: Single; num_points: Integer); cdecl;
-  al_draw_circle: procedure(cx: Single; cy: Single; r: Single; color: ALLEGRO_COLOR; thickness: Single); cdecl;
-  al_draw_ellipse: procedure(cx: Single; cy: Single; rx: Single; ry: Single; color: ALLEGRO_COLOR; thickness: Single); cdecl;
-  al_draw_arc: procedure(cx: Single; cy: Single; r: Single; start_theta: Single; delta_theta: Single; color: ALLEGRO_COLOR; thickness: Single); cdecl;
-  al_draw_elliptical_arc: procedure(cx: Single; cy: Single; rx: Single; ry: Single; start_theta: Single; delta_theta: Single; color: ALLEGRO_COLOR; thickness: Single); cdecl;
-  al_draw_pieslice: procedure(cx: Single; cy: Single; r: Single; start_theta: Single; delta_theta: Single; color: ALLEGRO_COLOR; thickness: Single); cdecl;
-  al_calculate_spline: procedure(dest: PSingle; stride: Integer; points: PSingle; thickness: Single; num_segments: Integer); cdecl;
-  al_draw_spline: procedure(points: PSingle; color: ALLEGRO_COLOR; thickness: Single); cdecl;
-  al_calculate_ribbon: procedure(dest: PSingle; dest_stride: Integer; const points: PSingle; points_stride: Integer; thickness: Single; num_segments: Integer); cdecl;
-  al_draw_ribbon: procedure(const points: PSingle; points_stride: Integer; color: ALLEGRO_COLOR; thickness: Single; num_segments: Integer); cdecl;
-  al_draw_filled_triangle: procedure(x1: Single; y1: Single; x2: Single; y2: Single; x3: Single; y3: Single; color: ALLEGRO_COLOR); cdecl;
-  al_draw_filled_rectangle: procedure(x1: Single; y1: Single; x2: Single; y2: Single; color: ALLEGRO_COLOR); cdecl;
-  al_draw_filled_ellipse: procedure(cx: Single; cy: Single; rx: Single; ry: Single; color: ALLEGRO_COLOR); cdecl;
-  al_draw_filled_circle: procedure(cx: Single; cy: Single; r: Single; color: ALLEGRO_COLOR); cdecl;
-  al_draw_filled_pieslice: procedure(cx: Single; cy: Single; r: Single; start_theta: Single; delta_theta: Single; color: ALLEGRO_COLOR); cdecl;
-  al_draw_filled_rounded_rectangle: procedure(x1: Single; y1: Single; x2: Single; y2: Single; rx: Single; ry: Single; color: ALLEGRO_COLOR); cdecl;
-  al_draw_polyline: procedure(const vertices: PSingle; vertex_stride: Integer; vertex_count: Integer; join_style: Integer; cap_style: Integer; color: ALLEGRO_COLOR; thickness: Single; miter_limit: Single); cdecl;
-  al_draw_polygon: procedure(const vertices: PSingle; vertex_count: Integer; join_style: Integer; color: ALLEGRO_COLOR; thickness: Single; miter_limit: Single); cdecl;
-  al_draw_filled_polygon: procedure(const vertices: PSingle; vertex_count: Integer; color: ALLEGRO_COLOR); cdecl;
-  al_draw_filled_polygon_with_holes: procedure(const vertices: PSingle; const vertex_counts: PInteger; color: ALLEGRO_COLOR); cdecl;
-  al_load_ttf_font: function(const filename: PUTF8Char; size: Integer; flags: Integer): PALLEGRO_FONT; cdecl;
-  al_load_ttf_font_f: function(file_: PALLEGRO_FILE; const filename: PUTF8Char; size: Integer; flags: Integer): PALLEGRO_FONT; cdecl;
-  al_load_ttf_font_stretch: function(const filename: PUTF8Char; w: Integer; h: Integer; flags: Integer): PALLEGRO_FONT; cdecl;
-  al_load_ttf_font_stretch_f: function(file_: PALLEGRO_FILE; const filename: PUTF8Char; w: Integer; h: Integer; flags: Integer): PALLEGRO_FONT; cdecl;
-  al_init_ttf_addon: function(): Boolean; cdecl;
-  al_is_ttf_addon_initialized: function(): Boolean; cdecl;
-  al_shutdown_ttf_addon: procedure(); cdecl;
-  al_get_allegro_ttf_version: function(): UInt32; cdecl;
-  al_open_video: function(const filename: PUTF8Char): PALLEGRO_VIDEO; cdecl;
-  al_close_video: procedure(video: PALLEGRO_VIDEO); cdecl;
-  al_start_video: procedure(video: PALLEGRO_VIDEO; mixer: PALLEGRO_MIXER); cdecl;
-  al_start_video_with_voice: procedure(video: PALLEGRO_VIDEO; voice: PALLEGRO_VOICE); cdecl;
-  al_get_video_event_source: function(video: PALLEGRO_VIDEO): PALLEGRO_EVENT_SOURCE; cdecl;
-  al_set_video_playing: procedure(video: PALLEGRO_VIDEO; playing: Boolean); cdecl;
-  al_is_video_playing: function(video: PALLEGRO_VIDEO): Boolean; cdecl;
-  al_get_video_audio_rate: function(video: PALLEGRO_VIDEO): Double; cdecl;
-  al_get_video_fps: function(video: PALLEGRO_VIDEO): Double; cdecl;
-  al_get_video_scaled_width: function(video: PALLEGRO_VIDEO): Single; cdecl;
-  al_get_video_scaled_height: function(video: PALLEGRO_VIDEO): Single; cdecl;
-  al_get_video_frame: function(video: PALLEGRO_VIDEO): PALLEGRO_BITMAP; cdecl;
-  al_get_video_position: function(video: PALLEGRO_VIDEO; which: ALLEGRO_VIDEO_POSITION_TYPE): Double; cdecl;
-  al_seek_video: function(video: PALLEGRO_VIDEO; pos_in_seconds: Double): Boolean; cdecl;
-  al_init_video_addon: function(): Boolean; cdecl;
-  al_is_video_addon_initialized: function(): Boolean; cdecl;
-  al_shutdown_video_addon: procedure(); cdecl;
-  al_get_allegro_video_version: function(): UInt32; cdecl;
-  al_identify_video_f: function(fp: PALLEGRO_FILE): PUTF8Char; cdecl;
-  al_identify_video: function(const filename: PUTF8Char): PUTF8Char; cdecl;
-  PHYSFS_init: function(const argv0: PUTF8Char): Integer; cdecl;
-  PHYSFS_deinit: function(): Integer; cdecl;
-  PHYSFS_getWriteDir: function(): PUTF8Char; cdecl;
-  PHYSFS_setWriteDir: function(const newDir: PUTF8Char): Integer; cdecl;
-  PHYSFS_mount: function(const newDir: PUTF8Char; const mountPoint: PUTF8Char; appendToPath: Integer): Integer; cdecl;
-  PHYSFS_unmount: function(const oldDir: PUTF8Char): Integer; cdecl;
-  al_get_win_window_handle: function(display: PALLEGRO_DISPLAY): HWND; cdecl;
+// --- ZLib -----------------------------------------------------------------
+  { Ptm_zip_s }
+  Ptm_zip_s = ^tm_zip_s;
+
+  { Pzip_fileinfo }
+  Pzip_fileinfo = ^zip_fileinfo;
+
+  { tm_zip_s }
+  tm_zip_s = record
+    tm_sec: Integer;
+    tm_min: Integer;
+    tm_hour: Integer;
+    tm_mday: Integer;
+    tm_mon: Integer;
+    tm_year: Integer;
+  end;
+
+  { tm_zip }
+  tm_zip = tm_zip_s;
+
+  { tm_zip }
+  zip_fileinfo = record
+    tmz_date: tm_zip;
+    dosDate: Cardinal;
+    internal_fa: Cardinal;
+    external_fa: Cardinal;
+  end;
+
+  { zipFile }
+  zipFile = Pointer;
+
+// --- Allegro --------------------------------------------------------------
+function  al_get_allegro_version(): UInt32; cdecl; external SPARK_DLL;
+function  al_get_time(): Double; cdecl; external SPARK_DLL;
+procedure al_rest(seconds: Double); cdecl; external SPARK_DLL;
+procedure al_init_timeout(timeout: PALLEGRO_TIMEOUT; seconds: Double); cdecl; external SPARK_DLL;
+function  al_map_rgb(r: Byte; g: Byte; b: Byte): ALLEGRO_COLOR; cdecl; external SPARK_DLL;
+function  al_map_rgba(r: Byte; g: Byte; b: Byte; a: Byte): ALLEGRO_COLOR; cdecl; external SPARK_DLL;
+function  al_map_rgb_f(r: Single; g: Single; b: Single): ALLEGRO_COLOR; cdecl; external SPARK_DLL;
+function  al_map_rgba_f(r: Single; g: Single; b: Single; a: Single): ALLEGRO_COLOR; cdecl; external SPARK_DLL;
+function  al_premul_rgba(r: Byte; g: Byte; b: Byte; a: Byte): ALLEGRO_COLOR; cdecl; external SPARK_DLL;
+function  al_premul_rgba_f(r: Single; g: Single; b: Single; a: Single): ALLEGRO_COLOR; cdecl; external SPARK_DLL;
+procedure al_unmap_rgb(color: ALLEGRO_COLOR; r: PByte; g: PByte; b: PByte); cdecl; external SPARK_DLL;
+procedure al_unmap_rgba(color: ALLEGRO_COLOR; r: PByte; g: PByte; b: PByte; a: PByte); cdecl; external SPARK_DLL;
+procedure al_unmap_rgb_f(color: ALLEGRO_COLOR; r: PSingle; g: PSingle; b: PSingle); cdecl; external SPARK_DLL;
+procedure al_unmap_rgba_f(color: ALLEGRO_COLOR; r: PSingle; g: PSingle; b: PSingle; a: PSingle); cdecl; external SPARK_DLL;
+function  al_get_pixel_size(format: Integer): Integer; cdecl; external SPARK_DLL;
+function  al_get_pixel_format_bits(format: Integer): Integer; cdecl; external SPARK_DLL;
+function  al_get_pixel_block_size(format: Integer): Integer; cdecl; external SPARK_DLL;
+function  al_get_pixel_block_width(format: Integer): Integer; cdecl; external SPARK_DLL;
+function  al_get_pixel_block_height(format: Integer): Integer; cdecl; external SPARK_DLL;
+procedure al_set_new_bitmap_format(format: Integer); cdecl; external SPARK_DLL;
+procedure al_set_new_bitmap_flags(flags: Integer); cdecl; external SPARK_DLL;
+function  al_get_new_bitmap_format(): Integer; cdecl; external SPARK_DLL;
+function  al_get_new_bitmap_flags(): Integer; cdecl; external SPARK_DLL;
+procedure al_add_new_bitmap_flag(flag: Integer); cdecl; external SPARK_DLL;
+function  al_get_new_bitmap_depth(): Integer; cdecl; external SPARK_DLL;
+procedure al_set_new_bitmap_depth(depth: Integer); cdecl; external SPARK_DLL;
+function  al_get_new_bitmap_samples(): Integer; cdecl; external SPARK_DLL;
+procedure al_set_new_bitmap_samples(samples: Integer); cdecl; external SPARK_DLL;
+procedure al_get_new_bitmap_wrap(u: PALLEGRO_BITMAP_WRAP; v: PALLEGRO_BITMAP_WRAP); cdecl; external SPARK_DLL;
+procedure al_set_new_bitmap_wrap(u: ALLEGRO_BITMAP_WRAP; v: ALLEGRO_BITMAP_WRAP); cdecl; external SPARK_DLL;
+function  al_get_bitmap_width(bitmap: PALLEGRO_BITMAP): Integer; cdecl; external SPARK_DLL;
+function  al_get_bitmap_height(bitmap: PALLEGRO_BITMAP): Integer; cdecl; external SPARK_DLL;
+function  al_get_bitmap_format(bitmap: PALLEGRO_BITMAP): Integer; cdecl; external SPARK_DLL;
+function  al_get_bitmap_flags(bitmap: PALLEGRO_BITMAP): Integer; cdecl; external SPARK_DLL;
+function  al_get_bitmap_depth(bitmap: PALLEGRO_BITMAP): Integer; cdecl; external SPARK_DLL;
+function  al_get_bitmap_samples(bitmap: PALLEGRO_BITMAP): Integer; cdecl; external SPARK_DLL;
+function  al_create_bitmap(w: Integer; h: Integer): PALLEGRO_BITMAP; cdecl; external SPARK_DLL;
+procedure al_destroy_bitmap(bitmap: PALLEGRO_BITMAP); cdecl; external SPARK_DLL;
+procedure al_put_pixel(x: Integer; y: Integer; color: ALLEGRO_COLOR); cdecl; external SPARK_DLL;
+procedure al_put_blended_pixel(x: Integer; y: Integer; color: ALLEGRO_COLOR); cdecl; external SPARK_DLL;
+function  al_get_pixel(bitmap: PALLEGRO_BITMAP; x: Integer; y: Integer): ALLEGRO_COLOR; cdecl; external SPARK_DLL;
+procedure al_convert_mask_to_alpha(bitmap: PALLEGRO_BITMAP; mask_color: ALLEGRO_COLOR); cdecl; external SPARK_DLL;
+function  al_get_bitmap_blend_color(): ALLEGRO_COLOR; cdecl; external SPARK_DLL;
+procedure al_get_bitmap_blender(op: PInteger; src: PInteger; dst: PInteger); cdecl; external SPARK_DLL;
+procedure al_get_separate_bitmap_blender(op: PInteger; src: PInteger; dst: PInteger; alpha_op: PInteger; alpha_src: PInteger; alpha_dst: PInteger); cdecl; external SPARK_DLL;
+procedure al_set_bitmap_blend_color(color: ALLEGRO_COLOR); cdecl; external SPARK_DLL;
+procedure al_set_bitmap_blender(op: Integer; src: Integer; dst: Integer); cdecl; external SPARK_DLL;
+procedure al_set_separate_bitmap_blender(op: Integer; src: Integer; dst: Integer; alpha_op: Integer; alpha_src: Integer; alpha_dst: Integer); cdecl; external SPARK_DLL;
+procedure al_reset_bitmap_blender(); cdecl; external SPARK_DLL;
+procedure al_set_clipping_rectangle(x: Integer; y: Integer; width: Integer; height: Integer); cdecl; external SPARK_DLL;
+procedure al_reset_clipping_rectangle(); cdecl; external SPARK_DLL;
+procedure al_get_clipping_rectangle(x: PInteger; y: PInteger; w: PInteger; h: PInteger); cdecl; external SPARK_DLL;
+function  al_create_sub_bitmap(parent: PALLEGRO_BITMAP; x: Integer; y: Integer; w: Integer; h: Integer): PALLEGRO_BITMAP; cdecl; external SPARK_DLL;
+function  al_is_sub_bitmap(bitmap: PALLEGRO_BITMAP): Boolean; cdecl; external SPARK_DLL;
+function  al_get_parent_bitmap(bitmap: PALLEGRO_BITMAP): PALLEGRO_BITMAP; cdecl; external SPARK_DLL;
+function  al_get_bitmap_x(bitmap: PALLEGRO_BITMAP): Integer; cdecl; external SPARK_DLL;
+function  al_get_bitmap_y(bitmap: PALLEGRO_BITMAP): Integer; cdecl; external SPARK_DLL;
+procedure al_reparent_bitmap(bitmap: PALLEGRO_BITMAP; parent: PALLEGRO_BITMAP; x: Integer; y: Integer; w: Integer; h: Integer); cdecl; external SPARK_DLL;
+function  al_clone_bitmap(bitmap: PALLEGRO_BITMAP): PALLEGRO_BITMAP; cdecl; external SPARK_DLL;
+procedure al_convert_bitmap(bitmap: PALLEGRO_BITMAP); cdecl; external SPARK_DLL;
+procedure al_convert_memory_bitmaps(); cdecl; external SPARK_DLL;
+procedure al_backup_dirty_bitmap(bitmap: PALLEGRO_BITMAP); cdecl; external SPARK_DLL;
+procedure al_draw_bitmap(bitmap: PALLEGRO_BITMAP; dx: Single; dy: Single; flags: Integer); cdecl; external SPARK_DLL;
+procedure al_draw_bitmap_region(bitmap: PALLEGRO_BITMAP; sx: Single; sy: Single; sw: Single; sh: Single; dx: Single; dy: Single; flags: Integer); cdecl; external SPARK_DLL;
+procedure al_draw_scaled_bitmap(bitmap: PALLEGRO_BITMAP; sx: Single; sy: Single; sw: Single; sh: Single; dx: Single; dy: Single; dw: Single; dh: Single; flags: Integer); cdecl; external SPARK_DLL;
+procedure al_draw_rotated_bitmap(bitmap: PALLEGRO_BITMAP; cx: Single; cy: Single; dx: Single; dy: Single; angle: Single; flags: Integer); cdecl; external SPARK_DLL;
+procedure al_draw_scaled_rotated_bitmap(bitmap: PALLEGRO_BITMAP; cx: Single; cy: Single; dx: Single; dy: Single; xscale: Single; yscale: Single; angle: Single; flags: Integer); cdecl; external SPARK_DLL;
+procedure al_draw_tinted_bitmap(bitmap: PALLEGRO_BITMAP; tint: ALLEGRO_COLOR; dx: Single; dy: Single; flags: Integer); cdecl; external SPARK_DLL;
+procedure al_draw_tinted_bitmap_region(bitmap: PALLEGRO_BITMAP; tint: ALLEGRO_COLOR; sx: Single; sy: Single; sw: Single; sh: Single; dx: Single; dy: Single; flags: Integer); cdecl; external SPARK_DLL;
+procedure al_draw_tinted_scaled_bitmap(bitmap: PALLEGRO_BITMAP; tint: ALLEGRO_COLOR; sx: Single; sy: Single; sw: Single; sh: Single; dx: Single; dy: Single; dw: Single; dh: Single; flags: Integer); cdecl; external SPARK_DLL;
+procedure al_draw_tinted_rotated_bitmap(bitmap: PALLEGRO_BITMAP; tint: ALLEGRO_COLOR; cx: Single; cy: Single; dx: Single; dy: Single; angle: Single; flags: Integer); cdecl; external SPARK_DLL;
+procedure al_draw_tinted_scaled_rotated_bitmap(bitmap: PALLEGRO_BITMAP; tint: ALLEGRO_COLOR; cx: Single; cy: Single; dx: Single; dy: Single; xscale: Single; yscale: Single; angle: Single; flags: Integer); cdecl; external SPARK_DLL;
+procedure al_draw_tinted_scaled_rotated_bitmap_region(bitmap: PALLEGRO_BITMAP; sx: Single; sy: Single; sw: Single; sh: Single; tint: ALLEGRO_COLOR; cx: Single; cy: Single; dx: Single; dy: Single; xscale: Single; yscale: Single; angle: Single; flags: Integer); cdecl; external SPARK_DLL;
+function  al_ustr_new(const s: PUTF8Char): PALLEGRO_USTR; cdecl; external SPARK_DLL;
+function  al_ustr_new_from_buffer(const s: PUTF8Char; size: NativeUInt): PALLEGRO_USTR; cdecl; external SPARK_DLL;
+function  al_ustr_newf(const fmt: PUTF8Char): PALLEGRO_USTR varargs; cdecl; external SPARK_DLL;
+procedure al_ustr_free(us: PALLEGRO_USTR); cdecl; external SPARK_DLL;
+function  al_cstr(const us: PALLEGRO_USTR): PUTF8Char; cdecl; external SPARK_DLL;
+procedure al_ustr_to_buffer(const us: PALLEGRO_USTR; buffer: PUTF8Char; size: Integer); cdecl; external SPARK_DLL;
+function  al_cstr_dup(const us: PALLEGRO_USTR): PUTF8Char; cdecl; external SPARK_DLL;
+function  al_ustr_dup(const us: PALLEGRO_USTR): PALLEGRO_USTR; cdecl; external SPARK_DLL;
+function  al_ustr_dup_substr(const us: PALLEGRO_USTR; start_pos: Integer; end_pos: Integer): PALLEGRO_USTR; cdecl; external SPARK_DLL;
+function  al_ustr_empty_string(): PALLEGRO_USTR; cdecl; external SPARK_DLL;
+function  al_ref_cstr(info: PALLEGRO_USTR_INFO; const s: PUTF8Char): PALLEGRO_USTR; cdecl; external SPARK_DLL;
+function  al_ref_buffer(info: PALLEGRO_USTR_INFO; const s: PUTF8Char; size: NativeUInt): PALLEGRO_USTR; cdecl; external SPARK_DLL;
+function  al_ref_ustr(info: PALLEGRO_USTR_INFO; const us: PALLEGRO_USTR; start_pos: Integer; end_pos: Integer): PALLEGRO_USTR; cdecl; external SPARK_DLL;
+function  al_ustr_size(const us: PALLEGRO_USTR): NativeUInt; cdecl; external SPARK_DLL;
+function  al_ustr_length(const us: PALLEGRO_USTR): NativeUInt; cdecl; external SPARK_DLL;
+function  al_ustr_offset(const us: PALLEGRO_USTR; index: Integer): Integer; cdecl; external SPARK_DLL;
+function  al_ustr_next(const us: PALLEGRO_USTR; pos: PInteger): Boolean; cdecl; external SPARK_DLL;
+function  al_ustr_prev(const us: PALLEGRO_USTR; pos: PInteger): Boolean; cdecl; external SPARK_DLL;
+function  al_ustr_get(const us: PALLEGRO_USTR; pos: Integer): Int32; cdecl; external SPARK_DLL;
+function  al_ustr_get_next(const us: PALLEGRO_USTR; pos: PInteger): Int32; cdecl; external SPARK_DLL;
+function  al_ustr_prev_get(const us: PALLEGRO_USTR; pos: PInteger): Int32; cdecl; external SPARK_DLL;
+function  al_ustr_insert(us1: PALLEGRO_USTR; pos: Integer; const us2: PALLEGRO_USTR): Boolean; cdecl; external SPARK_DLL;
+function  al_ustr_insert_cstr(us: PALLEGRO_USTR; pos: Integer; const us2: PUTF8Char): Boolean; cdecl; external SPARK_DLL;
+function  al_ustr_insert_chr(us: PALLEGRO_USTR; pos: Integer; c: Int32): NativeUInt; cdecl; external SPARK_DLL;
+function  al_ustr_append(us1: PALLEGRO_USTR; const us2: PALLEGRO_USTR): Boolean; cdecl; external SPARK_DLL;
+function  al_ustr_append_cstr(us: PALLEGRO_USTR; const s: PUTF8Char): Boolean; cdecl; external SPARK_DLL;
+function  al_ustr_append_chr(us: PALLEGRO_USTR; c: Int32): NativeUInt; cdecl; external SPARK_DLL;
+function  al_ustr_appendf(us: PALLEGRO_USTR; const fmt: PUTF8Char): Boolean varargs; cdecl; external SPARK_DLL;
+function  al_ustr_vappendf(us: PALLEGRO_USTR; const fmt: PUTF8Char; ap: Pointer): Boolean; cdecl; external SPARK_DLL;
+function  al_ustr_remove_chr(us: PALLEGRO_USTR; pos: Integer): Boolean; cdecl; external SPARK_DLL;
+function  al_ustr_remove_range(us: PALLEGRO_USTR; start_pos: Integer; end_pos: Integer): Boolean; cdecl; external SPARK_DLL;
+function  al_ustr_truncate(us: PALLEGRO_USTR; start_pos: Integer): Boolean; cdecl; external SPARK_DLL;
+function  al_ustr_ltrim_ws(us: PALLEGRO_USTR): Boolean; cdecl; external SPARK_DLL;
+function  al_ustr_rtrim_ws(us: PALLEGRO_USTR): Boolean; cdecl; external SPARK_DLL;
+function  al_ustr_trim_ws(us: PALLEGRO_USTR): Boolean; cdecl; external SPARK_DLL;
+function  al_ustr_assign(us1: PALLEGRO_USTR; const us2: PALLEGRO_USTR): Boolean; cdecl; external SPARK_DLL;
+function  al_ustr_assign_substr(us1: PALLEGRO_USTR; const us2: PALLEGRO_USTR; start_pos: Integer; end_pos: Integer): Boolean; cdecl; external SPARK_DLL;
+function  al_ustr_assign_cstr(us1: PALLEGRO_USTR; const s: PUTF8Char): Boolean; cdecl; external SPARK_DLL;
+function  al_ustr_set_chr(us: PALLEGRO_USTR; pos: Integer; c: Int32): NativeUInt; cdecl; external SPARK_DLL;
+function  al_ustr_replace_range(us1: PALLEGRO_USTR; start_pos1: Integer; end_pos1: Integer; const us2: PALLEGRO_USTR): Boolean; cdecl; external SPARK_DLL;
+function  al_ustr_find_chr(const us: PALLEGRO_USTR; start_pos: Integer; c: Int32): Integer; cdecl; external SPARK_DLL;
+function  al_ustr_rfind_chr(const us: PALLEGRO_USTR; start_pos: Integer; c: Int32): Integer; cdecl; external SPARK_DLL;
+function  al_ustr_find_set(const us: PALLEGRO_USTR; start_pos: Integer; const accept: PALLEGRO_USTR): Integer; cdecl; external SPARK_DLL;
+function  al_ustr_find_set_cstr(const us: PALLEGRO_USTR; start_pos: Integer; const accept: PUTF8Char): Integer; cdecl; external SPARK_DLL;
+function  al_ustr_find_cset(const us: PALLEGRO_USTR; start_pos: Integer; const reject: PALLEGRO_USTR): Integer; cdecl; external SPARK_DLL;
+function  al_ustr_find_cset_cstr(const us: PALLEGRO_USTR; start_pos: Integer; const reject: PUTF8Char): Integer; cdecl; external SPARK_DLL;
+function  al_ustr_find_str(const haystack: PALLEGRO_USTR; start_pos: Integer; const needle: PALLEGRO_USTR): Integer; cdecl; external SPARK_DLL;
+function  al_ustr_find_cstr(const haystack: PALLEGRO_USTR; start_pos: Integer; const needle: PUTF8Char): Integer; cdecl; external SPARK_DLL;
+function  al_ustr_rfind_str(const haystack: PALLEGRO_USTR; start_pos: Integer; const needle: PALLEGRO_USTR): Integer; cdecl; external SPARK_DLL;
+function  al_ustr_rfind_cstr(const haystack: PALLEGRO_USTR; start_pos: Integer; const needle: PUTF8Char): Integer; cdecl; external SPARK_DLL;
+function  al_ustr_find_replace(us: PALLEGRO_USTR; start_pos: Integer; const find: PALLEGRO_USTR; const replace: PALLEGRO_USTR): Boolean; cdecl; external SPARK_DLL;
+function  al_ustr_find_replace_cstr(us: PALLEGRO_USTR; start_pos: Integer; const find: PUTF8Char; const replace: PUTF8Char): Boolean; cdecl; external SPARK_DLL;
+function  al_ustr_equal(const us1: PALLEGRO_USTR; const us2: PALLEGRO_USTR): Boolean; cdecl; external SPARK_DLL;
+function  al_ustr_compare(const u: PALLEGRO_USTR; const v: PALLEGRO_USTR): Integer; cdecl; external SPARK_DLL;
+function  al_ustr_ncompare(const us1: PALLEGRO_USTR; const us2: PALLEGRO_USTR; n: Integer): Integer; cdecl; external SPARK_DLL;
+function  al_ustr_has_prefix(const u: PALLEGRO_USTR; const v: PALLEGRO_USTR): Boolean; cdecl; external SPARK_DLL;
+function  al_ustr_has_prefix_cstr(const u: PALLEGRO_USTR; const s: PUTF8Char): Boolean; cdecl; external SPARK_DLL;
+function  al_ustr_has_suffix(const u: PALLEGRO_USTR; const v: PALLEGRO_USTR): Boolean; cdecl; external SPARK_DLL;
+function  al_ustr_has_suffix_cstr(const us1: PALLEGRO_USTR; const s: PUTF8Char): Boolean; cdecl; external SPARK_DLL;
+function  al_utf8_width(c: Int32): NativeUInt; cdecl; external SPARK_DLL;
+function  al_utf8_encode(s: PUTF8Char; c: Int32): NativeUInt; cdecl; external SPARK_DLL;
+function  al_ustr_new_from_utf16(const s: PUInt16): PALLEGRO_USTR; cdecl; external SPARK_DLL;
+function  al_ustr_size_utf16(const us: PALLEGRO_USTR): NativeUInt; cdecl; external SPARK_DLL;
+function  al_ustr_encode_utf16(const us: PALLEGRO_USTR; s: PUInt16; n: NativeUInt): NativeUInt; cdecl; external SPARK_DLL;
+function  al_utf16_width(c: Integer): NativeUInt; cdecl; external SPARK_DLL;
+function  al_utf16_encode(s: PUInt16; c: Int32): NativeUInt; cdecl; external SPARK_DLL;
+function  al_create_path(const str: PUTF8Char): PALLEGRO_PATH; cdecl; external SPARK_DLL;
+function  al_create_path_for_directory(const str: PUTF8Char): PALLEGRO_PATH; cdecl; external SPARK_DLL;
+function  al_clone_path(const path: PALLEGRO_PATH): PALLEGRO_PATH; cdecl; external SPARK_DLL;
+function  al_get_path_num_components(const path: PALLEGRO_PATH): Integer; cdecl; external SPARK_DLL;
+function  al_get_path_component(const path: PALLEGRO_PATH; i: Integer): PUTF8Char; cdecl; external SPARK_DLL;
+procedure al_replace_path_component(path: PALLEGRO_PATH; i: Integer; const s: PUTF8Char); cdecl; external SPARK_DLL;
+procedure al_remove_path_component(path: PALLEGRO_PATH; i: Integer); cdecl; external SPARK_DLL;
+procedure al_insert_path_component(path: PALLEGRO_PATH; i: Integer; const s: PUTF8Char); cdecl; external SPARK_DLL;
+function  al_get_path_tail(const path: PALLEGRO_PATH): PUTF8Char; cdecl; external SPARK_DLL;
+procedure al_drop_path_tail(path: PALLEGRO_PATH); cdecl; external SPARK_DLL;
+procedure al_append_path_component(path: PALLEGRO_PATH; const s: PUTF8Char); cdecl; external SPARK_DLL;
+function  al_join_paths(path: PALLEGRO_PATH; const tail: PALLEGRO_PATH): Boolean; cdecl; external SPARK_DLL;
+function  al_rebase_path(const head: PALLEGRO_PATH; tail: PALLEGRO_PATH): Boolean; cdecl; external SPARK_DLL;
+function  al_path_cstr(const path: PALLEGRO_PATH; delim: UTF8Char): PUTF8Char; cdecl; external SPARK_DLL;
+function  al_path_ustr(const path: PALLEGRO_PATH; delim: UTF8Char): PALLEGRO_USTR; cdecl; external SPARK_DLL;
+procedure al_destroy_path(path: PALLEGRO_PATH); cdecl; external SPARK_DLL;
+procedure al_set_path_drive(path: PALLEGRO_PATH; const drive: PUTF8Char); cdecl; external SPARK_DLL;
+function  al_get_path_drive(const path: PALLEGRO_PATH): PUTF8Char; cdecl; external SPARK_DLL;
+procedure al_set_path_filename(path: PALLEGRO_PATH; const filename: PUTF8Char); cdecl; external SPARK_DLL;
+function  al_get_path_filename(const path: PALLEGRO_PATH): PUTF8Char; cdecl; external SPARK_DLL;
+function  al_get_path_extension(const path: PALLEGRO_PATH): PUTF8Char; cdecl; external SPARK_DLL;
+function  al_set_path_extension(path: PALLEGRO_PATH; const extension: PUTF8Char): Boolean; cdecl; external SPARK_DLL;
+function  al_get_path_basename(const path: PALLEGRO_PATH): PUTF8Char; cdecl; external SPARK_DLL;
+function  al_make_path_canonical(path: PALLEGRO_PATH): Boolean; cdecl; external SPARK_DLL;
+function  al_fopen(const path: PUTF8Char; const mode: PUTF8Char): PALLEGRO_FILE; cdecl; external SPARK_DLL;
+function  al_fopen_interface(const vt: PALLEGRO_FILE_INTERFACE; const path: PUTF8Char; const mode: PUTF8Char): PALLEGRO_FILE; cdecl; external SPARK_DLL;
+function  al_create_file_handle(const vt: PALLEGRO_FILE_INTERFACE; userdata: Pointer): PALLEGRO_FILE; cdecl; external SPARK_DLL;
+function  al_fclose(f: PALLEGRO_FILE): Boolean; cdecl; external SPARK_DLL;
+function  al_fread(f: PALLEGRO_FILE; ptr: Pointer; size: NativeUInt): NativeUInt; cdecl; external SPARK_DLL;
+function  al_fwrite(f: PALLEGRO_FILE; const ptr: Pointer; size: NativeUInt): NativeUInt; cdecl; external SPARK_DLL;
+function  al_fflush(f: PALLEGRO_FILE): Boolean; cdecl; external SPARK_DLL;
+function  al_ftell(f: PALLEGRO_FILE): Int64; cdecl; external SPARK_DLL;
+function  al_fseek(f: PALLEGRO_FILE; offset: Int64; whence: Integer): Boolean; cdecl; external SPARK_DLL;
+function  al_feof(f: PALLEGRO_FILE): Boolean; cdecl; external SPARK_DLL;
+function  al_ferror(f: PALLEGRO_FILE): Integer; cdecl; external SPARK_DLL;
+function  al_ferrmsg(f: PALLEGRO_FILE): PUTF8Char; cdecl; external SPARK_DLL;
+procedure al_fclearerr(f: PALLEGRO_FILE); cdecl; external SPARK_DLL;
+function  al_fungetc(f: PALLEGRO_FILE; c: Integer): Integer; cdecl; external SPARK_DLL;
+function  al_fsize(f: PALLEGRO_FILE): Int64; cdecl; external SPARK_DLL;
+function  al_fgetc(f: PALLEGRO_FILE): Integer; cdecl; external SPARK_DLL;
+function  al_fputc(f: PALLEGRO_FILE; c: Integer): Integer; cdecl; external SPARK_DLL;
+function  al_fread16le(f: PALLEGRO_FILE): Int16; cdecl; external SPARK_DLL;
+function  al_fread16be(f: PALLEGRO_FILE): Int16; cdecl; external SPARK_DLL;
+function  al_fwrite16le(f: PALLEGRO_FILE; w: Int16): NativeUInt; cdecl; external SPARK_DLL;
+function  al_fwrite16be(f: PALLEGRO_FILE; w: Int16): NativeUInt; cdecl; external SPARK_DLL;
+function  al_fread32le(f: PALLEGRO_FILE): Int32; cdecl; external SPARK_DLL;
+function  al_fread32be(f: PALLEGRO_FILE): Int32; cdecl; external SPARK_DLL;
+function  al_fwrite32le(f: PALLEGRO_FILE; l: Int32): NativeUInt; cdecl; external SPARK_DLL;
+function  al_fwrite32be(f: PALLEGRO_FILE; l: Int32): NativeUInt; cdecl; external SPARK_DLL;
+function  al_fgets(f: PALLEGRO_FILE; const p: PUTF8Char; max: NativeUInt): PUTF8Char; cdecl; external SPARK_DLL;
+function  al_fget_ustr(f: PALLEGRO_FILE): PALLEGRO_USTR; cdecl; external SPARK_DLL;
+function  al_fputs(f: PALLEGRO_FILE; const p: PUTF8Char): Integer; cdecl; external SPARK_DLL;
+function  al_fprintf(f: PALLEGRO_FILE; const format: PUTF8Char): Integer varargs; cdecl; external SPARK_DLL;
+function  al_vfprintf(f: PALLEGRO_FILE; const format: PUTF8Char; args: Pointer): Integer; cdecl; varargs; external SPARK_DLL;
+function  al_fopen_fd(fd: Integer; const mode: PUTF8Char): PALLEGRO_FILE; cdecl; external SPARK_DLL;
+function  al_make_temp_file(const tmpl: PUTF8Char; ret_path: PPALLEGRO_PATH): PALLEGRO_FILE; cdecl; external SPARK_DLL;
+function  al_fopen_slice(fp: PALLEGRO_FILE; initial_size: NativeUInt; const mode: PUTF8Char): PALLEGRO_FILE; cdecl; external SPARK_DLL;
+function  al_get_new_file_interface(): PALLEGRO_FILE_INTERFACE; cdecl; external SPARK_DLL;
+procedure al_set_new_file_interface(const file_interface: PALLEGRO_FILE_INTERFACE); cdecl; external SPARK_DLL;
+procedure al_set_standard_file_interface(); cdecl; external SPARK_DLL;
+function  al_get_file_userdata(f: PALLEGRO_FILE): Pointer; cdecl; external SPARK_DLL;
+function  al_register_bitmap_loader(const ext: PUTF8Char; loader: ALLEGRO_IIO_LOADER_FUNCTION): Boolean; cdecl; external SPARK_DLL;
+function  al_register_bitmap_saver(const ext: PUTF8Char; saver: ALLEGRO_IIO_SAVER_FUNCTION): Boolean; cdecl; external SPARK_DLL;
+function  al_register_bitmap_loader_f(const ext: PUTF8Char; fs_loader: ALLEGRO_IIO_FS_LOADER_FUNCTION): Boolean; cdecl; external SPARK_DLL;
+function  al_register_bitmap_saver_f(const ext: PUTF8Char; fs_saver: ALLEGRO_IIO_FS_SAVER_FUNCTION): Boolean; cdecl; external SPARK_DLL;
+function  al_register_bitmap_identifier(const ext: PUTF8Char; identifier: ALLEGRO_IIO_IDENTIFIER_FUNCTION): Boolean; cdecl; external SPARK_DLL;
+function  al_load_bitmap(const filename: PUTF8Char): PALLEGRO_BITMAP; cdecl; external SPARK_DLL;
+function  al_load_bitmap_flags(const filename: PUTF8Char; flags: Integer): PALLEGRO_BITMAP; cdecl; external SPARK_DLL;
+function  al_load_bitmap_f(fp: PALLEGRO_FILE; const ident: PUTF8Char): PALLEGRO_BITMAP; cdecl; external SPARK_DLL;
+function  al_load_bitmap_flags_f(fp: PALLEGRO_FILE; const ident: PUTF8Char; flags: Integer): PALLEGRO_BITMAP; cdecl; external SPARK_DLL;
+function  al_save_bitmap(const filename: PUTF8Char; bitmap: PALLEGRO_BITMAP): Boolean; cdecl; external SPARK_DLL;
+function  al_save_bitmap_f(fp: PALLEGRO_FILE; const ident: PUTF8Char; bitmap: PALLEGRO_BITMAP): Boolean; cdecl; external SPARK_DLL;
+function  al_identify_bitmap_f(fp: PALLEGRO_FILE): PUTF8Char; cdecl; external SPARK_DLL;
+function  al_identify_bitmap(const filename: PUTF8Char): PUTF8Char; cdecl; external SPARK_DLL;
+function  al_lock_bitmap(bitmap: PALLEGRO_BITMAP; format: Integer; flags: Integer): PALLEGRO_LOCKED_REGION; cdecl; external SPARK_DLL;
+function  al_lock_bitmap_region(bitmap: PALLEGRO_BITMAP; x: Integer; y: Integer; width: Integer; height: Integer; format: Integer; flags: Integer): PALLEGRO_LOCKED_REGION; cdecl; external SPARK_DLL;
+function  al_lock_bitmap_blocked(bitmap: PALLEGRO_BITMAP; flags: Integer): PALLEGRO_LOCKED_REGION; cdecl; external SPARK_DLL;
+function  al_lock_bitmap_region_blocked(bitmap: PALLEGRO_BITMAP; x_block: Integer; y_block: Integer; width_block: Integer; height_block: Integer; flags: Integer): PALLEGRO_LOCKED_REGION; cdecl; external SPARK_DLL;
+procedure al_unlock_bitmap(bitmap: PALLEGRO_BITMAP); cdecl; external SPARK_DLL;
+function  al_is_bitmap_locked(bitmap: PALLEGRO_BITMAP): Boolean; cdecl; external SPARK_DLL;
+procedure al_set_blender(op: Integer; source: Integer; dest: Integer); cdecl; external SPARK_DLL;
+procedure al_set_blend_color(color: ALLEGRO_COLOR); cdecl; external SPARK_DLL;
+procedure al_get_blender(op: PInteger; source: PInteger; dest: PInteger); cdecl; external SPARK_DLL;
+function  al_get_blend_color(): ALLEGRO_COLOR; cdecl; external SPARK_DLL;
+procedure al_set_separate_blender(op: Integer; source: Integer; dest: Integer; alpha_op: Integer; alpha_source: Integer; alpha_dest: Integer); cdecl; external SPARK_DLL;
+procedure al_get_separate_blender(op: PInteger; source: PInteger; dest: PInteger; alpha_op: PInteger; alpha_src: PInteger; alpha_dest: PInteger); cdecl; external SPARK_DLL;
+procedure al_init_user_event_source(p1: PALLEGRO_EVENT_SOURCE); cdecl; external SPARK_DLL;
+procedure al_destroy_user_event_source(p1: PALLEGRO_EVENT_SOURCE); cdecl; external SPARK_DLL;
+function  al_emit_user_event(p1: PALLEGRO_EVENT_SOURCE; p2: PALLEGRO_EVENT; dtor: al_emit_user_event_dtor): Boolean; cdecl; external SPARK_DLL;
+procedure al_unref_user_event(p1: PALLEGRO_USER_EVENT); cdecl; external SPARK_DLL;
+procedure al_set_event_source_data(p1: PALLEGRO_EVENT_SOURCE; data: IntPtr); cdecl; external SPARK_DLL;
+function  al_get_event_source_data(const p1: PALLEGRO_EVENT_SOURCE): IntPtr; cdecl; external SPARK_DLL;
+function  al_create_event_queue(): PALLEGRO_EVENT_QUEUE; cdecl; external SPARK_DLL;
+procedure al_destroy_event_queue(p1: PALLEGRO_EVENT_QUEUE); cdecl; external SPARK_DLL;
+function  al_is_event_source_registered(p1: PALLEGRO_EVENT_QUEUE; p2: PALLEGRO_EVENT_SOURCE): Boolean; cdecl; external SPARK_DLL;
+procedure al_register_event_source(p1: PALLEGRO_EVENT_QUEUE; p2: PALLEGRO_EVENT_SOURCE); cdecl; external SPARK_DLL;
+procedure al_unregister_event_source(p1: PALLEGRO_EVENT_QUEUE; p2: PALLEGRO_EVENT_SOURCE); cdecl; external SPARK_DLL;
+procedure al_pause_event_queue(p1: PALLEGRO_EVENT_QUEUE; p2: Boolean); cdecl; external SPARK_DLL;
+function  al_is_event_queue_paused(const p1: PALLEGRO_EVENT_QUEUE): Boolean; cdecl; external SPARK_DLL;
+function  al_is_event_queue_empty(p1: PALLEGRO_EVENT_QUEUE): Boolean; cdecl; external SPARK_DLL;
+function  al_get_next_event(p1: PALLEGRO_EVENT_QUEUE; ret_event: PALLEGRO_EVENT): Boolean; cdecl; external SPARK_DLL;
+function  al_peek_next_event(p1: PALLEGRO_EVENT_QUEUE; ret_event: PALLEGRO_EVENT): Boolean; cdecl; external SPARK_DLL;
+function  al_drop_next_event(p1: PALLEGRO_EVENT_QUEUE): Boolean; cdecl; external SPARK_DLL;
+procedure al_flush_event_queue(p1: PALLEGRO_EVENT_QUEUE); cdecl; external SPARK_DLL;
+procedure al_wait_for_event(p1: PALLEGRO_EVENT_QUEUE; ret_event: PALLEGRO_EVENT); cdecl; external SPARK_DLL;
+function  al_wait_for_event_timed(p1: PALLEGRO_EVENT_QUEUE; ret_event: PALLEGRO_EVENT; secs: Single): Boolean; cdecl; external SPARK_DLL;
+function  al_wait_for_event_until(queue: PALLEGRO_EVENT_QUEUE; ret_event: PALLEGRO_EVENT; timeout: PALLEGRO_TIMEOUT): Boolean; cdecl; external SPARK_DLL;
+procedure al_set_new_display_refresh_rate(refresh_rate: Integer); cdecl; external SPARK_DLL;
+procedure al_set_new_display_flags(flags: Integer); cdecl; external SPARK_DLL;
+function  al_get_new_display_refresh_rate(): Integer; cdecl; external SPARK_DLL;
+function  al_get_new_display_flags(): Integer; cdecl; external SPARK_DLL;
+procedure al_set_new_window_title(const title: PUTF8Char); cdecl; external SPARK_DLL;
+function  al_get_new_window_title(): PUTF8Char; cdecl; external SPARK_DLL;
+function  al_get_display_width(display: PALLEGRO_DISPLAY): Integer; cdecl; external SPARK_DLL;
+function  al_get_display_height(display: PALLEGRO_DISPLAY): Integer; cdecl; external SPARK_DLL;
+function  al_get_display_format(display: PALLEGRO_DISPLAY): Integer; cdecl; external SPARK_DLL;
+function  al_get_display_refresh_rate(display: PALLEGRO_DISPLAY): Integer; cdecl; external SPARK_DLL;
+function  al_get_display_flags(display: PALLEGRO_DISPLAY): Integer; cdecl; external SPARK_DLL;
+function  al_get_display_orientation(display: PALLEGRO_DISPLAY): Integer; cdecl; external SPARK_DLL;
+function  al_set_display_flag(display: PALLEGRO_DISPLAY; flag: Integer; onoff: Boolean): Boolean; cdecl; external SPARK_DLL;
+function  al_create_display(w: Integer; h: Integer): PALLEGRO_DISPLAY; cdecl; external SPARK_DLL;
+procedure al_destroy_display(display: PALLEGRO_DISPLAY); cdecl; external SPARK_DLL;
+function  al_get_current_display(): PALLEGRO_DISPLAY; cdecl; external SPARK_DLL;
+procedure al_set_target_bitmap(bitmap: PALLEGRO_BITMAP); cdecl; external SPARK_DLL;
+procedure al_set_target_backbuffer(display: PALLEGRO_DISPLAY); cdecl; external SPARK_DLL;
+function  al_get_backbuffer(display: PALLEGRO_DISPLAY): PALLEGRO_BITMAP; cdecl; external SPARK_DLL;
+function  al_get_target_bitmap(): PALLEGRO_BITMAP; cdecl; external SPARK_DLL;
+function  al_acknowledge_resize(display: PALLEGRO_DISPLAY): Boolean; cdecl; external SPARK_DLL;
+function  al_resize_display(display: PALLEGRO_DISPLAY; width: Integer; height: Integer): Boolean; cdecl; external SPARK_DLL;
+procedure al_flip_display(); cdecl; external SPARK_DLL;
+procedure al_update_display_region(x: Integer; y: Integer; width: Integer; height: Integer); cdecl; external SPARK_DLL;
+function  al_is_compatible_bitmap(bitmap: PALLEGRO_BITMAP): Boolean; cdecl; external SPARK_DLL;
+function  al_wait_for_vsync(): Boolean; cdecl; external SPARK_DLL;
+function  al_get_display_event_source(display: PALLEGRO_DISPLAY): PALLEGRO_EVENT_SOURCE; cdecl; external SPARK_DLL;
+procedure al_set_display_icon(display: PALLEGRO_DISPLAY; icon: PALLEGRO_BITMAP); cdecl; external SPARK_DLL;
+procedure al_set_display_icons(display: PALLEGRO_DISPLAY; num_icons: Integer; icons: PPALLEGRO_BITMAP); cdecl; external SPARK_DLL;
+function  al_get_new_display_adapter(): Integer; cdecl; external SPARK_DLL;
+procedure al_set_new_display_adapter(adapter: Integer); cdecl; external SPARK_DLL;
+procedure al_set_new_window_position(x: Integer; y: Integer); cdecl; external SPARK_DLL;
+procedure al_get_new_window_position(x: PInteger; y: PInteger); cdecl; external SPARK_DLL;
+procedure al_set_window_position(display: PALLEGRO_DISPLAY; x: Integer; y: Integer); cdecl; external SPARK_DLL;
+procedure al_get_window_position(display: PALLEGRO_DISPLAY; x: PInteger; y: PInteger); cdecl; external SPARK_DLL;
+function  al_set_window_constraints(display: PALLEGRO_DISPLAY; min_w: Integer; min_h: Integer; max_w: Integer; max_h: Integer): Boolean; cdecl; external SPARK_DLL;
+function  al_get_window_constraints(display: PALLEGRO_DISPLAY; min_w: PInteger; min_h: PInteger; max_w: PInteger; max_h: PInteger): Boolean; cdecl; external SPARK_DLL;
+procedure al_apply_window_constraints(display: PALLEGRO_DISPLAY; onoff: Boolean); cdecl; external SPARK_DLL;
+procedure al_set_window_title(display: PALLEGRO_DISPLAY; const title: PUTF8Char); cdecl; external SPARK_DLL;
+procedure al_set_new_display_option(option: Integer; value: Integer; importance: Integer); cdecl; external SPARK_DLL;
+function  al_get_new_display_option(option: Integer; importance: PInteger): Integer; cdecl; external SPARK_DLL;
+procedure al_reset_new_display_options(); cdecl; external SPARK_DLL;
+procedure al_set_display_option(display: PALLEGRO_DISPLAY; option: Integer; value: Integer); cdecl; external SPARK_DLL;
+function  al_get_display_option(display: PALLEGRO_DISPLAY; option: Integer): Integer; cdecl; external SPARK_DLL;
+procedure al_hold_bitmap_drawing(hold: Boolean); cdecl; external SPARK_DLL;
+function  al_is_bitmap_drawing_held(): Boolean; cdecl; external SPARK_DLL;
+procedure al_acknowledge_drawing_halt(display: PALLEGRO_DISPLAY); cdecl; external SPARK_DLL;
+procedure al_acknowledge_drawing_resume(display: PALLEGRO_DISPLAY); cdecl; external SPARK_DLL;
+procedure al_backup_dirty_bitmaps(display: PALLEGRO_DISPLAY); cdecl; external SPARK_DLL;
+function  al_get_clipboard_text(display: PALLEGRO_DISPLAY): PUTF8Char; cdecl; external SPARK_DLL;
+function  al_set_clipboard_text(display: PALLEGRO_DISPLAY; const text: PUTF8Char): Boolean; cdecl; external SPARK_DLL;
+function  al_clipboard_has_text(display: PALLEGRO_DISPLAY): Boolean; cdecl; external SPARK_DLL;
+function  al_create_config(): PALLEGRO_CONFIG; cdecl; external SPARK_DLL;
+procedure al_add_config_section(config: PALLEGRO_CONFIG; const name: PUTF8Char); cdecl; external SPARK_DLL;
+procedure al_set_config_value(config: PALLEGRO_CONFIG; const section: PUTF8Char; const key: PUTF8Char; const value: PUTF8Char); cdecl; external SPARK_DLL;
+procedure al_add_config_comment(config: PALLEGRO_CONFIG; const section: PUTF8Char; const comment: PUTF8Char); cdecl; external SPARK_DLL;
+function  al_get_config_value(const config: PALLEGRO_CONFIG; const section: PUTF8Char; const key: PUTF8Char): PUTF8Char; cdecl; external SPARK_DLL;
+function  al_load_config_file(const filename: PUTF8Char): PALLEGRO_CONFIG; cdecl; external SPARK_DLL;
+function  al_load_config_file_f(filename: PALLEGRO_FILE): PALLEGRO_CONFIG; cdecl; external SPARK_DLL;
+function  al_save_config_file(const filename: PUTF8Char; const config: PALLEGRO_CONFIG): Boolean; cdecl; external SPARK_DLL;
+function  al_save_config_file_f(file_: PALLEGRO_FILE; const config: PALLEGRO_CONFIG): Boolean; cdecl; external SPARK_DLL;
+procedure al_merge_config_into(master: PALLEGRO_CONFIG; const add: PALLEGRO_CONFIG); cdecl; external SPARK_DLL;
+function  al_merge_config(const cfg1: PALLEGRO_CONFIG; const cfg2: PALLEGRO_CONFIG): PALLEGRO_CONFIG; cdecl; external SPARK_DLL;
+procedure al_destroy_config(config: PALLEGRO_CONFIG); cdecl; external SPARK_DLL;
+function  al_remove_config_section(config: PALLEGRO_CONFIG; const section: PUTF8Char): Boolean; cdecl; external SPARK_DLL;
+function  al_remove_config_key(config: PALLEGRO_CONFIG; const section: PUTF8Char; const key: PUTF8Char): Boolean; cdecl; external SPARK_DLL;
+function  al_get_first_config_section(const config: PALLEGRO_CONFIG; iterator: PPALLEGRO_CONFIG_SECTION): PUTF8Char; cdecl; external SPARK_DLL;
+function  al_get_next_config_section(iterator: PPALLEGRO_CONFIG_SECTION): PUTF8Char; cdecl; external SPARK_DLL;
+function  al_get_first_config_entry(const config: PALLEGRO_CONFIG; const section: PUTF8Char; iterator: PPALLEGRO_CONFIG_ENTRY): PUTF8Char; cdecl; external SPARK_DLL;
+function  al_get_next_config_entry(iterator: PPALLEGRO_CONFIG_ENTRY): PUTF8Char; cdecl; external SPARK_DLL;
+function  al_get_cpu_count(): Integer; cdecl; external SPARK_DLL;
+function  al_get_ram_size(): Integer; cdecl; external SPARK_DLL;
+function  _al_trace_prefix(const channel: PUTF8Char; level: Integer; const file_: PUTF8Char; line: Integer; const function_: PUTF8Char): Boolean; cdecl; external SPARK_DLL;
+procedure _al_trace_suffix(const msg: PUTF8Char) varargs; cdecl; external SPARK_DLL;
+procedure al_register_assert_handler(handler: al_register_assert_handler_handler); cdecl; external SPARK_DLL;
+procedure al_register_trace_handler(handler: al_register_trace_handler_handler); cdecl; external SPARK_DLL;
+procedure al_clear_to_color(color: ALLEGRO_COLOR); cdecl; external SPARK_DLL;
+procedure al_clear_depth_buffer(x: Single); cdecl; external SPARK_DLL;
+procedure al_draw_pixel(x: Single; y: Single; color: ALLEGRO_COLOR); cdecl; external SPARK_DLL;
+function  al_get_errno(): Integer; cdecl; external SPARK_DLL;
+procedure al_set_errno(errnum: Integer); cdecl; external SPARK_DLL;
+function  al_fixsqrt(x: al_fixed): al_fixed; cdecl; external SPARK_DLL;
+function  al_fixhypot(x: al_fixed; y: al_fixed): al_fixed; cdecl; external SPARK_DLL;
+function  al_fixatan(x: al_fixed): al_fixed; cdecl; external SPARK_DLL;
+function  al_fixatan2(y: al_fixed; x: al_fixed): al_fixed; cdecl; external SPARK_DLL;
+function  al_create_fs_entry(const path: PUTF8Char): PALLEGRO_FS_ENTRY; cdecl; external SPARK_DLL;
+procedure al_destroy_fs_entry(e: PALLEGRO_FS_ENTRY); cdecl; external SPARK_DLL;
+function  al_get_fs_entry_name(e: PALLEGRO_FS_ENTRY): PUTF8Char; cdecl; external SPARK_DLL;
+function  al_update_fs_entry(e: PALLEGRO_FS_ENTRY): Boolean; cdecl; external SPARK_DLL;
+function  al_get_fs_entry_mode(e: PALLEGRO_FS_ENTRY): UInt32; cdecl; external SPARK_DLL;
+function  al_get_fs_entry_atime(e: PALLEGRO_FS_ENTRY): Longint; cdecl; external SPARK_DLL;
+function  al_get_fs_entry_mtime(e: PALLEGRO_FS_ENTRY): Longint; cdecl; external SPARK_DLL;
+function  al_get_fs_entry_ctime(e: PALLEGRO_FS_ENTRY): Longint; cdecl; external SPARK_DLL;
+function  al_get_fs_entry_size(e: PALLEGRO_FS_ENTRY): off_t; cdecl; external SPARK_DLL;
+function  al_fs_entry_exists(e: PALLEGRO_FS_ENTRY): Boolean; cdecl; external SPARK_DLL;
+function  al_remove_fs_entry(e: PALLEGRO_FS_ENTRY): Boolean; cdecl; external SPARK_DLL;
+function  al_open_directory(e: PALLEGRO_FS_ENTRY): Boolean; cdecl; external SPARK_DLL;
+function  al_read_directory(e: PALLEGRO_FS_ENTRY): PALLEGRO_FS_ENTRY; cdecl; external SPARK_DLL;
+function  al_close_directory(e: PALLEGRO_FS_ENTRY): Boolean; cdecl; external SPARK_DLL;
+function  al_filename_exists(const path: PUTF8Char): Boolean; cdecl; external SPARK_DLL;
+function  al_remove_filename(const path: PUTF8Char): Boolean; cdecl; external SPARK_DLL;
+function  al_get_current_directory(): PUTF8Char; cdecl; external SPARK_DLL;
+function  al_change_directory(const path: PUTF8Char): Boolean; cdecl; external SPARK_DLL;
+function  al_make_directory(const path: PUTF8Char): Boolean; cdecl; external SPARK_DLL;
+function  al_open_fs_entry(e: PALLEGRO_FS_ENTRY; const mode: PUTF8Char): PALLEGRO_FILE; cdecl; external SPARK_DLL;
+function  al_for_each_fs_entry(dir: PALLEGRO_FS_ENTRY; callback: al_for_each_fs_entry_callback; extra: Pointer): Integer; cdecl; external SPARK_DLL;
+function  al_get_fs_interface(): PALLEGRO_FS_INTERFACE; cdecl; external SPARK_DLL;
+procedure al_set_fs_interface(const vtable: PALLEGRO_FS_INTERFACE); cdecl; external SPARK_DLL;
+procedure al_set_standard_fs_interface(); cdecl; external SPARK_DLL;
+function  al_get_num_display_modes(): Integer; cdecl; external SPARK_DLL;
+function  al_get_display_mode(index: Integer; mode: PALLEGRO_DISPLAY_MODE): PALLEGRO_DISPLAY_MODE; cdecl; external SPARK_DLL;
+function  al_install_joystick(): Boolean; cdecl; external SPARK_DLL;
+procedure al_uninstall_joystick(); cdecl; external SPARK_DLL;
+function  al_is_joystick_installed(): Boolean; cdecl; external SPARK_DLL;
+function  al_reconfigure_joysticks(): Boolean; cdecl; external SPARK_DLL;
+function  al_get_num_joysticks(): Integer; cdecl; external SPARK_DLL;
+function  al_get_joystick(joyn: Integer): PALLEGRO_JOYSTICK; cdecl; external SPARK_DLL;
+procedure al_release_joystick(p1: PALLEGRO_JOYSTICK); cdecl; external SPARK_DLL;
+function  al_get_joystick_active(p1: PALLEGRO_JOYSTICK): Boolean; cdecl; external SPARK_DLL;
+function  al_get_joystick_name(p1: PALLEGRO_JOYSTICK): PUTF8Char; cdecl; external SPARK_DLL;
+function  al_get_joystick_num_sticks(p1: PALLEGRO_JOYSTICK): Integer; cdecl; external SPARK_DLL;
+function  al_get_joystick_stick_flags(p1: PALLEGRO_JOYSTICK; stick: Integer): Integer; cdecl; external SPARK_DLL;
+function  al_get_joystick_stick_name(p1: PALLEGRO_JOYSTICK; stick: Integer): PUTF8Char; cdecl; external SPARK_DLL;
+function  al_get_joystick_num_axes(p1: PALLEGRO_JOYSTICK; stick: Integer): Integer; cdecl; external SPARK_DLL;
+function  al_get_joystick_axis_name(p1: PALLEGRO_JOYSTICK; stick: Integer; axis: Integer): PUTF8Char; cdecl; external SPARK_DLL;
+function  al_get_joystick_num_buttons(p1: PALLEGRO_JOYSTICK): Integer; cdecl; external SPARK_DLL;
+function  al_get_joystick_button_name(p1: PALLEGRO_JOYSTICK; buttonn: Integer): PUTF8Char; cdecl; external SPARK_DLL;
+procedure al_get_joystick_state(p1: PALLEGRO_JOYSTICK; ret_state: PALLEGRO_JOYSTICK_STATE); cdecl; external SPARK_DLL;
+function  al_get_joystick_event_source(): PALLEGRO_EVENT_SOURCE; cdecl; external SPARK_DLL;
+function  al_is_keyboard_installed(): Boolean; cdecl; external SPARK_DLL;
+function  al_install_keyboard(): Boolean; cdecl; external SPARK_DLL;
+procedure al_uninstall_keyboard(); cdecl; external SPARK_DLL;
+function  al_set_keyboard_leds(leds: Integer): Boolean; cdecl; external SPARK_DLL;
+function  al_keycode_to_name(keycode: Integer): PUTF8Char; cdecl; external SPARK_DLL;
+procedure al_get_keyboard_state(ret_state: PALLEGRO_KEYBOARD_STATE); cdecl; external SPARK_DLL;
+procedure al_clear_keyboard_state(display: PALLEGRO_DISPLAY); cdecl; external SPARK_DLL;
+function  al_key_down(const p1: PALLEGRO_KEYBOARD_STATE; keycode: Integer): Boolean; cdecl; external SPARK_DLL;
+function  al_get_keyboard_event_source(): PALLEGRO_EVENT_SOURCE; cdecl; external SPARK_DLL;
+function  al_is_mouse_installed(): Boolean; cdecl; external SPARK_DLL;
+function  al_install_mouse(): Boolean; cdecl; external SPARK_DLL;
+procedure al_uninstall_mouse(); cdecl; external SPARK_DLL;
+function  al_get_mouse_num_buttons(): Cardinal; cdecl; external SPARK_DLL;
+function  al_get_mouse_num_axes(): Cardinal; cdecl; external SPARK_DLL;
+function  al_set_mouse_xy(display: PALLEGRO_DISPLAY; x: Integer; y: Integer): Boolean; cdecl; external SPARK_DLL;
+function  al_set_mouse_z(z: Integer): Boolean; cdecl; external SPARK_DLL;
+function  al_set_mouse_w(w: Integer): Boolean; cdecl; external SPARK_DLL;
+function  al_set_mouse_axis(axis: Integer; value: Integer): Boolean; cdecl; external SPARK_DLL;
+procedure al_get_mouse_state(ret_state: PALLEGRO_MOUSE_STATE); cdecl; external SPARK_DLL;
+function  al_mouse_button_down(const state: PALLEGRO_MOUSE_STATE; button: Integer): Boolean; cdecl; external SPARK_DLL;
+function  al_get_mouse_state_axis(const state: PALLEGRO_MOUSE_STATE; axis: Integer): Integer; cdecl; external SPARK_DLL;
+function  al_get_mouse_cursor_position(ret_x: PInteger; ret_y: PInteger): Boolean; cdecl; external SPARK_DLL;
+function  al_grab_mouse(display: PALLEGRO_DISPLAY): Boolean; cdecl; external SPARK_DLL;
+function  al_ungrab_mouse(): Boolean; cdecl; external SPARK_DLL;
+procedure al_set_mouse_wheel_precision(precision: Integer); cdecl; external SPARK_DLL;
+function  al_get_mouse_wheel_precision(): Integer; cdecl; external SPARK_DLL;
+function  al_get_mouse_event_source(): PALLEGRO_EVENT_SOURCE; cdecl; external SPARK_DLL;
+function  al_is_touch_input_installed(): Boolean; cdecl; external SPARK_DLL;
+function  al_install_touch_input(): Boolean; cdecl; external SPARK_DLL;
+procedure al_uninstall_touch_input(); cdecl; external SPARK_DLL;
+procedure al_get_touch_input_state(ret_state: PALLEGRO_TOUCH_INPUT_STATE); cdecl; external SPARK_DLL;
+function  al_get_touch_input_event_source(): PALLEGRO_EVENT_SOURCE; cdecl; external SPARK_DLL;
+procedure al_set_mouse_emulation_mode(mode: Integer); cdecl; external SPARK_DLL;
+function  al_get_mouse_emulation_mode(): Integer; cdecl; external SPARK_DLL;
+function  al_get_touch_input_mouse_emulation_event_source(): PALLEGRO_EVENT_SOURCE; cdecl; external SPARK_DLL;
+function  al_install_haptic(): Boolean; cdecl; external SPARK_DLL;
+procedure al_uninstall_haptic(); cdecl; external SPARK_DLL;
+function  al_is_haptic_installed(): Boolean; cdecl; external SPARK_DLL;
+function  al_is_mouse_haptic(p1: PALLEGRO_MOUSE): Boolean; cdecl; external SPARK_DLL;
+function  al_is_joystick_haptic(p1: PALLEGRO_JOYSTICK): Boolean; cdecl; external SPARK_DLL;
+function  al_is_keyboard_haptic(p1: PALLEGRO_KEYBOARD): Boolean; cdecl; external SPARK_DLL;
+function  al_is_display_haptic(p1: PALLEGRO_DISPLAY): Boolean; cdecl; external SPARK_DLL;
+function  al_is_touch_input_haptic(p1: PALLEGRO_TOUCH_INPUT): Boolean; cdecl; external SPARK_DLL;
+function  al_get_haptic_from_mouse(p1: PALLEGRO_MOUSE): PALLEGRO_HAPTIC; cdecl; external SPARK_DLL;
+function  al_get_haptic_from_joystick(p1: PALLEGRO_JOYSTICK): PALLEGRO_HAPTIC; cdecl; external SPARK_DLL;
+function  al_get_haptic_from_keyboard(p1: PALLEGRO_KEYBOARD): PALLEGRO_HAPTIC; cdecl; external SPARK_DLL;
+function  al_get_haptic_from_display(p1: PALLEGRO_DISPLAY): PALLEGRO_HAPTIC; cdecl; external SPARK_DLL;
+function  al_get_haptic_from_touch_input(p1: PALLEGRO_TOUCH_INPUT): PALLEGRO_HAPTIC; cdecl; external SPARK_DLL;
+function  al_release_haptic(p1: PALLEGRO_HAPTIC): Boolean; cdecl; external SPARK_DLL;
+function  al_is_haptic_active(p1: PALLEGRO_HAPTIC): Boolean; cdecl; external SPARK_DLL;
+function  al_get_haptic_capabilities(p1: PALLEGRO_HAPTIC): Integer; cdecl; external SPARK_DLL;
+function  al_is_haptic_capable(p1: PALLEGRO_HAPTIC; p2: Integer): Boolean; cdecl; external SPARK_DLL;
+function  al_set_haptic_gain(p1: PALLEGRO_HAPTIC; p2: Double): Boolean; cdecl; external SPARK_DLL;
+function  al_get_haptic_gain(p1: PALLEGRO_HAPTIC): Double; cdecl; external SPARK_DLL;
+function  al_set_haptic_autocenter(p1: PALLEGRO_HAPTIC; p2: Double): Boolean; cdecl; external SPARK_DLL;
+function  al_get_haptic_autocenter(p1: PALLEGRO_HAPTIC): Double; cdecl; external SPARK_DLL;
+function  al_get_max_haptic_effects(p1: PALLEGRO_HAPTIC): Integer; cdecl; external SPARK_DLL;
+function  al_is_haptic_effect_ok(p1: PALLEGRO_HAPTIC; p2: PALLEGRO_HAPTIC_EFFECT): Boolean; cdecl; external SPARK_DLL;
+function  al_upload_haptic_effect(p1: PALLEGRO_HAPTIC; p2: PALLEGRO_HAPTIC_EFFECT; p3: PALLEGRO_HAPTIC_EFFECT_ID): Boolean; cdecl; external SPARK_DLL;
+function  al_play_haptic_effect(p1: PALLEGRO_HAPTIC_EFFECT_ID; p2: Integer): Boolean; cdecl; external SPARK_DLL;
+function  al_upload_and_play_haptic_effect(p1: PALLEGRO_HAPTIC; p2: PALLEGRO_HAPTIC_EFFECT; p3: PALLEGRO_HAPTIC_EFFECT_ID; p4: Integer): Boolean; cdecl; external SPARK_DLL;
+function  al_stop_haptic_effect(p1: PALLEGRO_HAPTIC_EFFECT_ID): Boolean; cdecl; external SPARK_DLL;
+function  al_is_haptic_effect_playing(p1: PALLEGRO_HAPTIC_EFFECT_ID): Boolean; cdecl; external SPARK_DLL;
+function  al_release_haptic_effect(p1: PALLEGRO_HAPTIC_EFFECT_ID): Boolean; cdecl; external SPARK_DLL;
+function  al_get_haptic_effect_duration(p1: PALLEGRO_HAPTIC_EFFECT): Double; cdecl; external SPARK_DLL;
+function  al_rumble_haptic(p1: PALLEGRO_HAPTIC; p2: Double; p3: Double; p4: PALLEGRO_HAPTIC_EFFECT_ID): Boolean; cdecl; external SPARK_DLL;
+procedure al_set_memory_interface(iface: PALLEGRO_MEMORY_INTERFACE); cdecl; external SPARK_DLL;
+function  al_malloc_with_context(n: NativeUInt; line: Integer; const file_: PUTF8Char; const func: PUTF8Char): Pointer; cdecl; external SPARK_DLL;
+procedure al_free_with_context(ptr: Pointer; line: Integer; const file_: PUTF8Char; const func: PUTF8Char); cdecl; external SPARK_DLL;
+function  al_realloc_with_context(ptr: Pointer; n: NativeUInt; line: Integer; const file_: PUTF8Char; const func: PUTF8Char): Pointer; cdecl; external SPARK_DLL;
+function  al_calloc_with_context(count: NativeUInt; n: NativeUInt; line: Integer; const file_: PUTF8Char; const func: PUTF8Char): Pointer; cdecl; external SPARK_DLL;
+function  al_get_num_video_adapters(): Integer; cdecl; external SPARK_DLL;
+function  al_get_monitor_info(adapter: Integer; info: PALLEGRO_MONITOR_INFO): Boolean; cdecl; external SPARK_DLL;
+function  al_get_monitor_dpi(adapter: Integer): Integer; cdecl; external SPARK_DLL;
+function  al_get_monitor_refresh_rate(adapter: Integer): Integer; cdecl; external SPARK_DLL;
+function  al_create_mouse_cursor(sprite: PALLEGRO_BITMAP; xfocus: Integer; yfocus: Integer): PALLEGRO_MOUSE_CURSOR; cdecl; external SPARK_DLL;
+procedure al_destroy_mouse_cursor(p1: PALLEGRO_MOUSE_CURSOR); cdecl; external SPARK_DLL;
+function  al_set_mouse_cursor(display: PALLEGRO_DISPLAY; cursor: PALLEGRO_MOUSE_CURSOR): Boolean; cdecl; external SPARK_DLL;
+function  al_set_system_mouse_cursor(display: PALLEGRO_DISPLAY; cursor_id: ALLEGRO_SYSTEM_MOUSE_CURSOR): Boolean; cdecl; external SPARK_DLL;
+function  al_show_mouse_cursor(display: PALLEGRO_DISPLAY): Boolean; cdecl; external SPARK_DLL;
+function  al_hide_mouse_cursor(display: PALLEGRO_DISPLAY): Boolean; cdecl; external SPARK_DLL;
+procedure al_set_render_state(state: ALLEGRO_RENDER_STATE; value: Integer); cdecl; external SPARK_DLL;
+procedure al_use_transform(const trans: PALLEGRO_TRANSFORM); cdecl; external SPARK_DLL;
+procedure al_use_projection_transform(const trans: PALLEGRO_TRANSFORM); cdecl; external SPARK_DLL;
+procedure al_copy_transform(dest: PALLEGRO_TRANSFORM; const src: PALLEGRO_TRANSFORM); cdecl; external SPARK_DLL;
+procedure al_identity_transform(trans: PALLEGRO_TRANSFORM); cdecl; external SPARK_DLL;
+procedure al_build_transform(trans: PALLEGRO_TRANSFORM; x: Single; y: Single; sx: Single; sy: Single; theta: Single); cdecl; external SPARK_DLL;
+procedure al_build_camera_transform(trans: PALLEGRO_TRANSFORM; position_x: Single; position_y: Single; position_z: Single; look_x: Single; look_y: Single; look_z: Single; up_x: Single; up_y: Single; up_z: Single); cdecl; external SPARK_DLL;
+procedure al_translate_transform(trans: PALLEGRO_TRANSFORM; x: Single; y: Single); cdecl; external SPARK_DLL;
+procedure al_translate_transform_3d(trans: PALLEGRO_TRANSFORM; x: Single; y: Single; z: Single); cdecl; external SPARK_DLL;
+procedure al_rotate_transform(trans: PALLEGRO_TRANSFORM; theta: Single); cdecl; external SPARK_DLL;
+procedure al_rotate_transform_3d(trans: PALLEGRO_TRANSFORM; x: Single; y: Single; z: Single; angle: Single); cdecl; external SPARK_DLL;
+procedure al_scale_transform(trans: PALLEGRO_TRANSFORM; sx: Single; sy: Single); cdecl; external SPARK_DLL;
+procedure al_scale_transform_3d(trans: PALLEGRO_TRANSFORM; sx: Single; sy: Single; sz: Single); cdecl; external SPARK_DLL;
+procedure al_transform_coordinates(const trans: PALLEGRO_TRANSFORM; x: PSingle; y: PSingle); cdecl; external SPARK_DLL;
+procedure al_transform_coordinates_3d(const trans: PALLEGRO_TRANSFORM; x: PSingle; y: PSingle; z: PSingle); cdecl; external SPARK_DLL;
+procedure al_transform_coordinates_4d(const trans: PALLEGRO_TRANSFORM; x: PSingle; y: PSingle; z: PSingle; w: PSingle); cdecl; external SPARK_DLL;
+procedure al_transform_coordinates_3d_projective(const trans: PALLEGRO_TRANSFORM; x: PSingle; y: PSingle; z: PSingle); cdecl; external SPARK_DLL;
+procedure al_compose_transform(trans: PALLEGRO_TRANSFORM; const other: PALLEGRO_TRANSFORM); cdecl; external SPARK_DLL;
+function  al_get_current_transform(): PALLEGRO_TRANSFORM; cdecl; external SPARK_DLL;
+function  al_get_current_inverse_transform(): PALLEGRO_TRANSFORM; cdecl; external SPARK_DLL;
+function  al_get_current_projection_transform(): PALLEGRO_TRANSFORM; cdecl; external SPARK_DLL;
+procedure al_invert_transform(trans: PALLEGRO_TRANSFORM); cdecl; external SPARK_DLL;
+procedure al_transpose_transform(trans: PALLEGRO_TRANSFORM); cdecl; external SPARK_DLL;
+function  al_check_inverse(const trans: PALLEGRO_TRANSFORM; tol: Single): Integer; cdecl; external SPARK_DLL;
+procedure al_orthographic_transform(trans: PALLEGRO_TRANSFORM; left: Single; top: Single; n: Single; right: Single; bottom: Single; f: Single); cdecl; external SPARK_DLL;
+procedure al_perspective_transform(trans: PALLEGRO_TRANSFORM; left: Single; top: Single; n: Single; right: Single; bottom: Single; f: Single); cdecl; external SPARK_DLL;
+procedure al_horizontal_shear_transform(trans: PALLEGRO_TRANSFORM; theta: Single); cdecl; external SPARK_DLL;
+procedure al_vertical_shear_transform(trans: PALLEGRO_TRANSFORM; theta: Single); cdecl; external SPARK_DLL;
+function  al_create_shader(platform_: ALLEGRO_SHADER_PLATFORM): PALLEGRO_SHADER; cdecl; external SPARK_DLL;
+function  al_attach_shader_source(shader: PALLEGRO_SHADER; type_: ALLEGRO_SHADER_TYPE; const source: PUTF8Char): Boolean; cdecl; external SPARK_DLL;
+function  al_attach_shader_source_file(shader: PALLEGRO_SHADER; type_: ALLEGRO_SHADER_TYPE; const filename: PUTF8Char): Boolean; cdecl; external SPARK_DLL;
+function  al_build_shader(shader: PALLEGRO_SHADER): Boolean; cdecl; external SPARK_DLL;
+function  al_get_shader_log(shader: PALLEGRO_SHADER): PUTF8Char; cdecl; external SPARK_DLL;
+function  al_get_shader_platform(shader: PALLEGRO_SHADER): ALLEGRO_SHADER_PLATFORM; cdecl; external SPARK_DLL;
+function  al_use_shader(shader: PALLEGRO_SHADER): Boolean; cdecl; external SPARK_DLL;
+procedure al_destroy_shader(shader: PALLEGRO_SHADER); cdecl; external SPARK_DLL;
+function  al_set_shader_sampler(const name: PUTF8Char; bitmap: PALLEGRO_BITMAP; unit_: Integer): Boolean; cdecl; external SPARK_DLL;
+function  al_set_shader_matrix(const name: PUTF8Char; const matrix: PALLEGRO_TRANSFORM): Boolean; cdecl; external SPARK_DLL;
+function  al_set_shader_int(const name: PUTF8Char; i: Integer): Boolean; cdecl; external SPARK_DLL;
+function  al_set_shader_float(const name: PUTF8Char; f: Single): Boolean; cdecl; external SPARK_DLL;
+function  al_set_shader_int_vector(const name: PUTF8Char; num_components: Integer; const i: PInteger; num_elems: Integer): Boolean; cdecl; external SPARK_DLL;
+function  al_set_shader_float_vector(const name: PUTF8Char; num_components: Integer; const f: System.PSingle; num_elems: Integer): Boolean; cdecl; external SPARK_DLL;
+function  al_set_shader_bool(const name: PUTF8Char; b: Boolean): Boolean; cdecl; external SPARK_DLL;
+function  al_get_default_shader_source(platform_: ALLEGRO_SHADER_PLATFORM; type_: ALLEGRO_SHADER_TYPE): PUTF8Char; cdecl; external SPARK_DLL;
+function  al_install_system(version: Integer; atexit_ptr: al_install_system_atexit_ptr): Boolean; cdecl; external SPARK_DLL;
+procedure al_uninstall_system(); cdecl; external SPARK_DLL;
+function  al_is_system_installed(): Boolean; cdecl; external SPARK_DLL;
+function  al_get_system_driver(): PALLEGRO_SYSTEM; cdecl; external SPARK_DLL;
+function  al_get_system_config(): PALLEGRO_CONFIG; cdecl; external SPARK_DLL;
+function  al_get_system_id(): ALLEGRO_SYSTEM_ID; cdecl; external SPARK_DLL;
+function  al_get_standard_path(id: Integer): PALLEGRO_PATH; cdecl; external SPARK_DLL;
+procedure al_set_exe_name(const path: PUTF8Char); cdecl; external SPARK_DLL;
+procedure al_set_org_name(const org_name: PUTF8Char); cdecl; external SPARK_DLL;
+procedure al_set_app_name(const app_name: PUTF8Char); cdecl; external SPARK_DLL;
+function  al_get_org_name(): PUTF8Char; cdecl; external SPARK_DLL;
+function  al_get_app_name(): PUTF8Char; cdecl; external SPARK_DLL;
+function  al_inhibit_screensaver(inhibit: Boolean): Boolean; cdecl; external SPARK_DLL;
+function  al_create_thread(proc: al_create_thread_proc; arg: Pointer): PALLEGRO_THREAD; cdecl; external SPARK_DLL;
+function  al_create_thread_with_stacksize(proc: al_create_thread_with_stacksize_proc; arg: Pointer; stacksize: NativeUInt): PALLEGRO_THREAD; cdecl; external SPARK_DLL;
+procedure al_start_thread(outer: PALLEGRO_THREAD); cdecl; external SPARK_DLL;
+procedure al_join_thread(outer: PALLEGRO_THREAD; ret_value: PPointer); cdecl; external SPARK_DLL;
+procedure al_set_thread_should_stop(outer: PALLEGRO_THREAD); cdecl; external SPARK_DLL;
+function  al_get_thread_should_stop(outer: PALLEGRO_THREAD): Boolean; cdecl; external SPARK_DLL;
+procedure al_destroy_thread(thread: PALLEGRO_THREAD); cdecl; external SPARK_DLL;
+procedure al_run_detached_thread(proc: al_run_detached_thread_proc; arg: Pointer); cdecl; external SPARK_DLL;
+function  al_create_mutex(): PALLEGRO_MUTEX; cdecl; external SPARK_DLL;
+function  al_create_mutex_recursive(): PALLEGRO_MUTEX; cdecl; external SPARK_DLL;
+procedure al_lock_mutex(mutex: PALLEGRO_MUTEX); cdecl; external SPARK_DLL;
+procedure al_unlock_mutex(mutex: PALLEGRO_MUTEX); cdecl; external SPARK_DLL;
+procedure al_destroy_mutex(mutex: PALLEGRO_MUTEX); cdecl; external SPARK_DLL;
+function  al_create_cond(): PALLEGRO_COND; cdecl; external SPARK_DLL;
+procedure al_destroy_cond(cond: PALLEGRO_COND); cdecl; external SPARK_DLL;
+procedure al_wait_cond(cond: PALLEGRO_COND; mutex: PALLEGRO_MUTEX); cdecl; external SPARK_DLL;
+function  al_wait_cond_until(cond: PALLEGRO_COND; mutex: PALLEGRO_MUTEX; const timeout: PALLEGRO_TIMEOUT): Integer; cdecl; external SPARK_DLL;
+procedure al_broadcast_cond(cond: PALLEGRO_COND); cdecl; external SPARK_DLL;
+procedure al_signal_cond(cond: PALLEGRO_COND); cdecl; external SPARK_DLL;
+function  al_create_timer(speed_secs: Double): PALLEGRO_TIMER; cdecl; external SPARK_DLL;
+procedure al_destroy_timer(timer: PALLEGRO_TIMER); cdecl; external SPARK_DLL;
+procedure al_start_timer(timer: PALLEGRO_TIMER); cdecl; external SPARK_DLL;
+procedure al_stop_timer(timer: PALLEGRO_TIMER); cdecl; external SPARK_DLL;
+procedure al_resume_timer(timer: PALLEGRO_TIMER); cdecl; external SPARK_DLL;
+function  al_get_timer_started(const timer: PALLEGRO_TIMER): Boolean; cdecl; external SPARK_DLL;
+function  al_get_timer_speed(const timer: PALLEGRO_TIMER): Double; cdecl; external SPARK_DLL;
+procedure al_set_timer_speed(timer: PALLEGRO_TIMER; speed_secs: Double); cdecl; external SPARK_DLL;
+function  al_get_timer_count(const timer: PALLEGRO_TIMER): Int64; cdecl; external SPARK_DLL;
+procedure al_set_timer_count(timer: PALLEGRO_TIMER; count: Int64); cdecl; external SPARK_DLL;
+procedure al_add_timer_count(timer: PALLEGRO_TIMER; diff: Int64); cdecl; external SPARK_DLL;
+function  al_get_timer_event_source(timer: PALLEGRO_TIMER): PALLEGRO_EVENT_SOURCE; cdecl; external SPARK_DLL;
+procedure al_store_state(state: PALLEGRO_STATE; flags: Integer); cdecl; external SPARK_DLL;
+procedure al_restore_state(const state: PALLEGRO_STATE); cdecl; external SPARK_DLL;
+function  al_create_sample(buf: Pointer; samples: Cardinal; freq: Cardinal; depth: ALLEGRO_AUDIO_DEPTH; chan_conf: ALLEGRO_CHANNEL_CONF; free_buf: Boolean): PALLEGRO_SAMPLE; cdecl; external SPARK_DLL;
+procedure al_destroy_sample(spl: PALLEGRO_SAMPLE); cdecl; external SPARK_DLL;
+function  al_create_sample_instance(data: PALLEGRO_SAMPLE): PALLEGRO_SAMPLE_INSTANCE; cdecl; external SPARK_DLL;
+procedure al_destroy_sample_instance(spl: PALLEGRO_SAMPLE_INSTANCE); cdecl; external SPARK_DLL;
+function  al_get_sample_frequency(const spl: PALLEGRO_SAMPLE): Cardinal; cdecl; external SPARK_DLL;
+function  al_get_sample_length(const spl: PALLEGRO_SAMPLE): Cardinal; cdecl; external SPARK_DLL;
+function  al_get_sample_depth(const spl: PALLEGRO_SAMPLE): ALLEGRO_AUDIO_DEPTH; cdecl; external SPARK_DLL;
+function  al_get_sample_channels(const spl: PALLEGRO_SAMPLE): ALLEGRO_CHANNEL_CONF; cdecl; external SPARK_DLL;
+function  al_get_sample_data(const spl: PALLEGRO_SAMPLE): Pointer; cdecl; external SPARK_DLL;
+function  al_get_sample_instance_frequency(const spl: PALLEGRO_SAMPLE_INSTANCE): Cardinal; cdecl; external SPARK_DLL;
+function  al_get_sample_instance_length(const spl: PALLEGRO_SAMPLE_INSTANCE): Cardinal; cdecl; external SPARK_DLL;
+function  al_get_sample_instance_position(const spl: PALLEGRO_SAMPLE_INSTANCE): Cardinal; cdecl; external SPARK_DLL;
+function  al_get_sample_instance_speed(const spl: PALLEGRO_SAMPLE_INSTANCE): Single; cdecl; external SPARK_DLL;
+function  al_get_sample_instance_gain(const spl: PALLEGRO_SAMPLE_INSTANCE): Single; cdecl; external SPARK_DLL;
+function  al_get_sample_instance_pan(const spl: PALLEGRO_SAMPLE_INSTANCE): Single; cdecl; external SPARK_DLL;
+function  al_get_sample_instance_time(const spl: PALLEGRO_SAMPLE_INSTANCE): Single; cdecl; external SPARK_DLL;
+function  al_get_sample_instance_depth(const spl: PALLEGRO_SAMPLE_INSTANCE): ALLEGRO_AUDIO_DEPTH; cdecl; external SPARK_DLL;
+function  al_get_sample_instance_channels(const spl: PALLEGRO_SAMPLE_INSTANCE): ALLEGRO_CHANNEL_CONF; cdecl; external SPARK_DLL;
+function  al_get_sample_instance_playmode(const spl: PALLEGRO_SAMPLE_INSTANCE): ALLEGRO_PLAYMODE; cdecl; external SPARK_DLL;
+function  al_get_sample_instance_playing(const spl: PALLEGRO_SAMPLE_INSTANCE): Boolean; cdecl; external SPARK_DLL;
+function  al_get_sample_instance_attached(const spl: PALLEGRO_SAMPLE_INSTANCE): Boolean; cdecl; external SPARK_DLL;
+function  al_set_sample_instance_position(spl: PALLEGRO_SAMPLE_INSTANCE; val: Cardinal): Boolean; cdecl; external SPARK_DLL;
+function  al_set_sample_instance_length(spl: PALLEGRO_SAMPLE_INSTANCE; val: Cardinal): Boolean; cdecl; external SPARK_DLL;
+function  al_set_sample_instance_speed(spl: PALLEGRO_SAMPLE_INSTANCE; val: Single): Boolean; cdecl; external SPARK_DLL;
+function  al_set_sample_instance_gain(spl: PALLEGRO_SAMPLE_INSTANCE; val: Single): Boolean; cdecl; external SPARK_DLL;
+function  al_set_sample_instance_pan(spl: PALLEGRO_SAMPLE_INSTANCE; val: Single): Boolean; cdecl; external SPARK_DLL;
+function  al_set_sample_instance_playmode(spl: PALLEGRO_SAMPLE_INSTANCE; val: ALLEGRO_PLAYMODE): Boolean; cdecl; external SPARK_DLL;
+function  al_set_sample_instance_playing(spl: PALLEGRO_SAMPLE_INSTANCE; val: Boolean): Boolean; cdecl; external SPARK_DLL;
+function  al_detach_sample_instance(spl: PALLEGRO_SAMPLE_INSTANCE): Boolean; cdecl; external SPARK_DLL;
+function  al_set_sample(spl: PALLEGRO_SAMPLE_INSTANCE; data: PALLEGRO_SAMPLE): Boolean; cdecl; external SPARK_DLL;
+function  al_get_sample(spl: PALLEGRO_SAMPLE_INSTANCE): PALLEGRO_SAMPLE; cdecl; external SPARK_DLL;
+function  al_play_sample_instance(spl: PALLEGRO_SAMPLE_INSTANCE): Boolean; cdecl; external SPARK_DLL;
+function  al_stop_sample_instance(spl: PALLEGRO_SAMPLE_INSTANCE): Boolean; cdecl; external SPARK_DLL;
+function  al_set_sample_instance_channel_matrix(spl: PALLEGRO_SAMPLE_INSTANCE; const matrix: PSingle): Boolean; cdecl; external SPARK_DLL;
+function  al_create_audio_stream(buffer_count: NativeUInt; samples: Cardinal; freq: Cardinal; depth: ALLEGRO_AUDIO_DEPTH; chan_conf: ALLEGRO_CHANNEL_CONF): PALLEGRO_AUDIO_STREAM; cdecl; external SPARK_DLL;
+procedure al_destroy_audio_stream(stream: PALLEGRO_AUDIO_STREAM); cdecl; external SPARK_DLL;
+procedure al_drain_audio_stream(stream: PALLEGRO_AUDIO_STREAM); cdecl; external SPARK_DLL;
+function  al_get_audio_stream_frequency(const stream: PALLEGRO_AUDIO_STREAM): Cardinal; cdecl; external SPARK_DLL;
+function  al_get_audio_stream_length(const stream: PALLEGRO_AUDIO_STREAM): Cardinal; cdecl; external SPARK_DLL;
+function  al_get_audio_stream_fragments(const stream: PALLEGRO_AUDIO_STREAM): Cardinal; cdecl; external SPARK_DLL;
+function  al_get_available_audio_stream_fragments(const stream: PALLEGRO_AUDIO_STREAM): Cardinal; cdecl; external SPARK_DLL;
+function  al_get_audio_stream_speed(const stream: PALLEGRO_AUDIO_STREAM): Single; cdecl; external SPARK_DLL;
+function  al_get_audio_stream_gain(const stream: PALLEGRO_AUDIO_STREAM): Single; cdecl; external SPARK_DLL;
+function  al_get_audio_stream_pan(const stream: PALLEGRO_AUDIO_STREAM): Single; cdecl; external SPARK_DLL;
+function  al_get_audio_stream_channels(const stream: PALLEGRO_AUDIO_STREAM): ALLEGRO_CHANNEL_CONF; cdecl; external SPARK_DLL;
+function  al_get_audio_stream_depth(const stream: PALLEGRO_AUDIO_STREAM): ALLEGRO_AUDIO_DEPTH; cdecl; external SPARK_DLL;
+function  al_get_audio_stream_playmode(const stream: PALLEGRO_AUDIO_STREAM): ALLEGRO_PLAYMODE; cdecl; external SPARK_DLL;
+function  al_get_audio_stream_playing(const spl: PALLEGRO_AUDIO_STREAM): Boolean; cdecl; external SPARK_DLL;
+function  al_get_audio_stream_attached(const spl: PALLEGRO_AUDIO_STREAM): Boolean; cdecl; external SPARK_DLL;
+function  al_get_audio_stream_played_samples(const stream: PALLEGRO_AUDIO_STREAM): UInt64; cdecl; external SPARK_DLL;
+function  al_get_audio_stream_fragment(const stream: PALLEGRO_AUDIO_STREAM): Pointer; cdecl; external SPARK_DLL;
+function  al_set_audio_stream_speed(stream: PALLEGRO_AUDIO_STREAM; val: Single): Boolean; cdecl; external SPARK_DLL;
+function  al_set_audio_stream_gain(stream: PALLEGRO_AUDIO_STREAM; val: Single): Boolean; cdecl; external SPARK_DLL;
+function  al_set_audio_stream_pan(stream: PALLEGRO_AUDIO_STREAM; val: Single): Boolean; cdecl; external SPARK_DLL;
+function  al_set_audio_stream_playmode(stream: PALLEGRO_AUDIO_STREAM; val: ALLEGRO_PLAYMODE): Boolean; cdecl; external SPARK_DLL;
+function  al_set_audio_stream_playing(stream: PALLEGRO_AUDIO_STREAM; val: Boolean): Boolean; cdecl; external SPARK_DLL;
+function  al_detach_audio_stream(stream: PALLEGRO_AUDIO_STREAM): Boolean; cdecl; external SPARK_DLL;
+function  al_set_audio_stream_fragment(stream: PALLEGRO_AUDIO_STREAM; val: Pointer): Boolean; cdecl; external SPARK_DLL;
+function  al_rewind_audio_stream(stream: PALLEGRO_AUDIO_STREAM): Boolean; cdecl; external SPARK_DLL;
+function  al_seek_audio_stream_secs(stream: PALLEGRO_AUDIO_STREAM; time: Double): Boolean; cdecl; external SPARK_DLL;
+function  al_get_audio_stream_position_secs(stream: PALLEGRO_AUDIO_STREAM): Double; cdecl; external SPARK_DLL;
+function  al_get_audio_stream_length_secs(stream: PALLEGRO_AUDIO_STREAM): Double; cdecl; external SPARK_DLL;
+function  al_set_audio_stream_loop_secs(stream: PALLEGRO_AUDIO_STREAM; start: Double; end_: Double): Boolean; cdecl; external SPARK_DLL;
+function  al_get_audio_stream_event_source(stream: PALLEGRO_AUDIO_STREAM): PALLEGRO_EVENT_SOURCE; cdecl; external SPARK_DLL;
+function  al_set_audio_stream_channel_matrix(stream: PALLEGRO_AUDIO_STREAM; const matrix: PSingle): Boolean; cdecl; external SPARK_DLL;
+function  al_create_mixer(freq: Cardinal; depth: ALLEGRO_AUDIO_DEPTH; chan_conf: ALLEGRO_CHANNEL_CONF): PALLEGRO_MIXER; cdecl; external SPARK_DLL;
+procedure al_destroy_mixer(mixer: PALLEGRO_MIXER); cdecl; external SPARK_DLL;
+function  al_attach_sample_instance_to_mixer(stream: PALLEGRO_SAMPLE_INSTANCE; mixer: PALLEGRO_MIXER): Boolean; cdecl; external SPARK_DLL;
+function  al_attach_audio_stream_to_mixer(stream: PALLEGRO_AUDIO_STREAM; mixer: PALLEGRO_MIXER): Boolean; cdecl; external SPARK_DLL;
+function  al_attach_mixer_to_mixer(stream: PALLEGRO_MIXER; mixer: PALLEGRO_MIXER): Boolean; cdecl; external SPARK_DLL;
+function  al_set_mixer_postprocess_callback(mixer: PALLEGRO_MIXER; cb: al_set_mixer_postprocess_callback_cb; data: Pointer): Boolean; cdecl; external SPARK_DLL;
+function  al_get_mixer_frequency(const mixer: PALLEGRO_MIXER): Cardinal; cdecl; external SPARK_DLL;
+function  al_get_mixer_channels(const mixer: PALLEGRO_MIXER): ALLEGRO_CHANNEL_CONF; cdecl; external SPARK_DLL;
+function  al_get_mixer_depth(const mixer: PALLEGRO_MIXER): ALLEGRO_AUDIO_DEPTH; cdecl; external SPARK_DLL;
+function  al_get_mixer_quality(const mixer: PALLEGRO_MIXER): ALLEGRO_MIXER_QUALITY; cdecl; external SPARK_DLL;
+function  al_get_mixer_gain(const mixer: PALLEGRO_MIXER): Single; cdecl; external SPARK_DLL;
+function  al_get_mixer_playing(const mixer: PALLEGRO_MIXER): Boolean; cdecl; external SPARK_DLL;
+function  al_get_mixer_attached(const mixer: PALLEGRO_MIXER): Boolean; cdecl; external SPARK_DLL;
+function  al_set_mixer_frequency(mixer: PALLEGRO_MIXER; val: Cardinal): Boolean; cdecl; external SPARK_DLL;
+function  al_set_mixer_quality(mixer: PALLEGRO_MIXER; val: ALLEGRO_MIXER_QUALITY): Boolean; cdecl; external SPARK_DLL;
+function  al_set_mixer_gain(mixer: PALLEGRO_MIXER; gain: Single): Boolean; cdecl; external SPARK_DLL;
+function  al_set_mixer_playing(mixer: PALLEGRO_MIXER; val: Boolean): Boolean; cdecl; external SPARK_DLL;
+function  al_detach_mixer(mixer: PALLEGRO_MIXER): Boolean; cdecl; external SPARK_DLL;
+function  al_create_voice(freq: Cardinal; depth: ALLEGRO_AUDIO_DEPTH; chan_conf: ALLEGRO_CHANNEL_CONF): PALLEGRO_VOICE; cdecl; external SPARK_DLL;
+procedure al_destroy_voice(voice: PALLEGRO_VOICE); cdecl; external SPARK_DLL;
+function  al_attach_sample_instance_to_voice(stream: PALLEGRO_SAMPLE_INSTANCE; voice: PALLEGRO_VOICE): Boolean; cdecl; external SPARK_DLL;
+function  al_attach_audio_stream_to_voice(stream: PALLEGRO_AUDIO_STREAM; voice: PALLEGRO_VOICE): Boolean; cdecl; external SPARK_DLL;
+function  al_attach_mixer_to_voice(mixer: PALLEGRO_MIXER; voice: PALLEGRO_VOICE): Boolean; cdecl; external SPARK_DLL;
+procedure al_detach_voice(voice: PALLEGRO_VOICE); cdecl; external SPARK_DLL;
+function  al_get_voice_frequency(const voice: PALLEGRO_VOICE): Cardinal; cdecl; external SPARK_DLL;
+function  al_get_voice_position(const voice: PALLEGRO_VOICE): Cardinal; cdecl; external SPARK_DLL;
+function  al_get_voice_channels(const voice: PALLEGRO_VOICE): ALLEGRO_CHANNEL_CONF; cdecl; external SPARK_DLL;
+function  al_get_voice_depth(const voice: PALLEGRO_VOICE): ALLEGRO_AUDIO_DEPTH; cdecl; external SPARK_DLL;
+function  al_get_voice_playing(const voice: PALLEGRO_VOICE): Boolean; cdecl; external SPARK_DLL;
+function  al_set_voice_position(voice: PALLEGRO_VOICE; val: Cardinal): Boolean; cdecl; external SPARK_DLL;
+function  al_set_voice_playing(voice: PALLEGRO_VOICE; val: Boolean): Boolean; cdecl; external SPARK_DLL;
+function  al_install_audio(): Boolean; cdecl; external SPARK_DLL;
+procedure al_uninstall_audio(); cdecl; external SPARK_DLL;
+function  al_is_audio_installed(): Boolean; cdecl; external SPARK_DLL;
+function  al_get_allegro_audio_version(): UInt32; cdecl; external SPARK_DLL;
+function  al_get_channel_count(conf: ALLEGRO_CHANNEL_CONF): NativeUInt; cdecl; external SPARK_DLL;
+function  al_get_audio_depth_size(conf: ALLEGRO_AUDIO_DEPTH): NativeUInt; cdecl; external SPARK_DLL;
+procedure al_fill_silence(buf: Pointer; samples: Cardinal; depth: ALLEGRO_AUDIO_DEPTH; chan_conf: ALLEGRO_CHANNEL_CONF); cdecl; external SPARK_DLL;
+function  al_get_num_audio_output_devices(): Integer; cdecl; external SPARK_DLL;
+function  al_get_audio_output_device(index: Integer): PALLEGRO_AUDIO_DEVICE; cdecl; external SPARK_DLL;
+function  al_get_audio_device_name(const device: PALLEGRO_AUDIO_DEVICE): PUTF8Char; cdecl; external SPARK_DLL;
+function  al_reserve_samples(reserve_samples: Integer): Boolean; cdecl; external SPARK_DLL;
+function  al_get_default_mixer(): PALLEGRO_MIXER; cdecl; external SPARK_DLL;
+function  al_set_default_mixer(mixer: PALLEGRO_MIXER): Boolean; cdecl; external SPARK_DLL;
+function  al_restore_default_mixer(): Boolean; cdecl; external SPARK_DLL;
+function  al_play_sample(data: PALLEGRO_SAMPLE; gain: Single; pan: Single; speed: Single; loop: ALLEGRO_PLAYMODE; ret_id: PALLEGRO_SAMPLE_ID): Boolean; cdecl; external SPARK_DLL;
+procedure al_stop_sample(spl_id: PALLEGRO_SAMPLE_ID); cdecl; external SPARK_DLL;
+procedure al_stop_samples(); cdecl; external SPARK_DLL;
+function  al_get_default_voice(): PALLEGRO_VOICE; cdecl; external SPARK_DLL;
+procedure al_set_default_voice(voice: PALLEGRO_VOICE); cdecl; external SPARK_DLL;
+function  al_lock_sample_id(spl_id: PALLEGRO_SAMPLE_ID): PALLEGRO_SAMPLE_INSTANCE; cdecl; external SPARK_DLL;
+procedure al_unlock_sample_id(spl_id: PALLEGRO_SAMPLE_ID); cdecl; external SPARK_DLL;
+function  al_register_sample_loader(const ext: PUTF8Char; loader: al_register_sample_loader_loader): Boolean; cdecl; external SPARK_DLL;
+function  al_register_sample_saver(const ext: PUTF8Char; saver: al_register_sample_saver_saver): Boolean; cdecl; external SPARK_DLL;
+function  al_register_audio_stream_loader(const ext: PUTF8Char; stream_loader: al_register_audio_stream_loader_stream_loader): Boolean; cdecl; external SPARK_DLL;
+function  al_register_sample_loader_f(const ext: PUTF8Char; loader: al_register_sample_loader_f_loader): Boolean; cdecl; external SPARK_DLL;
+function  al_register_sample_saver_f(const ext: PUTF8Char; saver: al_register_sample_saver_f_saver): Boolean; cdecl; external SPARK_DLL;
+function  al_register_audio_stream_loader_f(const ext: PUTF8Char; stream_loader: al_register_audio_stream_loader_f_stream_loader): Boolean; cdecl; external SPARK_DLL;
+function  al_register_sample_identifier(const ext: PUTF8Char; identifier: al_register_sample_identifier_identifier): Boolean; cdecl; external SPARK_DLL;
+function  al_load_sample(const filename: PUTF8Char): PALLEGRO_SAMPLE; cdecl; external SPARK_DLL;
+function  al_save_sample(const filename: PUTF8Char; spl: PALLEGRO_SAMPLE): Boolean; cdecl; external SPARK_DLL;
+function  al_load_audio_stream(const filename: PUTF8Char; buffer_count: NativeUInt; samples: Cardinal): PALLEGRO_AUDIO_STREAM; cdecl; external SPARK_DLL;
+function  al_load_sample_f(fp: PALLEGRO_FILE; const ident: PUTF8Char): PALLEGRO_SAMPLE; cdecl; external SPARK_DLL;
+function  al_save_sample_f(fp: PALLEGRO_FILE; const ident: PUTF8Char; spl: PALLEGRO_SAMPLE): Boolean; cdecl; external SPARK_DLL;
+function  al_load_audio_stream_f(fp: PALLEGRO_FILE; const ident: PUTF8Char; buffer_count: NativeUInt; samples: Cardinal): PALLEGRO_AUDIO_STREAM; cdecl; external SPARK_DLL;
+function  al_identify_sample_f(fp: PALLEGRO_FILE): PUTF8Char; cdecl; external SPARK_DLL;
+function  al_identify_sample(const filename: PUTF8Char): PUTF8Char; cdecl; external SPARK_DLL;
+function  al_create_audio_recorder(fragment_count: NativeUInt; samples: Cardinal; freq: Cardinal; depth: ALLEGRO_AUDIO_DEPTH; chan_conf: ALLEGRO_CHANNEL_CONF): PALLEGRO_AUDIO_RECORDER; cdecl; external SPARK_DLL;
+function  al_start_audio_recorder(r: PALLEGRO_AUDIO_RECORDER): Boolean; cdecl; external SPARK_DLL;
+procedure al_stop_audio_recorder(r: PALLEGRO_AUDIO_RECORDER); cdecl; external SPARK_DLL;
+function  al_is_audio_recorder_recording(r: PALLEGRO_AUDIO_RECORDER): Boolean; cdecl; external SPARK_DLL;
+function  al_get_audio_recorder_event_source(r: PALLEGRO_AUDIO_RECORDER): PALLEGRO_EVENT_SOURCE; cdecl; external SPARK_DLL;
+function  al_get_audio_recorder_event(event: PALLEGRO_EVENT): PALLEGRO_AUDIO_RECORDER_EVENT; cdecl; external SPARK_DLL;
+procedure al_destroy_audio_recorder(r: PALLEGRO_AUDIO_RECORDER); cdecl; external SPARK_DLL;
+function  al_init_acodec_addon(): Boolean; cdecl; external SPARK_DLL;
+function  al_is_acodec_addon_initialized(): Boolean; cdecl; external SPARK_DLL;
+function  al_get_allegro_acodec_version(): UInt32; cdecl; external SPARK_DLL;
+function  al_get_allegro_color_version(): UInt32; cdecl; external SPARK_DLL;
+procedure al_color_hsv_to_rgb(hue: Single; saturation: Single; value: Single; red: PSingle; green: PSingle; blue: PSingle); cdecl; external SPARK_DLL;
+procedure al_color_rgb_to_hsl(red: Single; green: Single; blue: Single; hue: PSingle; saturation: PSingle; lightness: PSingle); cdecl; external SPARK_DLL;
+procedure al_color_rgb_to_hsv(red: Single; green: Single; blue: Single; hue: PSingle; saturation: PSingle; value: PSingle); cdecl; external SPARK_DLL;
+procedure al_color_hsl_to_rgb(hue: Single; saturation: Single; lightness: Single; red: PSingle; green: PSingle; blue: PSingle); cdecl; external SPARK_DLL;
+function  al_color_name_to_rgb(const name: PUTF8Char; r: PSingle; g: PSingle; b: PSingle): Boolean; cdecl; external SPARK_DLL;
+function  al_color_rgb_to_name(r: Single; g: Single; b: Single): PUTF8Char; cdecl; external SPARK_DLL;
+procedure al_color_cmyk_to_rgb(cyan: Single; magenta: Single; yellow: Single; key: Single; red: PSingle; green: PSingle; blue: PSingle); cdecl; external SPARK_DLL;
+procedure al_color_rgb_to_cmyk(red: Single; green: Single; blue: Single; cyan: PSingle; magenta: PSingle; yellow: PSingle; key: PSingle); cdecl; external SPARK_DLL;
+procedure al_color_yuv_to_rgb(y: Single; u: Single; v: Single; red: PSingle; green: PSingle; blue: PSingle); cdecl; external SPARK_DLL;
+procedure al_color_rgb_to_yuv(red: Single; green: Single; blue: Single; y: PSingle; u: PSingle; v: PSingle); cdecl; external SPARK_DLL;
+procedure al_color_rgb_to_html(red: Single; green: Single; blue: Single; string_: PUTF8Char); cdecl; external SPARK_DLL;
+function  al_color_html_to_rgb(const string_: PUTF8Char; red: PSingle; green: PSingle; blue: PSingle): Boolean; cdecl; external SPARK_DLL;
+function  al_color_yuv(y: Single; u: Single; v: Single): ALLEGRO_COLOR; cdecl; external SPARK_DLL;
+function  al_color_cmyk(c: Single; m: Single; y: Single; k: Single): ALLEGRO_COLOR; cdecl; external SPARK_DLL;
+function  al_color_hsl(h: Single; s: Single; l: Single): ALLEGRO_COLOR; cdecl; external SPARK_DLL;
+function  al_color_hsv(h: Single; s: Single; v: Single): ALLEGRO_COLOR; cdecl; external SPARK_DLL;
+function  al_color_name(const name: PUTF8Char): ALLEGRO_COLOR; cdecl; external SPARK_DLL;
+function  al_color_html(const string_: PUTF8Char): ALLEGRO_COLOR; cdecl; external SPARK_DLL;
+procedure al_color_xyz_to_rgb(x: Single; y: Single; z: Single; red: PSingle; green: PSingle; blue: PSingle); cdecl; external SPARK_DLL;
+procedure al_color_rgb_to_xyz(red: Single; green: Single; blue: Single; x: PSingle; y: PSingle; z: PSingle); cdecl; external SPARK_DLL;
+function  al_color_xyz(x: Single; y: Single; z: Single): ALLEGRO_COLOR; cdecl; external SPARK_DLL;
+procedure al_color_lab_to_rgb(l: Single; a: Single; b: Single; red: PSingle; green: PSingle; blue: PSingle); cdecl; external SPARK_DLL;
+procedure al_color_rgb_to_lab(red: Single; green: Single; blue: Single; l: PSingle; a: PSingle; b: PSingle); cdecl; external SPARK_DLL;
+function  al_color_lab(l: Single; a: Single; b: Single): ALLEGRO_COLOR; cdecl; external SPARK_DLL;
+procedure al_color_xyy_to_rgb(x: Single; y: Single; y2: Single; red: PSingle; green: PSingle; blue: PSingle); cdecl; external SPARK_DLL;
+procedure al_color_rgb_to_xyy(red: Single; green: Single; blue: Single; x: PSingle; y: PSingle; y2: PSingle); cdecl; external SPARK_DLL;
+function  al_color_xyy(x: Single; y: Single; y2: Single): ALLEGRO_COLOR; cdecl; external SPARK_DLL;
+function  al_color_distance_ciede2000(c1: ALLEGRO_COLOR; c2: ALLEGRO_COLOR): Double; cdecl; external SPARK_DLL;
+procedure al_color_lch_to_rgb(l: Single; c: Single; h: Single; red: PSingle; green: PSingle; blue: PSingle); cdecl; external SPARK_DLL;
+procedure al_color_rgb_to_lch(red: Single; green: Single; blue: Single; l: PSingle; c: PSingle; h: PSingle); cdecl; external SPARK_DLL;
+function  al_color_lch(l: Single; c: Single; h: Single): ALLEGRO_COLOR; cdecl; external SPARK_DLL;
+function  al_is_color_valid(color: ALLEGRO_COLOR): Boolean; cdecl; external SPARK_DLL;
+procedure al_color_oklab_to_rgb(l: Single; a: Single; b: Single; red: PSingle; green: PSingle; blue: PSingle); cdecl; external SPARK_DLL;
+procedure al_color_rgb_to_oklab(red: Single; green: Single; blue: Single; l: PSingle; a: PSingle; b: PSingle); cdecl; external SPARK_DLL;
+function  al_color_oklab(l: Single; a: Single; b: Single): ALLEGRO_COLOR; cdecl; external SPARK_DLL;
+procedure al_color_linear_to_rgb(x: Single; y: Single; z: Single; red: PSingle; green: PSingle; blue: PSingle); cdecl; external SPARK_DLL;
+procedure al_color_rgb_to_linear(red: Single; green: Single; blue: Single; x: PSingle; y: PSingle; z: PSingle); cdecl; external SPARK_DLL;
+function  al_color_linear(r: Single; g: Single; b: Single): ALLEGRO_COLOR; cdecl; external SPARK_DLL;
+function  al_register_font_loader(const ext: PUTF8Char; load: al_register_font_loader_load): Boolean; cdecl; external SPARK_DLL;
+function  al_load_bitmap_font(const filename: PUTF8Char): PALLEGRO_FONT; cdecl; external SPARK_DLL;
+function  al_load_bitmap_font_flags(const filename: PUTF8Char; flags: Integer): PALLEGRO_FONT; cdecl; external SPARK_DLL;
+function  al_load_font(const filename: PUTF8Char; size: Integer; flags: Integer): PALLEGRO_FONT; cdecl; external SPARK_DLL;
+function  al_grab_font_from_bitmap(bmp: PALLEGRO_BITMAP; n: Integer; ranges: PInteger): PALLEGRO_FONT; cdecl; external SPARK_DLL;
+function  al_create_builtin_font(): PALLEGRO_FONT; cdecl; external SPARK_DLL;
+procedure al_draw_ustr(const font: PALLEGRO_FONT; color: ALLEGRO_COLOR; x: Single; y: Single; flags: Integer; const ustr: PALLEGRO_USTR); cdecl; external SPARK_DLL;
+procedure al_draw_text(const font: PALLEGRO_FONT; color: ALLEGRO_COLOR; x: Single; y: Single; flags: Integer; const text: PUTF8Char); cdecl; external SPARK_DLL;
+procedure al_draw_justified_text(const font: PALLEGRO_FONT; color: ALLEGRO_COLOR; x1: Single; x2: Single; y: Single; diff: Single; flags: Integer; const text: PUTF8Char); cdecl; external SPARK_DLL;
+procedure al_draw_justified_ustr(const font: PALLEGRO_FONT; color: ALLEGRO_COLOR; x1: Single; x2: Single; y: Single; diff: Single; flags: Integer; const text: PALLEGRO_USTR); cdecl; external SPARK_DLL;
+procedure al_draw_textf(const font: PALLEGRO_FONT; color: ALLEGRO_COLOR; x: Single; y: Single; flags: Integer; const format: PUTF8Char) varargs; cdecl; external SPARK_DLL;
+procedure al_draw_justified_textf(const font: PALLEGRO_FONT; color: ALLEGRO_COLOR; x1: Single; x2: Single; y: Single; diff: Single; flags: Integer; const format: PUTF8Char) varargs; cdecl; external SPARK_DLL;
+function  al_get_text_width(const f: PALLEGRO_FONT; const str: PUTF8Char): Integer; cdecl; external SPARK_DLL;
+function  al_get_ustr_width(const f: PALLEGRO_FONT; const ustr: PALLEGRO_USTR): Integer; cdecl; external SPARK_DLL;
+function  al_get_font_line_height(const f: PALLEGRO_FONT): Integer; cdecl; external SPARK_DLL;
+function  al_get_font_ascent(const f: PALLEGRO_FONT): Integer; cdecl; external SPARK_DLL;
+function  al_get_font_descent(const f: PALLEGRO_FONT): Integer; cdecl; external SPARK_DLL;
+procedure al_destroy_font(f: PALLEGRO_FONT); cdecl; external SPARK_DLL;
+procedure al_get_ustr_dimensions(const f: PALLEGRO_FONT; const text: PALLEGRO_USTR; bbx: PInteger; bby: PInteger; bbw: PInteger; bbh: PInteger); cdecl; external SPARK_DLL;
+procedure al_get_text_dimensions(const f: PALLEGRO_FONT; const text: PUTF8Char; bbx: PInteger; bby: PInteger; bbw: PInteger; bbh: PInteger); cdecl; external SPARK_DLL;
+function  al_init_font_addon(): Boolean; cdecl; external SPARK_DLL;
+function  al_is_font_addon_initialized(): Boolean; cdecl; external SPARK_DLL;
+procedure al_shutdown_font_addon(); cdecl; external SPARK_DLL;
+function  al_get_allegro_font_version(): UInt32; cdecl; external SPARK_DLL;
+function  al_get_font_ranges(font: PALLEGRO_FONT; ranges_count: Integer; ranges: PInteger): Integer; cdecl; external SPARK_DLL;
+procedure al_draw_glyph(const font: PALLEGRO_FONT; color: ALLEGRO_COLOR; x: Single; y: Single; codepoint: Integer); cdecl; external SPARK_DLL;
+function  al_get_glyph_width(const f: PALLEGRO_FONT; codepoint: Integer): Integer; cdecl; external SPARK_DLL;
+function  al_get_glyph_dimensions(const f: PALLEGRO_FONT; codepoint: Integer; bbx: PInteger; bby: PInteger; bbw: PInteger; bbh: PInteger): Boolean; cdecl; external SPARK_DLL;
+function  al_get_glyph_advance(const f: PALLEGRO_FONT; codepoint1: Integer; codepoint2: Integer): Integer; cdecl; external SPARK_DLL;
+function  al_get_glyph(const f: PALLEGRO_FONT; prev_codepoint: Integer; codepoint: Integer; glyph: PALLEGRO_GLYPH): Boolean; cdecl; external SPARK_DLL;
+procedure al_draw_multiline_text(const font: PALLEGRO_FONT; color: ALLEGRO_COLOR; x: Single; y: Single; max_width: Single; line_height: Single; flags: Integer; const text: PUTF8Char); cdecl; external SPARK_DLL;
+procedure al_draw_multiline_textf(const font: PALLEGRO_FONT; color: ALLEGRO_COLOR; x: Single; y: Single; max_width: Single; line_height: Single; flags: Integer; const format: PUTF8Char) varargs; cdecl; external SPARK_DLL;
+procedure al_draw_multiline_ustr(const font: PALLEGRO_FONT; color: ALLEGRO_COLOR; x: Single; y: Single; max_width: Single; line_height: Single; flags: Integer; const text: PALLEGRO_USTR); cdecl; external SPARK_DLL;
+procedure al_do_multiline_text(const font: PALLEGRO_FONT; max_width: Single; const text: PUTF8Char; cb: al_do_multiline_text_cb; extra: Pointer); cdecl; external SPARK_DLL;
+procedure al_do_multiline_ustr(const font: PALLEGRO_FONT; max_width: Single; const ustr: PALLEGRO_USTR; cb: al_do_multiline_ustr_cb; extra: Pointer); cdecl; external SPARK_DLL;
+procedure al_set_fallback_font(font: PALLEGRO_FONT; fallback: PALLEGRO_FONT); cdecl; external SPARK_DLL;
+function  al_get_fallback_font(font: PALLEGRO_FONT): PALLEGRO_FONT; cdecl; external SPARK_DLL;
+function  al_init_image_addon(): Boolean; cdecl; external SPARK_DLL;
+function  al_is_image_addon_initialized(): Boolean; cdecl; external SPARK_DLL;
+procedure al_shutdown_image_addon(); cdecl; external SPARK_DLL;
+function  al_get_allegro_image_version(): UInt32; cdecl; external SPARK_DLL;
+function  al_open_memfile(mem: Pointer; size: Int64; const mode: PUTF8Char): PALLEGRO_FILE; cdecl; external SPARK_DLL;
+function  al_get_allegro_memfile_version(): UInt32; cdecl; external SPARK_DLL;
+function  al_init_native_dialog_addon(): Boolean; cdecl; external SPARK_DLL;
+function  al_is_native_dialog_addon_initialized(): Boolean; cdecl; external SPARK_DLL;
+procedure al_shutdown_native_dialog_addon(); cdecl; external SPARK_DLL;
+function  al_create_native_file_dialog(const initial_path: PUTF8Char; const title: PUTF8Char; const patterns: PUTF8Char; mode: Integer): PALLEGRO_FILECHOOSER; cdecl; external SPARK_DLL;
+function  al_show_native_file_dialog(display: PALLEGRO_DISPLAY; dialog: PALLEGRO_FILECHOOSER): Boolean; cdecl; external SPARK_DLL;
+function  al_get_native_file_dialog_count(const dialog: PALLEGRO_FILECHOOSER): Integer; cdecl; external SPARK_DLL;
+function  al_get_native_file_dialog_path(const dialog: PALLEGRO_FILECHOOSER; index: NativeUInt): PUTF8Char; cdecl; external SPARK_DLL;
+procedure al_destroy_native_file_dialog(dialog: PALLEGRO_FILECHOOSER); cdecl; external SPARK_DLL;
+function  al_show_native_message_box(display: PALLEGRO_DISPLAY; const title: PUTF8Char; const heading: PUTF8Char; const text: PUTF8Char; const buttons: PUTF8Char; flags: Integer): Integer; cdecl; external SPARK_DLL;
+function  al_open_native_text_log(const title: PUTF8Char; flags: Integer): PALLEGRO_TEXTLOG; cdecl; external SPARK_DLL;
+procedure al_close_native_text_log(textlog: PALLEGRO_TEXTLOG); cdecl; external SPARK_DLL;
+procedure al_append_native_text_log(textlog: PALLEGRO_TEXTLOG; const format: PUTF8Char) varargs; cdecl; external SPARK_DLL;
+function  al_get_native_text_log_event_source(textlog: PALLEGRO_TEXTLOG): PALLEGRO_EVENT_SOURCE; cdecl; external SPARK_DLL;
+function  al_create_menu(): PALLEGRO_MENU; cdecl; external SPARK_DLL;
+function  al_create_popup_menu(): PALLEGRO_MENU; cdecl; external SPARK_DLL;
+function  al_build_menu(info: PALLEGRO_MENU_INFO): PALLEGRO_MENU; cdecl; external SPARK_DLL;
+function  al_append_menu_item(parent: PALLEGRO_MENU; const title: PUTF8Char; id: UInt16; flags: Integer; icon: PALLEGRO_BITMAP; submenu: PALLEGRO_MENU): Integer; cdecl; external SPARK_DLL;
+function  al_insert_menu_item(parent: PALLEGRO_MENU; pos: Integer; const title: PUTF8Char; id: UInt16; flags: Integer; icon: PALLEGRO_BITMAP; submenu: PALLEGRO_MENU): Integer; cdecl; external SPARK_DLL;
+function  al_remove_menu_item(menu: PALLEGRO_MENU; pos: Integer): Boolean; cdecl; external SPARK_DLL;
+function  al_clone_menu(menu: PALLEGRO_MENU): PALLEGRO_MENU; cdecl; external SPARK_DLL;
+function  al_clone_menu_for_popup(menu: PALLEGRO_MENU): PALLEGRO_MENU; cdecl; external SPARK_DLL;
+procedure al_destroy_menu(menu: PALLEGRO_MENU); cdecl; external SPARK_DLL;
+function  al_get_menu_item_caption(menu: PALLEGRO_MENU; pos: Integer): PUTF8Char; cdecl; external SPARK_DLL;
+procedure al_set_menu_item_caption(menu: PALLEGRO_MENU; pos: Integer; const caption: PUTF8Char); cdecl; external SPARK_DLL;
+function  al_get_menu_item_flags(menu: PALLEGRO_MENU; pos: Integer): Integer; cdecl; external SPARK_DLL;
+procedure al_set_menu_item_flags(menu: PALLEGRO_MENU; pos: Integer; flags: Integer); cdecl; external SPARK_DLL;
+function  al_get_menu_item_icon(menu: PALLEGRO_MENU; pos: Integer): PALLEGRO_BITMAP; cdecl; external SPARK_DLL;
+procedure al_set_menu_item_icon(menu: PALLEGRO_MENU; pos: Integer; icon: PALLEGRO_BITMAP); cdecl; external SPARK_DLL;
+function  al_toggle_menu_item_flags(menu: PALLEGRO_MENU; pos: Integer; flags: Integer): Integer; cdecl; external SPARK_DLL;
+function  al_find_menu(haystack: PALLEGRO_MENU; id: UInt16): PALLEGRO_MENU; cdecl; external SPARK_DLL;
+function  al_find_menu_item(haystack: PALLEGRO_MENU; id: UInt16; menu: PPALLEGRO_MENU; index: PInteger): Boolean; cdecl; external SPARK_DLL;
+function  al_get_default_menu_event_source(): PALLEGRO_EVENT_SOURCE; cdecl; external SPARK_DLL;
+function  al_enable_menu_event_source(menu: PALLEGRO_MENU): PALLEGRO_EVENT_SOURCE; cdecl; external SPARK_DLL;
+procedure al_disable_menu_event_source(menu: PALLEGRO_MENU); cdecl; external SPARK_DLL;
+function  al_get_display_menu(display: PALLEGRO_DISPLAY): PALLEGRO_MENU; cdecl; external SPARK_DLL;
+function  al_set_display_menu(display: PALLEGRO_DISPLAY; menu: PALLEGRO_MENU): Boolean; cdecl; external SPARK_DLL;
+function  al_popup_menu(popup: PALLEGRO_MENU; display: PALLEGRO_DISPLAY): Boolean; cdecl; external SPARK_DLL;
+function  al_remove_display_menu(display: PALLEGRO_DISPLAY): PALLEGRO_MENU; cdecl; external SPARK_DLL;
+function  al_get_allegro_native_dialog_version(): UInt32; cdecl; external SPARK_DLL;
+procedure al_set_physfs_file_interface(); cdecl; external SPARK_DLL;
+function  al_get_allegro_physfs_version(): UInt32; cdecl; external SPARK_DLL;
+function  al_get_allegro_primitives_version(): UInt32; cdecl; external SPARK_DLL;
+function  al_init_primitives_addon(): Boolean; cdecl; external SPARK_DLL;
+function  al_is_primitives_addon_initialized(): Boolean; cdecl; external SPARK_DLL;
+procedure al_shutdown_primitives_addon(); cdecl; external SPARK_DLL;
+function  al_draw_prim(const vtxs: Pointer; const decl: PALLEGRO_VERTEX_DECL; texture: PALLEGRO_BITMAP; start: Integer; end_: Integer; type_: Integer): Integer; cdecl; external SPARK_DLL;
+function  al_draw_indexed_prim(const vtxs: Pointer; const decl: PALLEGRO_VERTEX_DECL; texture: PALLEGRO_BITMAP; const indices: PInteger; num_vtx: Integer; type_: Integer): Integer; cdecl; external SPARK_DLL;
+function  al_draw_vertex_buffer(vertex_buffer: PALLEGRO_VERTEX_BUFFER; texture: PALLEGRO_BITMAP; start: Integer; end_: Integer; type_: Integer): Integer; cdecl; external SPARK_DLL;
+function  al_draw_indexed_buffer(vertex_buffer: PALLEGRO_VERTEX_BUFFER; texture: PALLEGRO_BITMAP; index_buffer: PALLEGRO_INDEX_BUFFER; start: Integer; end_: Integer; type_: Integer): Integer; cdecl; external SPARK_DLL;
+function  al_create_vertex_decl(const elements: PALLEGRO_VERTEX_ELEMENT; stride: Integer): PALLEGRO_VERTEX_DECL; cdecl; external SPARK_DLL;
+procedure al_destroy_vertex_decl(decl: PALLEGRO_VERTEX_DECL); cdecl; external SPARK_DLL;
+function  al_create_vertex_buffer(decl: PALLEGRO_VERTEX_DECL; const initial_data: Pointer; num_vertices: Integer; flags: Integer): PALLEGRO_VERTEX_BUFFER; cdecl; external SPARK_DLL;
+procedure al_destroy_vertex_buffer(buffer: PALLEGRO_VERTEX_BUFFER); cdecl; external SPARK_DLL;
+function  al_lock_vertex_buffer(buffer: PALLEGRO_VERTEX_BUFFER; offset: Integer; length: Integer; flags: Integer): Pointer; cdecl; external SPARK_DLL;
+procedure al_unlock_vertex_buffer(buffer: PALLEGRO_VERTEX_BUFFER); cdecl; external SPARK_DLL;
+function  al_get_vertex_buffer_size(buffer: PALLEGRO_VERTEX_BUFFER): Integer; cdecl; external SPARK_DLL;
+function  al_create_index_buffer(index_size: Integer; const initial_data: Pointer; num_indices: Integer; flags: Integer): PALLEGRO_INDEX_BUFFER; cdecl; external SPARK_DLL;
+procedure al_destroy_index_buffer(buffer: PALLEGRO_INDEX_BUFFER); cdecl; external SPARK_DLL;
+function  al_lock_index_buffer(buffer: PALLEGRO_INDEX_BUFFER; offset: Integer; length: Integer; flags: Integer): Pointer; cdecl; external SPARK_DLL;
+procedure al_unlock_index_buffer(buffer: PALLEGRO_INDEX_BUFFER); cdecl; external SPARK_DLL;
+function  al_get_index_buffer_size(buffer: PALLEGRO_INDEX_BUFFER): Integer; cdecl; external SPARK_DLL;
+function  al_triangulate_polygon(const vertices: PSingle; vertex_stride: NativeUInt; const vertex_counts: PInteger; emit_triangle: al_triangulate_polygon_emit_triangle; userdata: Pointer): Boolean; cdecl; external SPARK_DLL;
+procedure al_draw_soft_triangle(v1: PALLEGRO_VERTEX; v2: PALLEGRO_VERTEX; v3: PALLEGRO_VERTEX; state: UIntPtr; init: al_draw_soft_triangle_init; first: al_draw_soft_triangle_first; step: al_draw_soft_triangle_step; draw: al_draw_soft_triangle_draw); cdecl; external SPARK_DLL;
+procedure al_draw_soft_line(v1: PALLEGRO_VERTEX; v2: PALLEGRO_VERTEX; state: UIntPtr; first: al_draw_soft_line_first; step: al_draw_soft_line_step; draw: al_draw_soft_line_draw); cdecl; external SPARK_DLL;
+procedure al_draw_line(x1: Single; y1: Single; x2: Single; y2: Single; color: ALLEGRO_COLOR; thickness: Single); cdecl; external SPARK_DLL;
+procedure al_draw_triangle(x1: Single; y1: Single; x2: Single; y2: Single; x3: Single; y3: Single; color: ALLEGRO_COLOR; thickness: Single); cdecl; external SPARK_DLL;
+procedure al_draw_rectangle(x1: Single; y1: Single; x2: Single; y2: Single; color: ALLEGRO_COLOR; thickness: Single); cdecl; external SPARK_DLL;
+procedure al_draw_rounded_rectangle(x1: Single; y1: Single; x2: Single; y2: Single; rx: Single; ry: Single; color: ALLEGRO_COLOR; thickness: Single); cdecl; external SPARK_DLL;
+procedure al_calculate_arc(dest: PSingle; stride: Integer; cx: Single; cy: Single; rx: Single; ry: Single; start_theta: Single; delta_theta: Single; thickness: Single; num_points: Integer); cdecl; external SPARK_DLL;
+procedure al_draw_circle(cx: Single; cy: Single; r: Single; color: ALLEGRO_COLOR; thickness: Single); cdecl; external SPARK_DLL;
+procedure al_draw_ellipse(cx: Single; cy: Single; rx: Single; ry: Single; color: ALLEGRO_COLOR; thickness: Single); cdecl; external SPARK_DLL;
+procedure al_draw_arc(cx: Single; cy: Single; r: Single; start_theta: Single; delta_theta: Single; color: ALLEGRO_COLOR; thickness: Single); cdecl; external SPARK_DLL;
+procedure al_draw_elliptical_arc(cx: Single; cy: Single; rx: Single; ry: Single; start_theta: Single; delta_theta: Single; color: ALLEGRO_COLOR; thickness: Single); cdecl; external SPARK_DLL;
+procedure al_draw_pieslice(cx: Single; cy: Single; r: Single; start_theta: Single; delta_theta: Single; color: ALLEGRO_COLOR; thickness: Single); cdecl; external SPARK_DLL;
+procedure al_calculate_spline(dest: PSingle; stride: Integer; points: PSingle; thickness: Single; num_segments: Integer); cdecl; external SPARK_DLL;
+procedure al_draw_spline(points: PSingle; color: ALLEGRO_COLOR; thickness: Single); cdecl; external SPARK_DLL;
+procedure al_calculate_ribbon(dest: PSingle; dest_stride: Integer; const points: PSingle; points_stride: Integer; thickness: Single; num_segments: Integer); cdecl; external SPARK_DLL;
+procedure al_draw_ribbon(const points: PSingle; points_stride: Integer; color: ALLEGRO_COLOR; thickness: Single; num_segments: Integer); cdecl; external SPARK_DLL;
+procedure al_draw_filled_triangle(x1: Single; y1: Single; x2: Single; y2: Single; x3: Single; y3: Single; color: ALLEGRO_COLOR); cdecl; external SPARK_DLL;
+procedure al_draw_filled_rectangle(x1: Single; y1: Single; x2: Single; y2: Single; color: ALLEGRO_COLOR); cdecl; external SPARK_DLL;
+procedure al_draw_filled_ellipse(cx: Single; cy: Single; rx: Single; ry: Single; color: ALLEGRO_COLOR); cdecl; external SPARK_DLL;
+procedure al_draw_filled_circle(cx: Single; cy: Single; r: Single; color: ALLEGRO_COLOR); cdecl; external SPARK_DLL;
+procedure al_draw_filled_pieslice(cx: Single; cy: Single; r: Single; start_theta: Single; delta_theta: Single; color: ALLEGRO_COLOR); cdecl; external SPARK_DLL;
+procedure al_draw_filled_rounded_rectangle(x1: Single; y1: Single; x2: Single; y2: Single; rx: Single; ry: Single; color: ALLEGRO_COLOR); cdecl; external SPARK_DLL;
+procedure al_draw_polyline(const vertices: PSingle; vertex_stride: Integer; vertex_count: Integer; join_style: Integer; cap_style: Integer; color: ALLEGRO_COLOR; thickness: Single; miter_limit: Single); cdecl; external SPARK_DLL;
+procedure al_draw_polygon(const vertices: PSingle; vertex_count: Integer; join_style: Integer; color: ALLEGRO_COLOR; thickness: Single; miter_limit: Single); cdecl; external SPARK_DLL;
+procedure al_draw_filled_polygon(const vertices: PSingle; vertex_count: Integer; color: ALLEGRO_COLOR); cdecl; external SPARK_DLL;
+procedure al_draw_filled_polygon_with_holes(const vertices: PSingle; const vertex_counts: PInteger; color: ALLEGRO_COLOR); cdecl; external SPARK_DLL;
+function  al_load_ttf_font(const filename: PUTF8Char; size: Integer; flags: Integer): PALLEGRO_FONT; cdecl; external SPARK_DLL;
+function  al_load_ttf_font_f(file_: PALLEGRO_FILE; const filename: PUTF8Char; size: Integer; flags: Integer): PALLEGRO_FONT; cdecl; external SPARK_DLL;
+function  al_load_ttf_font_stretch(const filename: PUTF8Char; w: Integer; h: Integer; flags: Integer): PALLEGRO_FONT; cdecl; external SPARK_DLL;
+function  al_load_ttf_font_stretch_f(file_: PALLEGRO_FILE; const filename: PUTF8Char; w: Integer; h: Integer; flags: Integer): PALLEGRO_FONT; cdecl; external SPARK_DLL;
+function  al_init_ttf_addon(): Boolean; cdecl; external SPARK_DLL;
+function  al_is_ttf_addon_initialized(): Boolean; cdecl; external SPARK_DLL;
+procedure al_shutdown_ttf_addon(); cdecl; external SPARK_DLL;
+function  al_get_allegro_ttf_version(): UInt32; cdecl; external SPARK_DLL;
+function  al_open_video(const filename: PUTF8Char): PALLEGRO_VIDEO; cdecl; external SPARK_DLL;
+procedure al_close_video(video: PALLEGRO_VIDEO); cdecl; external SPARK_DLL;
+procedure al_start_video(video: PALLEGRO_VIDEO; mixer: PALLEGRO_MIXER); cdecl; external SPARK_DLL;
+procedure al_start_video_with_voice(video: PALLEGRO_VIDEO; voice: PALLEGRO_VOICE); cdecl; external SPARK_DLL;
+function  al_get_video_event_source(video: PALLEGRO_VIDEO): PALLEGRO_EVENT_SOURCE; cdecl; external SPARK_DLL;
+procedure al_set_video_playing(video: PALLEGRO_VIDEO; playing: Boolean); cdecl; external SPARK_DLL;
+function  al_is_video_playing(video: PALLEGRO_VIDEO): Boolean; cdecl; external SPARK_DLL;
+function  al_get_video_audio_rate(video: PALLEGRO_VIDEO): Double; cdecl; external SPARK_DLL;
+function  al_get_video_fps(video: PALLEGRO_VIDEO): Double; cdecl; external SPARK_DLL;
+function  al_get_video_scaled_width(video: PALLEGRO_VIDEO): Single; cdecl; external SPARK_DLL;
+function  al_get_video_scaled_height(video: PALLEGRO_VIDEO): Single; cdecl; external SPARK_DLL;
+function  al_get_video_frame(video: PALLEGRO_VIDEO): PALLEGRO_BITMAP; cdecl; external SPARK_DLL;
+function  al_get_video_position(video: PALLEGRO_VIDEO; which: ALLEGRO_VIDEO_POSITION_TYPE): Double; cdecl; external SPARK_DLL;
+function  al_seek_video(video: PALLEGRO_VIDEO; pos_in_seconds: Double): Boolean; cdecl; external SPARK_DLL;
+function  al_init_video_addon(): Boolean; cdecl; external SPARK_DLL;
+function  al_is_video_addon_initialized(): Boolean; cdecl; external SPARK_DLL;
+procedure al_shutdown_video_addon(); cdecl; external SPARK_DLL;
+function  al_get_allegro_video_version(): UInt32; cdecl; external SPARK_DLL;
+function  al_identify_video_f(fp: PALLEGRO_FILE): PUTF8Char; cdecl; external SPARK_DLL;
+function  al_identify_video(const filename: PUTF8Char): PUTF8Char; cdecl; external SPARK_DLL;
+function  al_get_win_window_handle(display: PALLEGRO_DISPLAY): HWND; cdecl; external SPARK_DLL;
+
+// --- PHYSFS ---------------------------------------------------------------
+function  PHYSFS_init(const argv0: PUTF8Char): Integer; cdecl; external SPARK_DLL;
+function  PHYSFS_deinit(): Integer; cdecl; external SPARK_DLL;
+function  PHYSFS_getWriteDir(): PUTF8Char; cdecl; external SPARK_DLL;
+function  PHYSFS_setWriteDir(const newDir: PUTF8Char): Integer; cdecl; external SPARK_DLL;
+function  PHYSFS_mount(const newDir: PUTF8Char; const mountPoint: PUTF8Char; appendToPath: Integer): Integer; cdecl; external SPARK_DLL;
+function  PHYSFS_unmount(const oldDir: PUTF8Char): Integer; cdecl; external SPARK_DLL;
+
+// --- ZLib -----------------------------------------------------------------
+function  crc32(crc: Cardinal; const buf: PByte; len: Cardinal): Cardinal; cdecl; external SPARK_DLL;
+function  zipOpen(const pathname: PUTF8Char; append: Integer): zipFile; cdecl; external SPARK_DLL;
+function  zipOpenNewFileInZip3(file_: zipFile; const filename: PUTF8Char; const zipfi: Pzip_fileinfo; const extrafield_local: Pointer; intsize_extrafield_local: Cardinal; const extrafield_global: Pointer; intsize_extrafield_global: Cardinal; const comment: PUTF8Char; method: Integer; level: Integer; raw: Integer; windowBits: Integer; memLevel: Integer; strategy: Integer; const password: PUTF8Char; crcForCrypting: Cardinal): Integer; cdecl; external SPARK_DLL;
+function  zipWriteInFileInZip(file_: zipFile; const buf: Pointer; len: Cardinal): Integer; cdecl; external SPARK_DLL;
+function  zipCloseFileInZip(file_: zipFile): Integer; cdecl; external SPARK_DLL;
+function  zipClose(file_: zipFile; const global_comment: PUTF8Char): Integer; cdecl; external SPARK_DLL;
 
 {$ENDREGION}
 
-// Spark ====================================================================
-{$REGION 'Spark'}
-
+{$REGION 'Spark.Math'}
 const
-  // GameVision Constants
+  RAD2DEG = 180.0 / PI;
+  DEG2RAD = PI / 180.0;
+  EPSILON = 0.00001;
+  NaN     =  0.0 / 0.0;
+
+type
+  { TLineIntersection }
+  TLineIntersection = (liNone, liTrue, liParallel);
+
+  { TEaseType }
+  TEaseType = (etLinearTween, etInQuad, etOutQuad, etInOutQuad, etInCubic,
+    etOutCubic, etInOutCubic, etInQuart, etOutQuart, etInOutQuart, etInQuint,
+    etOutQuint, etInOutQuint, etInSine, etOutSine, etInOutSine, etInExpo,
+    etOutExpo, etInOutExpo, etInCircle, etOutCircle, etInOutCircle);
+
+  { TVector }
+  PVector = ^TVector;
+  TVector = record
+    X,Y,Z, W: Single;
+    constructor Create(aX, aY: Single); overload;
+    constructor Create(aX, aY, aZ: Single); overload;
+    constructor Create(aX, aY, aZ, aW: Single); overload;
+    procedure Assign(aX, aY: Single); overload;
+    procedure Assign(aX, aY, aZ: Single); overload;
+    procedure Assign(aX, aY, aZ, aW: Single); overload;
+    procedure Assign(aVector: TVector); overload;
+    procedure Clear;
+    procedure Add(aVector: TVector);
+    procedure Subtract(aVector: TVector);
+    procedure Multiply(aVector: TVector);
+    procedure Divide(aVector: TVector);
+    function  Magnitude: Single;
+    function  MagnitudeTruncate(aMaxMagitude: Single): TVector;
+    function  Distance(aVector: TVector): Single;
+    procedure Normalize;
+    function  Angle(aVector: TVector): Single;
+    procedure Thrust(aAngle: Single; aSpeed: Single);
+    function  MagnitudeSquared: Single;
+    function  DotProduct(aVector: TVector): Single;
+    procedure Scale(aValue: Single);
+    procedure DivideBy(aValue: Single);
+    function  Project(aVector: TVector): TVector;
+    procedure Negate;
+  end;
+
+  { TRectangle }
+  PRectangle = ^TRectangle;
+  TRectangle = record
+    X, Y, Width, Height: Single;
+    constructor Create(aX, aY, aWidth, aHeight: Single);
+    procedure Assign(aX, aY, aWidth, aHeight: Single); overload;
+    procedure Assign(aRectangle: TRectangle); overload;
+    procedure Clear;
+    function Intersect(aRect: TRectangle): Boolean;
+  end;
+
+{ Routines }
+function  Min(const A, B: Int64): Int64; overload; inline;
+function  Min(const A, B: UInt64): UInt64; overload; inline;
+function  Min(const A, B: Double): Double; overload; inline;
+function  Max(const A, B: Int64): Int64; overload; inline;
+function  Max(const A, B: UInt64): UInt64; overload; inline;
+function  Max(const A, B: Double): Double; overload; inline;
+function  Sign(const aValue: Int64): Integer; overload; inline;
+function  Sign(const aValue: Double): Integer; overload; inline;
+function  InRange(const AValue, AMin, AMax: Int64): Boolean; overload;
+function  InRange(const AValue, AMin, AMax: UInt64): Boolean; overload;
+function  InRange(const AValue, AMin, AMax: Double): Boolean; overload;
+function  EnsureRange(const aValue, aMin, aMax: Int64): Int64; overload;
+function  EnsureRange(const aValue, aMin, aMax: UInt64): UInt64; overload;
+function  EnsureRange(const aValue, aMin, aMax: Double): Double; overload;
+function  Floor(const X: Extended): Integer;
+function  IntPower(const Base: Extended; const Exponent: Integer): Extended;
+function  Power(const Base, Exponent: Extended): Extended;
+function  RandomRange(aMin, aMax: Integer): Integer; overload;
+function  RandomRange(aMin, aMax: Single): Single; overload;
+function  RandomBool: Boolean;
+function  GetRandomSeed: Integer;
+procedure SetRandomSeed(aValue: Integer);
+function  AngleCos(aAngle: Integer): Single;
+function  AngleSin(aAngle: Integer): Single;
+function  AngleDifference(aSrcAngle: Single; aDestAngle: Single): Single;
+procedure AngleRotatePos(aAngle: Single; var aX: Single; var aY: Single);
+function  ClipValue(var aValue: Single; aMin: Single; aMax: Single; aWrap: Boolean): Single; overload;
+function  ClipValue(var aValue: Integer; aMin: Integer; aMax: Integer; aWrap: Boolean): Integer; overload;
+function  SameSign(aValue1: Integer; aValue2: Integer): Boolean; overload;
+function  SameSign(aValue1: Single; aValue2: Single): Boolean; overload;
+function  SameValue(aA: Double; aB: Double; aEpsilon: Double = 0): Boolean; overload;
+function  SameValue(aA: Single; aB: Single; aEpsilon: Single = 0): Boolean; overload;
+function  Vector(aX: Single; aY: Single): TVector;
+function  Rectangle(aX: Single; aY: Single; aWidth: Single; aHeight: Single): TRectangle;
+procedure SmoothMove(var aValue: Single; aAmount: Single; aMax: Single; aDrag: Single);
+function  Lerp(aFrom: Double; aTo: Double; aTime: Double): Double;
+
+// --- Collision ------------------------------------------------------------
+function  PointInRectangle(aPoint: TVector; aRect: TRectangle): Boolean;
+function  PointInCircle(aPoint, aCenter: TVector; aRadius: Single): Boolean;
+function  PointInTriangle(aPoint, aP1, aP2, aP3: TVector): Boolean;
+function  CirclesOverlap(aCenter1: TVector; aRadius1: Single; aCenter2: TVector; aRadius2: Single): Boolean;
+function  CircleInRectangle(aCenter: TVector; aRadius: Single; aRect: TRectangle): Boolean;
+function  RectanglesOverlap(aRect1: TRectangle; aRect2: TRectangle): Boolean;
+function  RectangleIntersection(aRect1, aRect2: TRectangle): TRectangle;
+function  LineIntersection(aX1, aY1, aX2, aY2, aX3, aY3, aX4, aY4: Integer; var aX: Integer; var aY: Integer): TLineIntersection;
+function  RadiusOverlap(aRadius1, aX1, aY1, aRadius2, aX2, aY2, aShrinkFactor: Single): Boolean;
+
+// --- Easing ---------------------------------------------------------------
+function  EaseValue(aCurrentTime: Double; aStartValue: Double; aChangeInValue: Double; aDuration: Double; aEaseType: TEaseType): Double;
+function  EasePosition(aStartPos: Double; aEndPos: Double; aCurrentPos: Double; aEaseType: TEaseType): Double;
+
+
+{$ENDREGION}
+
+{$REGION 'Spark.Utils'}
+const
+  PathDelim  = '\';
+  DriveDelim = ':';
+  PathSep    = ';';
+  CR         = #13;
+  LF         = #10;
+  CRLF       = #13#10;
+
+type
+  TSysCharSet = set of AnsiChar;
+  TStringArray = array of string;
+
+  { TGVHAlign }
+  THAlign = (haLeft, haCenter, haRight);
+
+  { TGVVAlign }
+  TVAlign = (vaTop, vaCenter, vaBottom);
+
+  { TBaseObject }
+  TBaseObject = class
+  public
+    constructor Create; virtual;
+    destructor Destroy; override;
+  end;
+
+  { TListCompareFunc }
+  TListCompareFunc = function (Item1, Item2: Pointer): Integer;
+
+  { TList }
+  TList = class(TBaseObject)
+  protected
+    FItems    : array of Pointer;
+    FCount    : Integer;
+    FCapacity : Integer;
+    function OutOfBounds(aIndex: Integer): Boolean;
+    function GetItem(aIndex: Integer): Pointer; inline;
+    procedure SetItem(aIndex: Integer; aValue: Pointer); inline;
+  public
+    property Count: Integer read FCount;
+    property Items[aIndex: Integer]: Pointer read GetItem write SetItem; default;
+    constructor Create; override;
+    destructor Destroy; override;
+    procedure Init(aCapacity: Integer = 1);
+    procedure Clear;
+    function IndexOf(aItem: Pointer): Integer;
+    function Add(aItem: Pointer): Integer;
+    function Delete(aIndex: Integer): Pointer;
+    procedure Insert(aIndex: Integer; aItem: Pointer);
+    procedure Sort(aCompareFunc: TListCompareFunc);
+  end;
+
+  { TStringListCompareFunc }
+  TStringListCompareFunc = function (Item1, Item2: string): Integer;
+
+  { TStringList }
+  TStringList = class(TBaseObject)
+  protected
+    FItems    : array of string;
+    FCount    : Integer;
+    FCapacity : Integer;
+    function OutOfBounds(aIndex: Integer): Boolean;
+    function GetItem(aIndex: Integer): string; inline;
+    procedure SetItem(aIndex: Integer; aValue: string); inline;
+  public
+    property Count: Integer read FCount;
+    property Items[aIndex: Integer]: string read GetItem write SetItem; default;
+    constructor Create; override;
+    destructor Destroy; override;
+    procedure Init(aCapacity: Integer = 1);
+    procedure Clear;
+    function IndexOf(aItem: string): Integer;
+    function Add(aItem: string): Integer;
+    function Delete(aIndex: Integer): string;
+    procedure Insert(aIndex: Integer; aItem: string);
+    procedure Sort(aCompareFunc: TStringListCompareFunc);
+    function AddPair(const aName, aValue: string): TStringList;
+    function GetKey(aIndex: Integer): string; inline;
+    function GetValue(aIndex: Integer): string; inline;
+  end;
+
+  { TStream }
+  TStream = class(TBaseObject)
+  protected
+  type
+    TType = (stClosed, stMemory, stFile);
+  protected
+    FType  : TType;
+    FSize  : Integer;
+    FPos   : Integer;
+    FFile  : File;
+    FMem   : Pointer;
+    procedure SetPos(aValue: Integer);
+  public
+    property Size: Integer read FSize;
+    property Pos: Integer read FPos write SetPos;
+    constructor Create; override;
+    destructor Destroy; override;
+    function Open(aMemory: Pointer; aMemSize: Integer): Boolean; overload;
+    function Open(const aFilename: string; aCreate: Boolean = False): Boolean; overload;
+    procedure Close;
+    procedure CopyFrom(const aStream: TStream);
+    function Read(out aBuf; aBufSize: Integer): Integer;
+    function Write(const aBuf; aBufSize: Integer): Integer;
+    function ReadAnsiString: AnsiString;
+    procedure WriteAnsiString(const aValue: AnsiString);
+    function ReadString: string;
+    procedure WriteString(const aValue: string);
+    class function Init(aMemory: Pointer; aMemSize: Integer): TStream; overload;
+    class function Init(const aFilename: string; aCreate: Boolean = False): TStream; overload;
+  end;
+
+{ Routines }
+procedure FreeNilObject(var aObject);
+function  GetTempPath: string;
+function  GetTempFileName: string;
+procedure ProcessMessages;
+function  NumToStr(aValue: Int64): string; overload;
+function  NumToStr(aValue: UInt64): string; overload;
+function  NumToStr(aValue: Double; aWidth: Integer=0; aDecimals: Integer=2): string; overload;
+function  NumToStr(aValue: Extended; aWidth: Integer=0; aDecimals: Integer=2): string; overload;
+function  TrimChars(const aValue: string; Chars: TSysCharSet): string;
+function  TrimStr(aValue: string): string;
+function  DeleteChars(const Str: string; Chars: TSysCharSet): string;
+function  StrToInt(aValue: string): Int64;
+function  StrToUInt(aValue: string): UInt64;
+function  StrToFloat(aValue: string): Double;
+function  StuffStr(const aText: string; aStart, aLength: Cardinal; const aSubText: string): string;
+function  UpperCase(const S: string): string;
+function  SameText(A, B: string): Boolean;
+function  LastDelimiter(const aText: string; const Delims: TSysCharSet): Integer;
+function  ChangeFileExt(const aFilename, aExtension: string): string;
+function  FileExist(const aFilename: string): Boolean;
+function  DirExist(const aDir: string): Boolean;
+function  GetFiles(const aPath: string; aRecursive: Boolean): TStringArray;
+function  FileCount(const aPath: string; const aMask: string): Int64;
+function  GetBit(const aValue: Cardinal; const Bit: Byte): Boolean;
+function  SetBit(const aValue: Cardinal; const Bit: Byte): Cardinal;
+function  ClearBit(const aValue: Cardinal; const Bit: Byte): Cardinal;
+function  EnableBit(const aValue: Cardinal; const Bit: Byte; const Flag: Boolean): Cardinal;
+function  StrScan(const aText: PWideChar; Chr: WideChar): PWideChar;
+function  StrEnd(const aText: PWideChar): PWideChar;
+function  ExtractQuotedStr(var aText: PWideChar; Quote: WideChar): UnicodeString;
+function  DequotedStr(const aText: string; aQuote: Char): string;
+function  RemoveQuotes(const aText: string): string;
+function  FormatStr(const aMsg: string; const aArgs: array of const): string;
+function  PadRightStr(const aText: string; aTotalWidth: Integer; aPaddingChar: Char): string;
+function  PadLeftStr(const aText: string; aTotalWidth: Integer; aPaddingChar: Char): string;
+function  ExtractStrings(Separators, WhiteSpace: TSysCharSet; Content: PChar; Strings: TStringList): Integer;
+function  GetFilename(const aPath: string): string;
+function  HasConsoleOutput: Boolean;
+procedure Print(const aMsg: string; const aArgs: array of const);
+procedure PrintLn(const aMsg: string; const aArgs: array of const);
+function  ExtractFilePath(const FileName: string): string;
+function  CreateDir(const Dir: string): Boolean;
+function  ForceDirectories(Dir: string): Boolean;
+function ExpandFileName(const FileName: string): string;
+
+{$ENDREGION}
+
+{$REGION 'Spark.System'}
+const
   SPARK_VERSION_MAJOR = '0';
   SPARK_VERSION_MINOR = '1';
   SPARK_VERSION_PATCH = '0';
   SPARK_VERSION       = SPARK_VERSION_MAJOR + '.' + SPARK_VERSION_MINOR + '.' + SPARK_VERSION_PATCH;
+  cLogExt = '.log';
+  cIniExt = '.ini';
+  cPngExt = '.png';
 
-  // Delimitors
-  PathDelim  = '\';
-  DriveDelim = ':';
-  PathSep    = ';';
+type
+  { TLog }
+  TLog = class(TBaseObject)
+  protected
+    FFilename: string;
+    FText: Text;
+    FBuffer: array[Word] of Byte;
+    FOpen: Boolean;
+    FGlobalWriteToConsole: Boolean;
+  public
+    property GlobalWriteToConsole: Boolean read FGlobalWriteToConsole write FGlobalWriteToConsole;
+    constructor Create; override;
+    destructor Destroy; override;
+    procedure Open(const aFilename: string=''; aOverwrite: Boolean=True);
+    procedure Close;
+    function Add(const aMsg: string; const aArgs: array of const; aWriteToConsole: Boolean=False): string;
+  end;
 
-  // File Extentions Constatns
-  FILEEXT_LOG = '.log';
-  FILEEXT_INI = '.ini';
-  FILEEXT_PNG = '.png';
+  { TconfigFile }
+  TConfigFile = class(TBaseObject)
+  protected
+  type
+    { TParams }
+    TParams = record
+      Name : string;
+      Value: string;
+    end;
 
-  // Common Character
-  CR = #13;  // carrage return
-  LF = #10;  // line feed
+     { TData }
+    TData = record
+      Category: string;
+      Params  : array of TParams;
+    end;
+  protected
+    FData: array of TData;
+    FFilename: string;
+    procedure Load(const aFilename: string);
+    procedure Save(const aFilename: string);
+  public
+    constructor Create; override;
+    destructor Destroy; override;
+    procedure Open(const aFilename: string='');
+    procedure Close;
+    procedure Clear;
+    procedure Write(const aCategory, aName, aValue: string); overload;
+    procedure Write(const aCategory, aName: string; aValue: Int64); overload;
+    procedure Write(const aCategory, aName: string; aValue: Single); overload;
+    procedure Write(const aCategory, aName: string; aValue: Boolean); overload;
+    function Read(const aCategory, aName: string; const Default: string = ''): string; overload;
+    function Read(const aCategory, aName: string; aDefault: Int64 = 0): Int64; overload;
+    function Read(const aCategory, aName: string; aDefault: Single = 0): Single; overload;
+    function Read(const aCategory, aName: string; aDefault: Boolean = False): Boolean; overload;
+    function CategoryName(aIndex: Integer): string;
+  end;
 
-  // Display Constants
-  DISPLAY_DEFAULT_DPI = 96;
+  { TArchiveBuildProgressEvent }
+  TArchiveBuildProgressEvent = procedure(const aFilename: string; aProgress: Integer; aNewFile: Boolean) of object;
 
-  // Degree/Radian conversion
-  RAD2DEG = 180.0 / PI;
-  DEG2RAD = PI / 180.0;
+  { TArchive }
+  TArchive = class(TBaseObject)
+  protected
+    FPassword: string;
+    FFilename: string;
+    FPasswordFilename: string;
+    FIsOpen: Boolean;
+    function GetCRC32(aStream: PALLEGRO_FILE): Cardinal;
+  public
+    constructor Create; override;
+    destructor Destroy; override;
+    function IsOpen: Boolean;
+    function Open(const aPassword: string; const aFilename: string): Boolean;
+    function Close: Boolean;
+    function FileInside(const aFilename: string): Boolean;
+    function GetPasswordFilename(const aFilename: string): PAnsiChar;
+    function Build(const aPassword: string; const aFilename: string; const aDirectory: string; aOnProgress: TArchiveBuildProgressEvent): Boolean;
+  end;
 
-  // Misc
-  EPSILON = 0.00001;
-  NaN     =  0.0 / 0.0;
+var
+  LogToConsole: Boolean = True;
 
-  // Custom events
-  EVENT_CMDCON_ACTIVE   = 10000;
-  EVENT_CMDCON_INACTIVE = 10001;
+{$ENDREGION}
 
-  // Blend operations
-  BLEND_ZERO = 0;
-  BLEND_ONE = 1;
-  BLEND_ALPHA = 2;
-  BLEND_INVERSE_ALPHA = 3;
-  BLEND_SRC_COLOR = 4;
-  BLEND_DEST_COLOR = 5;
-  BLEND_INVERSE_SRC_COLOR = 6;
-  BLEND_INVERSE_DEST_COLOR = 7;
-  BLEND_CONST_COLOR = 8;
-  BLEND_INVERSE_CONST_COLOR = 9;
-  BLEND_ADD = 0;
-  BLEND_SRC_MINUS_DEST = 1;
-  BLEND_DEST_MINUS_SRC = 2;
+{$REGION 'Spark.Graphics'}
+const
+  cCmdConsoleViewPrecentage = 0.75;
 
+type
+  { TBlendMode }
+  TBlendMode = (bmPreMultipliedAlpha, bmNonPreMultipliedAlpha, bmAdditiveAlpha, bmCopySrcToDest, bmMultiplySrcAndDest);
 
+  { TVideoState }
+  TVideoState = (vsLoad, vsUnload, vsPlaying, vsPaused, vsFinished);
+
+  { TBlendModeColor }
+  TBlendModeColor = (bmcNormal, bmcAvgSrcDest);
+
+  { TColor }
+  PColor = ^TColor;
+  TColor = record
+    Red, Green, Blue, Alpha: Single;
+    function FromByte(aRed: Byte; aGreen: Byte; aBlue: Byte; aAlpha: Byte): TColor; overload;
+    function FromFloat(aRed: Single; aGreen: Single; aBlue: Single; aAlpha: Single): TColor; overload;
+    function FromName(const aName: string): TColor; overload;
+    function Fade(aTo: TColor; aPos: Single): TColor;
+    function Equal(aColor: TColor): Boolean;
+  end;
+
+{$REGION 'Common Colors'}
+const
+  ALICEBLUE           : TColor = (Red:$F0/$FF; Green:$F8/$FF; Blue:$FF/$FF; Alpha:$FF/$FF);
+  ANTIQUEWHITE        : TColor = (Red:$FA/$FF; Green:$EB/$FF; Blue:$D7/$FF; Alpha:$FF/$FF);
+  AQUA                : TColor = (Red:$00/$FF; Green:$FF/$FF; Blue:$FF/$FF; Alpha:$FF/$FF);
+  AQUAMARINE          : TColor = (Red:$7F/$FF; Green:$FF/$FF; Blue:$D4/$FF; Alpha:$FF/$FF);
+  AZURE               : TColor = (Red:$F0/$FF; Green:$FF/$FF; Blue:$FF/$FF; Alpha:$FF/$FF);
+  BEIGE               : TColor = (Red:$F5/$FF; Green:$F5/$FF; Blue:$DC/$FF; Alpha:$FF/$FF);
+  BISQUE              : TColor = (Red:$FF/$FF; Green:$E4/$FF; Blue:$C4/$FF; Alpha:$FF/$FF);
+  BLACK               : TColor = (Red:$00/$FF; Green:$00/$FF; Blue:$00/$FF; Alpha:$FF/$FF);
+  BLANCHEDALMOND      : TColor = (Red:$FF/$FF; Green:$EB/$FF; Blue:$CD/$FF; Alpha:$FF/$FF);
+  BLUE                : TColor = (Red:$00/$FF; Green:$00/$FF; Blue:$FF/$FF; Alpha:$FF/$FF);
+  BLUEVIOLET          : TColor = (Red:$8A/$FF; Green:$2B/$FF; Blue:$E2/$FF; Alpha:$FF/$FF);
+  BROWN               : TColor = (Red:$A5/$FF; Green:$2A/$FF; Blue:$2A/$FF; Alpha:$FF/$FF);
+  BURLYWOOD           : TColor = (Red:$DE/$FF; Green:$B8/$FF; Blue:$87/$FF; Alpha:$FF/$FF);
+  CADETBLUE           : TColor = (Red:$5F/$FF; Green:$9E/$FF; Blue:$A0/$FF; Alpha:$FF/$FF);
+  CHARTREUSE          : TColor = (Red:$7F/$FF; Green:$FF/$FF; Blue:$00/$FF; Alpha:$FF/$FF);
+  CHOCOLATE           : TColor = (Red:$D2/$FF; Green:$69/$FF; Blue:$1E/$FF; Alpha:$FF/$FF);
+  CORAL               : TColor = (Red:$FF/$FF; Green:$7F/$FF; Blue:$50/$FF; Alpha:$FF/$FF);
+  CORNFLOWERBLUE      : TColor = (Red:$64/$FF; Green:$95/$FF; Blue:$ED/$FF; Alpha:$FF/$FF);
+  CORNSILK            : TColor = (Red:$FF/$FF; Green:$F8/$FF; Blue:$DC/$FF; Alpha:$FF/$FF);
+  CRIMSON             : TColor = (Red:$DC/$FF; Green:$14/$FF; Blue:$3C/$FF; Alpha:$FF/$FF);
+  CYAN                : TColor = (Red:$00/$FF; Green:$FF/$FF; Blue:$FF/$FF; Alpha:$FF/$FF);
+  DARKBLUE            : TColor = (Red:$00/$FF; Green:$00/$FF; Blue:$8B/$FF; Alpha:$FF/$FF);
+  DARKCYAN            : TColor = (Red:$00/$FF; Green:$8B/$FF; Blue:$8B/$FF; Alpha:$FF/$FF);
+  DARKGOLDENROD       : TColor = (Red:$B8/$FF; Green:$86/$FF; Blue:$0B/$FF; Alpha:$FF/$FF);
+  DARKGRAY            : TColor = (Red:$A9/$FF; Green:$A9/$FF; Blue:$A9/$FF; Alpha:$FF/$FF);
+  DARKGREEN           : TColor = (Red:$00/$FF; Green:$64/$FF; Blue:$00/$FF; Alpha:$FF/$FF);
+  DARKGREY            : TColor = (Red:$A9/$FF; Green:$A9/$FF; Blue:$A9/$FF; Alpha:$FF/$FF);
+  DARKKHAKI           : TColor = (Red:$BD/$FF; Green:$B7/$FF; Blue:$6B/$FF; Alpha:$FF/$FF);
+  DARKMAGENTA         : TColor = (Red:$8B/$FF; Green:$00/$FF; Blue:$8B/$FF; Alpha:$FF/$FF);
+  DARKOLIVEGREEN      : TColor = (Red:$55/$FF; Green:$6B/$FF; Blue:$2F/$FF; Alpha:$FF/$FF);
+  DARKORANGE          : TColor = (Red:$FF/$FF; Green:$8C/$FF; Blue:$00/$FF; Alpha:$FF/$FF);
+  DARKORCHID          : TColor = (Red:$99/$FF; Green:$32/$FF; Blue:$CC/$FF; Alpha:$FF/$FF);
+  DARKRED             : TColor = (Red:$8B/$FF; Green:$00/$FF; Blue:$00/$FF; Alpha:$FF/$FF);
+  DARKSALMON          : TColor = (Red:$E9/$FF; Green:$96/$FF; Blue:$7A/$FF; Alpha:$FF/$FF);
+  DARKSEAGREEN        : TColor = (Red:$8F/$FF; Green:$BC/$FF; Blue:$8F/$FF; Alpha:$FF/$FF);
+  DARKSLATEBLUE       : TColor = (Red:$48/$FF; Green:$3D/$FF; Blue:$8B/$FF; Alpha:$FF/$FF);
+  DARKSLATEGRAY       : TColor = (Red:$2F/$FF; Green:$4F/$FF; Blue:$4F/$FF; Alpha:$FF/$FF);
+  DARKSLATEGREY       : TColor = (Red:$2F/$FF; Green:$4F/$FF; Blue:$4F/$FF; Alpha:$FF/$FF);
+  DARKTURQUOISE       : TColor = (Red:$00/$FF; Green:$CE/$FF; Blue:$D1/$FF; Alpha:$FF/$FF);
+  DARKVIOLET          : TColor = (Red:$94/$FF; Green:$00/$FF; Blue:$D3/$FF; Alpha:$FF/$FF);
+  DEEPPINK            : TColor = (Red:$FF/$FF; Green:$14/$FF; Blue:$93/$FF; Alpha:$FF/$FF);
+  DEEPSKYBLUE         : TColor = (Red:$00/$FF; Green:$BF/$FF; Blue:$FF/$FF; Alpha:$FF/$FF);
+  DIMGRAY             : TColor = (Red:$69/$FF; Green:$69/$FF; Blue:$69/$FF; Alpha:$FF/$FF);
+  DIMGREY             : TColor = (Red:$69/$FF; Green:$69/$FF; Blue:$69/$FF; Alpha:$FF/$FF);
+  DODGERBLUE          : TColor = (Red:$1E/$FF; Green:$90/$FF; Blue:$FF/$FF; Alpha:$FF/$FF);
+  FIREBRICK           : TColor = (Red:$B2/$FF; Green:$22/$FF; Blue:$22/$FF; Alpha:$FF/$FF);
+  FLORALWHITE         : TColor = (Red:$FF/$FF; Green:$FA/$FF; Blue:$F0/$FF; Alpha:$FF/$FF);
+  FORESTGREEN         : TColor = (Red:$22/$FF; Green:$8B/$FF; Blue:$22/$FF; Alpha:$FF/$FF);
+  FUCHSIA             : TColor = (Red:$FF/$FF; Green:$00/$FF; Blue:$FF/$FF; Alpha:$FF/$FF);
+  GAINSBORO           : TColor = (Red:$DC/$FF; Green:$DC/$FF; Blue:$DC/$FF; Alpha:$FF/$FF);
+  GHOSTWHITE          : TColor = (Red:$F8/$FF; Green:$F8/$FF; Blue:$FF/$FF; Alpha:$FF/$FF);
+  GOLD                : TColor = (Red:$FF/$FF; Green:$D7/$FF; Blue:$00/$FF; Alpha:$FF/$FF);
+  GOLDENROD           : TColor = (Red:$DA/$FF; Green:$A5/$FF; Blue:$20/$FF; Alpha:$FF/$FF);
+  GRAY                : TColor = (Red:$80/$FF; Green:$80/$FF; Blue:$80/$FF; Alpha:$FF/$FF);
+  GREEN               : TColor = (Red:$00/$FF; Green:$80/$FF; Blue:$00/$FF; Alpha:$FF/$FF);
+  GREENYELLOW         : TColor = (Red:$AD/$FF; Green:$FF/$FF; Blue:$2F/$FF; Alpha:$FF/$FF);
+  GREY                : TColor = (Red:$80/$FF; Green:$80/$FF; Blue:$80/$FF; Alpha:$FF/$FF);
+  HONEYDEW            : TColor = (Red:$F0/$FF; Green:$FF/$FF; Blue:$F0/$FF; Alpha:$FF/$FF);
+  HOTPINK             : TColor = (Red:$FF/$FF; Green:$69/$FF; Blue:$B4/$FF; Alpha:$FF/$FF);
+  INDIANRED           : TColor = (Red:$CD/$FF; Green:$5C/$FF; Blue:$5C/$FF; Alpha:$FF/$FF);
+  INDIGO              : TColor = (Red:$4B/$FF; Green:$00/$FF; Blue:$82/$FF; Alpha:$FF/$FF);
+  IVORY               : TColor = (Red:$FF/$FF; Green:$FF/$FF; Blue:$F0/$FF; Alpha:$FF/$FF);
+  KHAKI               : TColor = (Red:$F0/$FF; Green:$E6/$FF; Blue:$8C/$FF; Alpha:$FF/$FF);
+  LAVENDER            : TColor = (Red:$E6/$FF; Green:$E6/$FF; Blue:$FA/$FF; Alpha:$FF/$FF);
+  LAVENDERBLUSH       : TColor = (Red:$FF/$FF; Green:$F0/$FF; Blue:$F5/$FF; Alpha:$FF/$FF);
+  LAWNGREEN           : TColor = (Red:$7C/$FF; Green:$FC/$FF; Blue:$00/$FF; Alpha:$FF/$FF);
+  LEMONCHIFFON        : TColor = (Red:$FF/$FF; Green:$FA/$FF; Blue:$CD/$FF; Alpha:$FF/$FF);
+  LIGHTBLUE           : TColor = (Red:$AD/$FF; Green:$D8/$FF; Blue:$E6/$FF; Alpha:$FF/$FF);
+  LIGHTCORAL          : TColor = (Red:$F0/$FF; Green:$80/$FF; Blue:$80/$FF; Alpha:$FF/$FF);
+  LIGHTCYAN           : TColor = (Red:$E0/$FF; Green:$FF/$FF; Blue:$FF/$FF; Alpha:$FF/$FF);
+  LIGHTGOLDENRODYELLOW: TColor = (Red:$FA/$FF; Green:$FA/$FF; Blue:$D2/$FF; Alpha:$FF/$FF);
+  LIGHTGRAY           : TColor = (Red:$D3/$FF; Green:$D3/$FF; Blue:$D3/$FF; Alpha:$FF/$FF);
+  LIGHTGREEN          : TColor = (Red:$90/$FF; Green:$EE/$FF; Blue:$90/$FF; Alpha:$FF/$FF);
+  LIGHTGREY           : TColor = (Red:$D3/$FF; Green:$D3/$FF; Blue:$D3/$FF; Alpha:$FF/$FF);
+  LIGHTPINK           : TColor = (Red:$FF/$FF; Green:$B6/$FF; Blue:$C1/$FF; Alpha:$FF/$FF);
+  LIGHTSALMON         : TColor = (Red:$FF/$FF; Green:$A0/$FF; Blue:$7A/$FF; Alpha:$FF/$FF);
+  LIGHTSEAGREEN       : TColor = (Red:$20/$FF; Green:$B2/$FF; Blue:$AA/$FF; Alpha:$FF/$FF);
+  LIGHTSKYBLUE        : TColor = (Red:$87/$FF; Green:$CE/$FF; Blue:$FA/$FF; Alpha:$FF/$FF);
+  LIGHTSLATEGRAY      : TColor = (Red:$77/$FF; Green:$88/$FF; Blue:$99/$FF; Alpha:$FF/$FF);
+  LIGHTSLATEGREY      : TColor = (Red:$77/$FF; Green:$88/$FF; Blue:$99/$FF; Alpha:$FF/$FF);
+  LIGHTSTEELBLUE      : TColor = (Red:$B0/$FF; Green:$C4/$FF; Blue:$DE/$FF; Alpha:$FF/$FF);
+  LIGHTYELLOW         : TColor = (Red:$FF/$FF; Green:$FF/$FF; Blue:$E0/$FF; Alpha:$FF/$FF);
+  LIME                : TColor = (Red:$00/$FF; Green:$FF/$FF; Blue:$00/$FF; Alpha:$FF/$FF);
+  LIMEGREEN           : TColor = (Red:$32/$FF; Green:$CD/$FF; Blue:$32/$FF; Alpha:$FF/$FF);
+  LINEN               : TColor = (Red:$FA/$FF; Green:$F0/$FF; Blue:$E6/$FF; Alpha:$FF/$FF);
+  MAGENTA             : TColor = (Red:$FF/$FF; Green:$00/$FF; Blue:$FF/$FF; Alpha:$FF/$FF);
+  MAROON              : TColor = (Red:$80/$FF; Green:$00/$FF; Blue:$00/$FF; Alpha:$FF/$FF);
+  MEDIUMAQUAMARINE    : TColor = (Red:$66/$FF; Green:$CD/$FF; Blue:$AA/$FF; Alpha:$FF/$FF);
+  MEDIUMBLUE          : TColor = (Red:$00/$FF; Green:$00/$FF; Blue:$CD/$FF; Alpha:$FF/$FF);
+  MEDIUMORCHID        : TColor = (Red:$BA/$FF; Green:$55/$FF; Blue:$D3/$FF; Alpha:$FF/$FF);
+  MEDIUMPURPLE        : TColor = (Red:$93/$FF; Green:$70/$FF; Blue:$DB/$FF; Alpha:$FF/$FF);
+  MEDIUMSEAGREEN      : TColor = (Red:$3C/$FF; Green:$B3/$FF; Blue:$71/$FF; Alpha:$FF/$FF);
+  MEDIUMSLATEBLUE     : TColor = (Red:$7B/$FF; Green:$68/$FF; Blue:$EE/$FF; Alpha:$FF/$FF);
+  MEDIUMSPRINGGREEN   : TColor = (Red:$00/$FF; Green:$FA/$FF; Blue:$9A/$FF; Alpha:$FF/$FF);
+  MEDIUMTURQUOISE     : TColor = (Red:$48/$FF; Green:$D1/$FF; Blue:$CC/$FF; Alpha:$FF/$FF);
+  MEDIUMVIOLETRED     : TColor = (Red:$C7/$FF; Green:$15/$FF; Blue:$85/$FF; Alpha:$FF/$FF);
+  MIDNIGHTBLUE        : TColor = (Red:$19/$FF; Green:$19/$FF; Blue:$70/$FF; Alpha:$FF/$FF);
+  MINTCREAM           : TColor = (Red:$F5/$FF; Green:$FF/$FF; Blue:$FA/$FF; Alpha:$FF/$FF);
+  MISTYROSE           : TColor = (Red:$FF/$FF; Green:$E4/$FF; Blue:$E1/$FF; Alpha:$FF/$FF);
+  MOCCASIN            : TColor = (Red:$FF/$FF; Green:$E4/$FF; Blue:$B5/$FF; Alpha:$FF/$FF);
+  NAVAJOWHITE         : TColor = (Red:$FF/$FF; Green:$DE/$FF; Blue:$AD/$FF; Alpha:$FF/$FF);
+  NAVY                : TColor = (Red:$00/$FF; Green:$00/$FF; Blue:$80/$FF; Alpha:$FF/$FF);
+  OLDLACE             : TColor = (Red:$FD/$FF; Green:$F5/$FF; Blue:$E6/$FF; Alpha:$FF/$FF);
+  OLIVE               : TColor = (Red:$80/$FF; Green:$80/$FF; Blue:$00/$FF; Alpha:$FF/$FF);
+  OLIVEDRAB           : TColor = (Red:$6B/$FF; Green:$8E/$FF; Blue:$23/$FF; Alpha:$FF/$FF);
+  ORANGE              : TColor = (Red:$FF/$FF; Green:$A5/$FF; Blue:$00/$FF; Alpha:$FF/$FF);
+  ORANGERED           : TColor = (Red:$FF/$FF; Green:$45/$FF; Blue:$00/$FF; Alpha:$FF/$FF);
+  ORCHID              : TColor = (Red:$DA/$FF; Green:$70/$FF; Blue:$D6/$FF; Alpha:$FF/$FF);
+  PALEGOLDENROD       : TColor = (Red:$EE/$FF; Green:$E8/$FF; Blue:$AA/$FF; Alpha:$FF/$FF);
+  PALEGREEN           : TColor = (Red:$98/$FF; Green:$FB/$FF; Blue:$98/$FF; Alpha:$FF/$FF);
+  PALETURQUOISE       : TColor = (Red:$AF/$FF; Green:$EE/$FF; Blue:$EE/$FF; Alpha:$FF/$FF);
+  PALEVIOLETRED       : TColor = (Red:$DB/$FF; Green:$70/$FF; Blue:$93/$FF; Alpha:$FF/$FF);
+  PAPAYAWHIP          : TColor = (Red:$FF/$FF; Green:$EF/$FF; Blue:$D5/$FF; Alpha:$FF/$FF);
+  PEACHPUFF           : TColor = (Red:$FF/$FF; Green:$DA/$FF; Blue:$B9/$FF; Alpha:$FF/$FF);
+  PERU                : TColor = (Red:$CD/$FF; Green:$85/$FF; Blue:$3F/$FF; Alpha:$FF/$FF);
+  PINK                : TColor = (Red:$FF/$FF; Green:$C0/$FF; Blue:$CB/$FF; Alpha:$FF/$FF);
+  PLUM                : TColor = (Red:$DD/$FF; Green:$A0/$FF; Blue:$DD/$FF; Alpha:$FF/$FF);
+  POWDERBLUE          : TColor = (Red:$B0/$FF; Green:$E0/$FF; Blue:$E6/$FF; Alpha:$FF/$FF);
+  PURPLE              : TColor = (Red:$80/$FF; Green:$00/$FF; Blue:$80/$FF; Alpha:$FF/$FF);
+  REBECCAPURPLE       : TColor = (Red:$66/$FF; Green:$33/$FF; Blue:$99/$FF; Alpha:$FF/$FF);
+  RED                 : TColor = (Red:$FF/$FF; Green:$00/$FF; Blue:$00/$FF; Alpha:$FF/$FF);
+  ROSYBROWN           : TColor = (Red:$BC/$FF; Green:$8F/$FF; Blue:$8F/$FF; Alpha:$FF/$FF);
+  ROYALBLUE           : TColor = (Red:$41/$FF; Green:$69/$FF; Blue:$E1/$FF; Alpha:$FF/$FF);
+  SADDLEBROWN         : TColor = (Red:$8B/$FF; Green:$45/$FF; Blue:$13/$FF; Alpha:$FF/$FF);
+  SALMON              : TColor = (Red:$FA/$FF; Green:$80/$FF; Blue:$72/$FF; Alpha:$FF/$FF);
+  SANDYBROWN          : TColor = (Red:$F4/$FF; Green:$A4/$FF; Blue:$60/$FF; Alpha:$FF/$FF);
+  SEAGREEN            : TColor = (Red:$2E/$FF; Green:$8B/$FF; Blue:$57/$FF; Alpha:$FF/$FF);
+  SEASHELL            : TColor = (Red:$FF/$FF; Green:$F5/$FF; Blue:$EE/$FF; Alpha:$FF/$FF);
+  SIENNA              : TColor = (Red:$A0/$FF; Green:$52/$FF; Blue:$2D/$FF; Alpha:$FF/$FF);
+  SILVER              : TColor = (Red:$C0/$FF; Green:$C0/$FF; Blue:$C0/$FF; Alpha:$FF/$FF);
+  SKYBLUE             : TColor = (Red:$87/$FF; Green:$CE/$FF; Blue:$EB/$FF; Alpha:$FF/$FF);
+  SLATEBLUE           : TColor = (Red:$6A/$FF; Green:$5A/$FF; Blue:$CD/$FF; Alpha:$FF/$FF);
+  SLATEGRAY           : TColor = (Red:$70/$FF; Green:$80/$FF; Blue:$90/$FF; Alpha:$FF/$FF);
+  SLATEGREY           : TColor = (Red:$70/$FF; Green:$80/$FF; Blue:$90/$FF; Alpha:$FF/$FF);
+  SNOW                : TColor = (Red:$FF/$FF; Green:$FA/$FF; Blue:$FA/$FF; Alpha:$FF/$FF);
+  SPRINGGREEN         : TColor = (Red:$00/$FF; Green:$FF/$FF; Blue:$7F/$FF; Alpha:$FF/$FF);
+  STEELBLUE           : TColor = (Red:$46/$FF; Green:$82/$FF; Blue:$B4/$FF; Alpha:$FF/$FF);
+  TAN                 : TColor = (Red:$D2/$FF; Green:$B4/$FF; Blue:$8C/$FF; Alpha:$FF/$FF);
+  TEAL                : TColor = (Red:$00/$FF; Green:$80/$FF; Blue:$80/$FF; Alpha:$FF/$FF);
+  THISTLE             : TColor = (Red:$D8/$FF; Green:$BF/$FF; Blue:$D8/$FF; Alpha:$FF/$FF);
+  TOMATO              : TColor = (Red:$FF/$FF; Green:$63/$FF; Blue:$47/$FF; Alpha:$FF/$FF);
+  TURQUOISE           : TColor = (Red:$40/$FF; Green:$E0/$FF; Blue:$D0/$FF; Alpha:$FF/$FF);
+  VIOLET              : TColor = (Red:$EE/$FF; Green:$82/$FF; Blue:$EE/$FF; Alpha:$FF/$FF);
+  WHEAT               : TColor = (Red:$F5/$FF; Green:$DE/$FF; Blue:$B3/$FF; Alpha:$FF/$FF);
+  WHITE               : TColor = (Red:$FF/$FF; Green:$FF/$FF; Blue:$FF/$FF; Alpha:$FF/$FF);
+  WHITESMOKE          : TColor = (Red:$F5/$FF; Green:$F5/$FF; Blue:$F5/$FF; Alpha:$FF/$FF);
+  YELLOW              : TColor = (Red:$FF/$FF; Green:$FF/$FF; Blue:$00/$FF; Alpha:$FF/$FF);
+  YELLOWGREEN         : TColor = (Red:$9A/$FF; Green:$CD/$FF; Blue:$32/$FF; Alpha:$FF/$FF);
+  BLANK               : TColor = (Red:$00;     Green:$00;     Blue:$00;     Alpha:$00);
+  WHITE2              : TColor = (Red:$F5/$FF; Green:$F5/$FF; Blue:$F5/$FF; Alpha:$FF/$FF);
+  RED2                : TColor = (Red:$7E/$FF; Green:$32/$FF; Blue:$3F/$FF; Alpha:255/$FF);
+  COLORKEY            : TColor = (Red:$FF/$FF; Green:$00;     Blue:$FF/$FF; Alpha:$FF/$FF);
+  OVERLAY1            : TColor = (Red:$00/$FF; Green:$20/$FF; Blue:$29/$FF; Alpha:$B4/$FF);
+  OVERLAY2            : TColor = (Red:$01/$FF; Green:$1B/$FF; Blue:$01/$FF; Alpha:255/$FF);
+  DIMWHITE            : TColor = (Red:$10/$FF; Green:$10/$FF; Blue:$10/$FF; Alpha:$10/$FF);
+  DARKSLATEBROWN      : TColor = (Red:30/255; Green:31/255; Blue:30/255; Alpha:1);
+{$ENDREGION}
+
+type
+  { TFont }
+  TFont = class(TBaseObject)
+  private
+    FHandle: PALLEGRO_FONT;
+    FFilename: string;
+    FSize: Integer;
+  public
+    constructor Create; override;
+    destructor Destroy; override;
+    function LoadBuiltIn: Boolean;
+    function LoadDefault(aSize: Cardinal): Boolean;
+    function Load(aArchive: TArchive; aSize: Cardinal; aFilename: string): Boolean;
+    function Unload: Boolean;
+    procedure PrintText(aX: Single; aY: Single; aColor: TColor; aAlign: THAlign; const aMsg: string; const aArgs: array of const); overload;
+    procedure PrintText(aX: Single; var aY: Single; aLineSpace: Single; aColor: TColor; aAlign: THAlign; const aMsg: string; const aArgs: array of const); overload;
+    procedure PrintText(aX: Single; aY: Single; aColor: TColor; aAngle: Single; const aMsg: string; const aArgs: array of const); overload;
+    function  GetTextWidth(const aMsg: string; const aArgs: array of const): Single;
+    function  GetLineHeight: Single;
+  end;
+
+  { TTextureData }
+  PTextureData = ^TTextureData;
+  TTextureData = record
+    Memory: Pointer;
+    Format: Integer;
+    Pitch: Integer;
+    PixelSize: Integer;
+  end;
+
+  { TTexture }
+  TTexture = class(TBaseObject)
+  protected
+    FHandle: PALLEGRO_BITMAP;
+    FWidth: Single;
+    FHeight: Single;
+    FLocked: Boolean;
+    FLockedRegion: TRectangle;
+    FFilename: string;
+  public
+    property Width: Single read FWidth;
+    property Height: Single read FHeight;
+    property Filename: string read FFilename;
+    property Handle: PALLEGRO_BITMAP read FHandle;
+    constructor Create; override;
+    destructor Destroy; override;
+    function  Allocate(aWidth: Integer; aHeight: Integer): Boolean;
+    function  Load(aArchive: TArchive; const aFilename: string; aColorKey: PColor): Boolean;
+    function Unload: Boolean;
+    function Lock(aRegion: PRectangle; aData: PTextureData=nil): Boolean;
+    function Unlock: Boolean;
+    function  GetPixel(aX: Integer; aY: Integer): TColor;
+    procedure SetPixel(aX: Integer; aY: Integer; aColor: TColor);
+    procedure Draw(aX, aY: Single; aRegion: PRectangle; aCenter: PVector;  aScale: PVector; aAngle: Single; aColor: TColor; aHFlip: Boolean=False; aVFlip: Boolean=False); overload;
+    procedure Draw(aX, aY, aScale, aAngle: Single; aColor: TColor; aHAlign: THAlign; aVAlign: TVAlign; aHFlip: Boolean=False; aVFlip: Boolean=False); overload;
+    procedure DrawTiled(aDeltaX: Single; aDeltaY: Single);
+  end;
+
+  { TRenderTarget }
+  TRenderTarget = class(TBaseObject)
+  protected
+    FTexture: TTexture;
+    FPosition: TVector;
+    FRegion: TRectangle;
+    FCenter: TVector;
+    FActive: Boolean;
+    FAngle: Single;
+  public
+    constructor Create; override;
+    destructor Destroy; override;
+    procedure Init(aX, aY, aWidth, aHeight: Integer);
+    procedure SetActive(aActive: Boolean);
+    function  GetActive: Boolean;
+    procedure SetPosition(aX: Single; aY: Single);
+    procedure GetPosition(var aPosition: TVector);
+    procedure GetSize(var aSize: TRectangle);
+    procedure SetRegion(aX: Single; aY: Single; aWidth: Single; aHeight: Single);
+    procedure GetRegion(var aRegion: TRectangle);
+    procedure SetAngle(aAngle: Single);
+    function  GetAngle: Single;
+    procedure Show;
+  end;
+
+  { TGVShaderType }
+  TShaderType = (stVertex=1, stFragment=2);
+
+  { TShader }
+  TShader = class(TBaseObject)
+  protected
+    FHandle: PALLEGRO_SHADER;
+  public
+    constructor Create; override;
+    destructor Destroy; override;
+    procedure Clear;
+    function Load(aType: TShaderType; const aSource: string): Boolean; overload;
+    function Load(aArchive: TArchive; aType: TShaderType; const aFilename: string): Boolean; overload;
+    function Build: Boolean;
+    function Enable(aEnable: Boolean): Boolean;
+    function Log: string;
+    function SetIntUniform(const aName: string; aValue: Integer): Boolean; overload;
+    function SetIntUniform(const aName: string; aNumComponents: Integer; aValue: PInteger; aNumElements: Integer): Boolean; overload;
+    function SetFloatUniform(const aName: string; aValue: Single): Boolean; overload;
+    function SetFloatUniform(const aName: string; aNumComponents: Integer; aValue: System.PSingle; aNumElements: Integer): Boolean; overload;
+    function SetBoolUniform(const aName: string; aValue: Boolean): Boolean;
+    function SetTextureUniform(const aName: string; aTexture: TTexture): Boolean;
+    function SetVec2Uniform(const aName: string; aValue: TVector): Boolean; overload;
+    function SetVec2Uniform(const aName: string; aX: Single; aY: Single): Boolean; overload;
+  end;
+
+  { TCmdConsoleActionEvent }
+  TCmdConsoleActionEvent = procedure of object;
+
+  { TCmdConsoleState }
+  TCmdConsoleState = (ccOpen, ccClose);
+
+  { TCmdConsole }
+  TCmdConsole = class(TBaseObject)
+  protected
+  const
+    cDefaultSlideSpeed = 60 * 4;
+    cDefaultFrameWidth = 2;
+    cDefaultMargins = 2;
+    cDefaultMaxCmdHistoryCount = 20;
+    cDefaultMaxTextLinesCount = 1080;
+  protected
+  type
+    { TState }
+    TState = (stInactive, stSlideDown, stSlideUp);
+    { TAction }
+    PAction = ^TAction;
+    TAction = record
+      Name: string;
+      Discription: string;
+      Handler: TCmdConsoleActionEvent;
+    end;
+  protected
+    FEnabled: Boolean;
+    FActive: Boolean;
+    FSize: TRectangle;
+    FPos: TVector;
+    FSlider: Double;
+    FState: TState;
+    FFont: TFont;
+    FFontHeight: Single;
+    FToggleKey: Integer;
+    FSlideSpeed: Single;
+    FCmdLine: string;
+    FCmdCurPos: Integer;
+    FCurFlashTimer: Single;
+    FCurFlash: Boolean;
+    FTextLines: TStringList;
+    FCmdHistory: TStringList;
+    FCmdHistoryIndex: Integer;
+    FMaxCmdHistoryCount: Integer;
+    FMaxTextLinesCount: Integer;
+    FCmdActionList: TList;
+    FCmdParams: TStringList;
+    FLastChar: Integer;
+    function ProcessCmd(aName: string; var aWasInternalCmd: Boolean): Boolean;
+    procedure Setup;
+    procedure Shutdown;
+  public
+    constructor Create; override;
+    destructor Destroy; override;
+    procedure Render;
+    procedure Update(aDeltaTime: Double);
+  public
+    function  GetActive: Boolean;
+    procedure LoadFont(aArchive: TArchive; aSize: Cardinal; const aFilename: string);
+    procedure Open;
+    procedure Close;
+    function  Toggle: Boolean;
+    procedure SetToggleKey(aKey: Integer);
+    procedure SetSlideSpeed(aSpeed: Single);
+    procedure ClearCommands;
+    procedure AddCommand(const aName: string; const aDiscription: string; aAction: TCmdConsoleActionEvent);
+    procedure Enable(aEnable: Boolean);
+    function  ParamCount: Integer;
+    function  ParamStr(aIndex: Integer): string;
+    procedure AddTextLine(const aMsg: string; const aArgs: array of const);
+  end;
+
+  { TVideo }
+  TVideo = class(TBaseObject)
+  protected
+    FVoice: PALLEGRO_VOICE;
+    FMixer: PALLEGRO_MIXER;
+    FHandle: PALLEGRO_VIDEO;
+    FLoop: Boolean;
+    FPlaying: Boolean;
+    FPaused: Boolean;
+    FFilename: string;
+    procedure Play(aLoop: Boolean; aVolume: Single); overload;
+  public
+    procedure OnFinished(aHandle: PALLEGRO_VIDEO);
+    constructor Create; override;
+    destructor Destroy; override;
+    function  Load(aArchive: TArchive; const aFilename: string): Boolean;
+    function  Unload: Boolean;
+    function  GetPause: Boolean;
+    procedure SetPause(aPause: Boolean);
+    function  GetLooping:  Boolean;
+    procedure SetLoping(aLoop: Boolean);
+    function  GetPlaying: Boolean;
+    procedure SetPlaying(aPlay: Boolean);
+    function  GetFilename: string;
+    procedure Play(aArchive: TArchive; const aFilename: string; aLoop: Boolean; aVolume: Single); overload;
+    procedure Draw(aX: Single; aY: Single; aScale: Single);
+    procedure GetSize(aWidth: System.PSingle; aHeight: System.PSingle);
+    procedure Seek(aSeconds: Single);
+    procedure Rewind;
+  end;
+
+  { TAScreenshake }
+  TAScreenshake = class
+  protected
+    FActive: Boolean;
+    FDuration: Single;
+    FMagnitude: Single;
+    FTimer: Single;
+    FPos: TVector;
+  public
+    constructor Create(aDuration: Single; aMagnitude: Single);
+    destructor Destroy; override;
+    procedure Process(aSpeed: Single; aDeltaTime: Double);
+    property Active: Boolean read FActive;
+  end;
+
+  { TScreenshake }
+  TScreenshake = class(TBaseObject)
+  protected
+    FTrans: ALLEGRO_TRANSFORM;
+    FList: TList;
+  public
+    constructor Create; override;
+    destructor Destroy; override;
+    procedure Process(aSpeed: Single; aDeltaTime: Double);
+    procedure Start(aDuration: Single; aMagnitude: Single);
+    procedure Clear;
+    function  Active: Boolean;
+  end;
+
+  { TScreenshot }
+  TScreenshot = class(TBaseObject)
+  protected
+    FFlag: Boolean;
+    FDir: string;
+    FBaseFilename: string;
+    FFilename: string;
+  public
+    constructor Create; override;
+    destructor Destroy; override;
+    procedure Process;
+    procedure Init(const aDir: string=''; const aBaseFilename: string='');
+    procedure Take;
+  end;
+
+  { TStarfield }
+  TStarfield = class(TBaseObject)
+  protected
+    type
+      { TItem }
+      TItem = record
+        X, Y, Z, Speed: Single;
+      end;
+  protected
+    FCenter: TVector;
+    FMin: TVector;
+    FMax: TVector;
+    FViewScaleRatio: Single;
+    FViewScale: Single;
+    FStarCount: Cardinal;
+    FStar: array of TItem;
+    FSpeed: TVector;
+    FVirtualPos: TVector;
+    procedure TransformDrawPoint(aX, aY, aZ: Single; aVPX, aVPY, aVPW, aVPH: Integer);
+    procedure Done;
+  public
+    constructor Create; override;
+    destructor Destroy; override;
+    procedure Init(aStarCount: Cardinal; aMinX, aMinY, aMinZ, aMaxX, aMaxY, aMaxZ, aViewScale: Single);
+    procedure SetVirtualPos(aX, aY: Single);
+    procedure GetVirtualPos(var aX: Single; var aY: Single);
+    procedure SetXSpeed(aSpeed: Single);
+    procedure SetYSpeed(aSpeed: Single);
+    procedure SetZSpeed(aSpeed: Single);
+    procedure Update(aDeltaTime: Single);
+    procedure Render;
+  end;
+
+{$ENDREGION}
+
+{$REGION 'Spark.Window'}
+const
   MAX_AXES = 3;
   MAX_STICKS = 16;
   MAX_BUTTONS = 32;
-
   MOUSE_BUTTON_LEFT = 1;
   MOUSE_BUTTON_RIGHT = 2;
   MOUSE_BUTTON_MIDDLE = 3;
+
+  // sticks
+  JOY_STICK_LS = 0;
+  JOY_STICK_RS = 1;
+  JOY_STICK_LT = 2;
+  JOY_STICK_RT = 3;
+
+  // axes
+  JOY_AXES_X = 0;
+  JOY_AXES_Y = 1;
+  JOY_AXES_Z = 2;
+
+  // buttons
+  JOY_BTN_A = 0;
+  JOY_BTN_B = 1;
+  JOY_BTN_X = 2;
+  JOY_BTN_Y = 3;
+  JOY_BTN_RB = 4;
+  JOY_BTN_LB = 5;
+  JOY_BTN_RT = 6;
+  JOY_BTN_LT = 7;
+  JOY_BTN_BACK = 8;
+  JOY_BTN_START = 9;
+  JOY_BTN_RDPAD = 10;
+  JOY_BTN_LDPAD = 11;
+  JOY_BTN_DDPAD = 12;
+  JOY_BTN_UDPAD = 13;
 
 {$REGION 'Keyboard Constants'}
 const
@@ -2647,733 +3936,40 @@ const
   KEYMOD_ACCENT4 = $8000;
 {$ENDREGION}
 
-  // sticks
-  JOY_STICK_LS = 0;
-  JOY_STICK_RS = 1;
-  JOY_STICK_LT = 2;
-  JOY_STICK_RT = 3;
-
-  // axes
-  JOY_AXES_X = 0;
-  JOY_AXES_Y = 1;
-  JOY_AXES_Z = 2;
-
-  // buttons
-  JOY_BTN_A = 0;
-  JOY_BTN_B = 1;
-  JOY_BTN_X = 2;
-  JOY_BTN_Y = 3;
-  JOY_BTN_RB = 4;
-  JOY_BTN_LB = 5;
-  JOY_BTN_RT = 6;
-  JOY_BTN_LT = 7;
-  JOY_BTN_BACK = 8;
-  JOY_BTN_START = 9;
-  JOY_BTN_RDPAD = 10;
-  JOY_BTN_LDPAD = 11;
-  JOY_BTN_DDPAD = 12;
-  JOY_BTN_UDPAD = 13;
-
-  // audio
-  AUDIO_CHANNEL_COUNT   = 16;
-  AUDIO_PAN_NONE        = -1000.0;
 
 type
-  TSysCharSet = set of AnsiChar;
-  TStringArray = array of string;
-  PObject = ^TObject;
-
-  { TGVHAlign }
-  THAlign = (haLeft, haCenter, haRight);
-
-  { TGVVAlign }
-  TVAlign = (vaTop, vaCenter, vaBottom);
-
-  { TLineIntersection }
-  TLineIntersection = (liNone, liTrue, liParallel);
-
-  { TEaseType }
-  TEaseType = (etLinearTween, etInQuad, etOutQuad, etInOutQuad, etInCubic,
-    etOutCubic, etInOutCubic, etInQuart, etOutQuart, etInOutQuart, etInQuint,
-    etOutQuint, etInOutQuint, etInSine, etOutSine, etInOutSine, etInExpo,
-    etOutExpo, etInOutExpo, etInCircle, etOutCircle, etInOutCircle);
-
-  { TBlendMode }
-  TBlendMode = (bmPreMultipliedAlpha, bmNonPreMultipliedAlpha, bmAdditiveAlpha, bmCopySrcToDest, bmMultiplySrcAndDest);
-
-  { TGVShaderType }
-  TShaderType = (stVertex=1, stFragment=2);
-
-  { TVideoState }
-  TVideoState = (vsLoad, vsUnload, vsPlaying, vsPaused, vsFinished);
-
-  { TBlendModeColor }
-  TBlendModeColor = (bmcNormal, bmcAvgSrcDest);
-
-  { TColor }
-  PColor = ^TColor;
-  TColor = record
-    Red, Green, Blue, Alpha: Single;
-    function FromByte(aRed: Byte; aGreen: Byte; aBlue: Byte; aAlpha: Byte): TColor; overload;
-    function FromFloat(aRed: Single; aGreen: Single; aBlue: Single; aAlpha: Single): TColor; overload;
-    function FromName(const aName: string): TColor; overload;
-    function Fade(aTo: TColor; aPos: Single): TColor;
-    function Equal(aColor: TColor): Boolean;
-  end;
-
-  { TVector }
-  PVector = ^TVector;
-  TVector = record
-    X,Y,Z, W: Single;
-    constructor Create(aX, aY: Single); overload;
-    constructor Create(aX, aY, aZ: Single); overload;
-    constructor Create(aX, aY, aZ, aW: Single); overload;
-    procedure Assign(aX, aY: Single); overload;
-    procedure Assign(aX, aY, aZ: Single); overload;
-    procedure Assign(aX, aY, aZ, aW: Single); overload;
-    procedure Assign(aVector: TVector); overload;
-    procedure Clear;
-    procedure Add(aVector: TVector);
-    procedure Subtract(aVector: TVector);
-    procedure Multiply(aVector: TVector);
-    procedure Divide(aVector: TVector);
-    function  Magnitude: Single;
-    function  MagnitudeTruncate(aMaxMagitude: Single): TVector;
-    function  Distance(aVector: TVector): Single;
-    procedure Normalize;
-    function  Angle(aVector: TVector): Single;
-    procedure Thrust(aAngle: Single; aSpeed: Single);
-    function  MagnitudeSquared: Single;
-    function  DotProduct(aVector: TVector): Single;
-    procedure Scale(aValue: Single);
-    procedure DivideBy(aValue: Single);
-    function  Project(aVector: TVector): TVector;
-    procedure Negate;
-  end;
-
-  { TRectangle }
-  PRectangle = ^TRectangle;
-  TRectangle = record
-    X, Y, Width, Height: Single;
-    constructor Create(aX, aY, aWidth, aHeight: Single);
-    procedure Assign(aX, aY, aWidth, aHeight: Single); overload;
-    procedure Assign(aRectangle: TRectangle); overload;
-    procedure Clear;
-    function Intersect(aRect: TRectangle): Boolean;
-  end;
-
-  { TSample }
-  TSample = type PALLEGRO_SAMPLE;
-
-  { TSampleID }
-  PSampleID = ^TSampleID;
-  TSampleID = record
-    Index: Integer;
-    Id: Integer;
-  end;
-
-  { TJoystick }
-  TJoystick = record
-    Name: string;
-    Sticks: Integer;
-    Buttons: Integer;
-    StickName: array[0..MAX_STICKS-1] of string;
-    Axes: array[0..MAX_STICKS-1] of Integer;
-    AxesName: array[0..MAX_STICKS-1, 0..MAX_AXES-1] of string;
-    Pos: array[0..MAX_STICKS-1, 0..MAX_AXES-1] of Single;
-    Button: array[0..1, 0..MAX_BUTTONS-1] of Boolean;
-    ButtonName: array[0..MAX_BUTTONS- 1] of string;
-    procedure Setup(aNum: Integer);
-    function GetPos(aStick: Integer; aAxes: Integer): Single;
-    function GetButton(aButton: Integer): Boolean;
-    procedure Clear;
-  end;
-
-  { TBaseObject }
-  TBaseObject = class
-  public
-    constructor Create; virtual;
-    destructor Destroy; override;
-  end;
-
-  { TListCompareFunc }
-  TListCompareFunc = function (Item1, Item2: Pointer): Integer;
-
-  { TList }
-  TList = class(TBaseObject)
+  { TWindow }
+  TWindow = class(TBaseObject)
   protected
-    FItems    : array of Pointer;
-    FCount    : Integer;
-    FCapacity : Integer;
-    function OutOfBounds(aIndex: Integer): Boolean;
-    function GetItem(aIndex: Integer): Pointer; inline;
-    procedure SetItem(aIndex: Integer; aValue: Pointer); inline;
-  public
-    property Count: Integer read FCount;
-    property Items[aIndex: Integer]: Pointer read GetItem write SetItem; default;
-    constructor Create; override;
-    destructor Destroy; override;
-    procedure Init(aCapacity: Integer = 1);
-    procedure Clear;
-    function IndexOf(aItem: Pointer): Integer;
-    function Add(aItem: Pointer): Integer;
-    function Delete(aIndex: Integer): Pointer;
-    procedure Insert(aIndex: Integer; aItem: Pointer);
-    procedure Sort(aCompareFunc: TListCompareFunc);
-  end;
-
-  { TStringListCompareFunc }
-  TStringListCompareFunc = function (Item1, Item2: string): Integer;
-
-  { TStringList }
-  TStringList = class(TBaseObject)
-  protected
-    FItems    : array of string;
-    FCount    : Integer;
-    FCapacity : Integer;
-    function OutOfBounds(aIndex: Integer): Boolean;
-    function GetItem(aIndex: Integer): string; inline;
-    procedure SetItem(aIndex: Integer; aValue: string); inline;
-  public
-    property Count: Integer read FCount;
-    property Items[aIndex: Integer]: string read GetItem write SetItem; default;
-    constructor Create; override;
-    destructor Destroy; override;
-    procedure Init(aCapacity: Integer = 1);
-    procedure Clear;
-    function IndexOf(aItem: string): Integer;
-    function Add(aItem: string): Integer;
-    function Delete(aIndex: Integer): string;
-    procedure Insert(aIndex: Integer; aItem: string);
-    procedure Sort(aCompareFunc: TStringListCompareFunc);
-    function AddPair(const aName, aValue: string): TStringList;
-    function GetKey(aIndex: Integer): string; inline;
-    function GetValue(aIndex: Integer): string; inline;
-
-  end;
-
-  { TArchiveBuildProgressEvent }
-  TArchiveBuildProgressEvent = procedure(const aFilename: string; aProgress: Integer; aNewFile: Boolean) of object;
-
-  { TArchive }
-  TArchive = class(TBaseObject)
-  protected
-    FPassword: string;
-    FFilename: string;
-    FPasswordFilename: string;
-    FIsOpen: Boolean;
-    function GetCRC32(aStream: PALLEGRO_FILE): Cardinal;
-  public
-    constructor Create; override;
-    destructor Destroy; override;
-    function IsOpen: Boolean;
-    function Open(const aPassword: string; const aFilename: string): Boolean;
-    function Close: Boolean;
-    function FileExist(const aFilename: string): Boolean;
-    function GetPasswordFilename(const aFilename: string): PAnsiChar;
-    function Build(const aPassword: string; const aFilename: string; const aDirectory: string; aOnProgress: TArchiveBuildProgressEvent): Boolean;
-  end;
-
-  { TFont }
-  TFont = class(TBaseObject)
-  private
-    FHandle: PALLEGRO_FONT;
-    FFilename: string;
-    FSize: Integer;
-  public
-    constructor Create; override;
-    destructor Destroy; override;
-    function LoadBuiltIn: Boolean;
-    function LoadDefault(aSize: Cardinal): Boolean;
-    function Load(aArchive: TArchive; aSize: Cardinal; aFilename: string): Boolean;
-    function Unload: Boolean;
-    procedure PrintText(aX: Single; aY: Single; aColor: TColor; aAlign: THAlign; const aMsg: string; const aArgs: array of const); overload;
-    procedure PrintText(aX: Single; var aY: Single; aLineSpace: Single; aColor: TColor; aAlign: THAlign; const aMsg: string; const aArgs: array of const); overload;
-    procedure PrintText(aX: Single; aY: Single; aColor: TColor; aAngle: Single; const aMsg: string; const aArgs: array of const); overload;
-    function  GetTextWidth(const aMsg: string; const aArgs: array of const): Single;
-    function  GetLineHeight: Single;
-  end;
-
-  { TTextureData }
-  PTextureData = ^TTextureData;
-  TTextureData = record
-    Memory: Pointer;
-    Format: Integer;
-    Pitch: Integer;
-    PixelSize: Integer;
-  end;
-
-  { TTexture }
-  TTexture = class(TBaseObject)
-  protected
-    FHandle: PALLEGRO_BITMAP;
-    FWidth: Single;
-    FHeight: Single;
-    FLocked: Boolean;
-    FLockedRegion: TRectangle;
-    FFilename: string;
-  public
-    property Width: Single read FWidth;
-    property Height: Single read FHeight;
-    property Filename: string read FFilename;
-    property Handle: PALLEGRO_BITMAP read FHandle;
-    constructor Create; override;
-    destructor Destroy; override;
-    function  Allocate(aWidth: Integer; aHeight: Integer): Boolean;
-    function  Load(aArchive: TArchive; const aFilename: string; aColorKey: PColor): Boolean;
-    function Unload: Boolean;
-    function Lock(aRegion: PRectangle; aData: PTextureData=nil): Boolean;
-    function Unlock: Boolean;
-    function  GetPixel(aX: Integer; aY: Integer): TColor;
-    procedure SetPixel(aX: Integer; aY: Integer; aColor: TColor);
-    procedure Draw(aX, aY: Single; aRegion: PRectangle; aCenter: PVector;  aScale: PVector; aAngle: Single; aColor: TColor; aHFlip: Boolean=False; aVFlip: Boolean=False); overload;
-    procedure Draw(aX, aY, aScale, aAngle: Single; aColor: TColor; aHAlign: THAlign; aVAlign: TVAlign; aHFlip: Boolean=False; aVFlip: Boolean=False); overload;
-    procedure DrawTiled(aDeltaX: Single; aDeltaY: Single);
-  end;
-
-  { TRenderTarget }
-  TRenderTarget = class(TBaseObject)
-  protected
-    FTexture: TTexture;
-    FPosition: TVector;
-    FRegion: TRectangle;
-    FCenter: TVector;
-    FActive: Boolean;
-    FAngle: Single;
-  public
-    constructor Create; override;
-    destructor Destroy; override;
-    procedure Init(aX, aY, aWidth, aHeight: Integer);
-    procedure SetActive(aActive: Boolean);
-    function  GetActive: Boolean;
-    procedure SetPosition(aX: Single; aY: Single);
-    procedure GetPosition(var aPosition: TVector);
-    procedure GetSize(var aSize: TRectangle);
-    procedure SetRegion(aX: Single; aY: Single; aWidth: Single; aHeight: Single);
-    procedure GetRegion(var aRegion: TRectangle);
-    procedure SetAngle(aAngle: Single);
-    function  GetAngle: Single;
-    procedure Show;
-  end;
-
-  { TShader }
-  TShader = class(TBaseObject)
-  protected
-    FHandle: PALLEGRO_SHADER;
-  public
-    constructor Create; override;
-    destructor Destroy; override;
-    procedure Clear;
-    function Load(aType: TShaderType; const aSource: string): Boolean; overload;
-    function Load(aArchive: TArchive; aType: TShaderType; const aFilename: string): Boolean; overload;
-    function Build: Boolean;
-    function Enable(aEnable: Boolean): Boolean;
-    function Log: string;
-    function SetIntUniform(const aName: string; aValue: Integer): Boolean; overload;
-    function SetIntUniform(const aName: string; aNumComponents: Integer; aValue: PInteger; aNumElements: Integer): Boolean; overload;
-    function SetFloatUniform(const aName: string; aValue: Single): Boolean; overload;
-    function SetFloatUniform(const aName: string; aNumComponents: Integer; aValue: System.PSingle; aNumElements: Integer): Boolean; overload;
-    function SetBoolUniform(const aName: string; aValue: Boolean): Boolean;
-    function SetTextureUniform(const aName: string; aTexture: TTexture): Boolean;
-    function SetVec2Uniform(const aName: string; aValue: TVector): Boolean; overload;
-    function SetVec2Uniform(const aName: string; aX: Single; aY: Single): Boolean; overload;
-  end;
-
-  { TStarfield }
-  TStarfield = class(TBaseObject)
-  protected
-    type
-      { TStarfieldItem }
-      TStarfieldItem = record
-        X, Y, Z, Speed: Single;
-      end;
-  protected
-    FCenter: TVector;
-    FMin: TVector;
-    FMax: TVector;
-    FViewScaleRatio: Single;
-    FViewScale: Single;
-    FStarCount: Cardinal;
-    FStar: array of TStarfieldItem;
-    FSpeed: TVector;
-    FVirtualPos: TVector;
-    procedure TransformDrawPoint(aX, aY, aZ: Single; aVPX, aVPY, aVPW, aVPH: Integer);
-    procedure Done;
-  public
-    constructor Create; override;
-    destructor Destroy; override;
-    procedure Init(aStarCount: Cardinal; aMinX, aMinY, aMinZ, aMaxX, aMaxY, aMaxZ, aViewScale: Single);
-    procedure SetVirtualPos(aX, aY: Single);
-    procedure GetVirtualPos(var aX: Single; var aY: Single);
-    procedure SetXSpeed(aSpeed: Single);
-    procedure SetYSpeed(aSpeed: Single);
-    procedure SetZSpeed(aSpeed: Single);
-    procedure Update(aDeltaTime: Single);
-    procedure Render;
-  end;
-
-  { TCmdConsoleActionEvent }
-  TCmdConsoleActionEvent = procedure of object;
-
-  { TCmdConsole }
-  TCmdConsole = class(TBaseObject)
-  protected
-  const
-    cDefaultSlideSpeed = 60 * 4;
-    cDefaultFrameWidth = 2;
-    cDefaultMargins = 2;
-    cDefaultMaxCmdHistoryCount = 20;
-    cDefaultMaxTextLinesCount = 1080;
-  protected
-  type
-    { TState }
-    TState = (stInactive, stSlideDown, stSlideUp);
-    { TAction }
-    PAction = ^TAction;
-    TAction = record
-      Name: string;
-      Discription: string;
-      Handler: TCmdConsoleActionEvent;
-    end;
-  protected
-    FEnabled: Boolean;
-    FActive: Boolean;
-    FSize: TRectangle;
-    FPos: TVector;
-    FSlider: Double;
-    FState: TState;
-    FFont: TFont;
-    FFontHeight: Single;
-    FToggleKey: Integer;
-    FSlideSpeed: Single;
-    FCmdLine: string;
-    FCmdCurPos: Integer;
-    FCurFlashTimer: Single;
-    FCurFlash: Boolean;
-    FTextLines: TStringList;
-    FCmdHistory: TStringList;
-    FCmdHistoryIndex: Integer;
-    FMaxCmdHistoryCount: Integer;
-    FMaxTextLinesCount: Integer;
-    FCmdActionList: TList;
-    FCmdParams: TStringList;
-    FLastChar: Integer;
-    function ProcessCmd(aName: string; var aWasInternalCmd: Boolean): Boolean;
-    procedure Setup;
-    procedure Shutdown;
-  public
-    constructor Create; override;
-    destructor Destroy; override;
-    procedure Render;
-    procedure Update(aDeltaTime: Double);
-  public
-    function  GetActive: Boolean;
-    procedure LoadFont(aArchive: TArchive; aSize: Cardinal; const aFilename: string);
-    procedure Open;
-    procedure Close;
-    function  Toggle: Boolean;
-    procedure SetToggleKey(aKey: Integer);
-    procedure SetSlideSpeed(aSpeed: Single);
-    procedure ClearCommands;
-    procedure AddCommand(const aName: string; const aDiscription: string; aAction: TCmdConsoleActionEvent);
-    procedure Enable(aEnable: Boolean);
-    function  ParamCount: Integer;
-    function  ParamStr(aIndex: Integer): string;
-    procedure AddTextLine(const aMsg: string; const aArgs: array of const);
-  end;
-
-  { TGameSettings }
-  TGameSettings = record
-    // Window
-    WindowWidth: Integer;
-    WindowHeight: Integer;
-    WindowTitle: string;
-    WindowClearColor: TColor;
-
-    // Archive
-    ArchivePassword: string;
-    ArchiveFilename: string;
-
-    // Font
-    FontSize: Cardinal;
-    FontFilename: string;
-
-    // Hud
-    HudTextItemPadWidth: Integer;
-    HudPosX: Integer;
-    HudPosY: Integer;
-    HudLineSpace: Integer;
-  end;
-
-  { TGame }
-  TGame = class
-  protected
-
-  {$REGION 'Types'}
-  type
-    { TWindow }
-    TWindow = record
-      Handle: PALLEGRO_DISPLAY;
-      Transform: ALLEGRO_TRANSFORM;
-      Width: Integer;
-      Height: Integer;
-      Scale: Single;
-      HWnd: HWND;
-      Dpi: Integer;
-      RenderTarget: TRenderTarget;
-    end;
-    { TTimer }
-    TTimer = record
-      LNow: Double;
-      Passed: Double;
-      Last: Double;
-      Accumulator: Double;
-      FrameAccumulator: Double;
-      DeltaTime: Double;
-      FrameCount: Cardinal;
-      FrameRate: Cardinal;
-      UpdateSpeed: Single;
-      FixedUpdateSpeed: Single;
-      FixedUpdateTimer: Single;
-    end;
-    { TInput }
-    TInput = record
-    private
-    type
-      TMouse = record
-        Postion: TVector;
-        Delta: TVector;
-        Pressure: Single;
-      end;
-    public
-      KeyCode: Integer;
-      KeyCodeRepeat: Boolean;
-      MouseButtons: array [0..1, 0..256] of Boolean;
-      KeyButtons: array [0..1, 0..256] of Boolean;
-      JoyStick: TJoystick;
-      Mouse: TMouse;
-    end;
-    { THud }
-    THud = record
-      TextItemPadWidth: Integer;
-      Pos: TVector;
-    end;
-    { TVideo }
-    TVideo = record
-      Voice: PALLEGRO_VOICE;
-      Mixer: PALLEGRO_MIXER;
-      Handle: PALLEGRO_VIDEO;
-      Loop: Boolean;
-      Playing: Boolean;
-      Paused: Boolean;
-      Filename: string;
-    end;
-  {$ENDREGION}
-
-  protected
-
-  {$REGION 'Variables'}
-    FCodePage: Cardinal;
-    FDllFilename: string;
-    FDllHandle: THandle;
-    FEvent: ALLEGRO_EVENT;
-    FQueue: PALLEGRO_EVENT_QUEUE;
-    FVoice: PALLEGRO_VOICE;
-    FMixer: PALLEGRO_MIXER;
-    FFileState: array[False..True] of ALLEGRO_STATE;
-    FFileInterface: array[False..True] of PALLEGRO_FILE_INTERFACE;
-    FUserEventSrc: ALLEGRO_EVENT_SOURCE;
-    FCmdConActive: ALLEGRO_EVENT;
-    FCmdConInactive: ALLEGRO_EVENT;
-    FCosTable: array [0 .. 360] of Single;
-    FSinTable: array [0 .. 360] of Single;
-    FSettings: TGameSettings;
-    FHud: THud;
-    FMousePos: TVector;
-    FMouseDelta: TVector;
-    FMousePressure: Single;
-    FReady: Boolean;
-    FTerminated: Boolean;
-    FWindow: TWindow;
-    FTimer: TTimer;
-    FInput: TInput;
-    FFont: TFont;
-    FArchive: TArchive;
-    FVideo: TVideo;
-    FCmdConsole: TCmdConsole;
-    FMusic: PALLEGRO_AUDIO_STREAM;
-  {$ENDREGION}
-
-  {$REGION 'Routines'}
-    // --- Startup ----------------------------------------------------------
-    function LoadDLL: Boolean;
-    procedure UnloadDLL;
-    function StartupAllegro: Boolean;
-    procedure ShutdownAllegro;
-    function ApplySettings: Boolean;
-    procedure UnapplySettings;
-    // --- Window -----------------------------------------------------------
-    function  OpenWindow: Boolean;
-    procedure CloseWindow;
+    FHandle: PALLEGRO_DISPLAY;
+    FTransform: ALLEGRO_TRANSFORM;
+    FWidth: Integer;
+    FHeight: Integer;
+    FScale: Single;
+    FHWnd: HWND;
+    FDpi: Integer;
+    FRenderTarget: TRenderTarget;
     procedure ScaleWindowToDPI;
-
-    // --- Timer ------------------------------------------------------------
-    procedure UpdateTiming;
-
-    // --- Video ------------------------------------------------------------
-    procedure OnVideoFinished(aHandle: PALLEGRO_VIDEO);
-    procedure PlayVideo(aLoop: Boolean; aVolume: Single); overload;
-
-    // --- Misc -------------------------------------------------------------
-    procedure EmitCmdConInactiveEvent;
-    procedure EmitCmdConActiveEvent;
-
-  {$ENDREGION}
-
   public
-    // --- Properties -------------------------------------------------------
-    property Terminated: Boolean read FTerminated write FTerminated;
-    property Ready: Boolean read FReady;
-    property Settings: TGameSettings read FSettings write FSettings;
-    property MousePos: TVector read FMousePos;
-    property MouseDelta: TVector read FMouseDelta;
-    property MousePressure: Single read FMousePressure;
-    property Font: TFont read FFont;
-    property Archive: TArchive read FArchive;
-    property Window: TWindow read FWindow;
-    property CmdConsole: TCmdConsole read FCmdConsole;
-
-    // --- Constructor ------------------------------------------------------
-    constructor Create; virtual;
+    property Handle: PALLEGRO_DISPLAY read FHandle;
+    property Scale: Single read FScale;
+    property Dpi: Integer read FDpi;
+    property Width: Integer read FWidth;
+    property Height: Integer read FHeight;
+    property Transform: ALLEGRO_TRANSFORM read FTransform;
+    constructor Create; override;
     destructor Destroy; override;
-
-    function ManualStartup: Boolean;
-    procedure ManualShutdown;
-
-    // --- Utils ------------------------------------------------------------
-    function  GetTempPath: string;
-    function  GetTempFileName: string;
-    procedure ProcessMessages;
-    function  NumToStr(aValue: Int64): string; overload;
-    function  NumToStr(aValue: UInt64): string; overload;
-    function  NumToStr(aValue: Double; aWidth: Integer=0; aDecimals: Integer=2): string; overload;
-    function  NumToStr(aValue: Extended; aWidth: Integer=0; aDecimals: Integer=2): string; overload;
-    function  TrimChars(const aValue: string; Chars: TSysCharSet): string;
-    function  TrimStr(aValue: string): string;
-    function  StrToInt(aValue: string): Int64;
-    function  StrToUInt(aValue: string): UInt64;
-    function  StrToFloat(aValue: string): Double;
-    function  StuffStr(const aText: string; aStart, aLength: Cardinal; const aSubText: string): string;
-    function  UpperCase(const S: string): string;
-    function  SameText(A, B: string): Boolean;
-    function  LastDelimiter(const aText: string; const Delims: TSysCharSet): Integer;
-    function  ChangeFileExt(const aFilename, aExtension: string): string;
-    function  FileExist(const aFilename: string): Boolean;
-    function  DirExist(const aDir: string): Boolean;
-    function  GetFiles(const aPath: string; aRecursive: Boolean): TStringArray;
-    function  GetBit(const aValue: Cardinal; const Bit: Byte): Boolean;
-    function  SetBit(const aValue: Cardinal; const Bit: Byte): Cardinal;
-    function  ClearBit(const aValue: Cardinal; const Bit: Byte): Cardinal;
-    function  EnableBit(const aValue: Cardinal; const Bit: Byte; const Flag: Boolean): Cardinal;
-    function  StrScan(const aText: PWideChar; Chr: WideChar): PWideChar;
-    function  StrEnd(const aText: PWideChar): PWideChar;
-    function  ExtractQuotedStr(var aText: PWideChar; Quote: WideChar): UnicodeString;
-    function  DequotedStr(const aText: string; aQuote: Char): string;
-    function  RemoveQuotes(const aText: string): string;
-    function  FormatStr(const aMsg: string; const aArgs: array of const): string;
-    function  PadRightStr(aText: string; aTotalWidth: Integer; aPaddingChar: Char): string;
-    function  ExtractStrings(Separators, WhiteSpace: TSysCharSet; Content: PChar; Strings: TStringList): Integer;
-
-    procedure FreeNilObject(aObject: PObject);
-
-    // --- Math -------------------------------------------------------------
-    function  RandomRange(aMin, aMax: Integer): Integer; overload;
-    function  RandomRange(aMin, aMax: Single): Single; overload;
-    function  RandomBool: Boolean;
-    function  GetRandomSeed: Integer;
-    procedure SetRandomSeed(aValue: Integer);
-    function  AngleCos(aAngle: Integer): Single;
-    function  AngleSin(aAngle: Integer): Single;
-    function  AngleDifference(aSrcAngle: Single; aDestAngle: Single): Single;
-    procedure AngleRotatePos(aAngle: Single; var aX: Single; var aY: Single);
-    function  ClipValue(var aValue: Single; aMin: Single; aMax: Single; aWrap: Boolean): Single; overload;
-    function  ClipValue(var aValue: Integer; aMin: Integer; aMax: Integer; aWrap: Boolean): Integer; overload;
-    function  SameSign(aValue1: Integer; aValue2: Integer): Boolean; overload;
-    function  SameSign(aValue1: Single; aValue2: Single): Boolean; overload;
-    function  SameValue(aA: Double; aB: Double; aEpsilon: Double = 0): Boolean; overload;
-    function  SameValue(aA: Single; aB: Single; aEpsilon: Single = 0): Boolean; overload;
-    function  Vector(aX: Single; aY: Single): TVector;
-    function  Rectangle(aX: Single; aY: Single; aWidth: Single; aHeight: Single): TRectangle;
-    procedure SmoothMove(var aValue: Single; aAmount: Single; aMax: Single; aDrag: Single);
-    function  Lerp(aFrom: Double; aTo: Double; aTime: Double): Double;
-
-    // --- Collision --------------------------------------------------------
-    function  PointInRectangle(aPoint: TVector; aRect: TRectangle): Boolean;
-    function  PointInCircle(aPoint, aCenter: TVector; aRadius: Single): Boolean;
-    function  PointInTriangle(aPoint, aP1, aP2, aP3: TVector): Boolean;
-    function  CirclesOverlap(aCenter1: TVector; aRadius1: Single; aCenter2: TVector; aRadius2: Single): Boolean;
-    function  CircleInRectangle(aCenter: TVector; aRadius: Single; aRect: TRectangle): Boolean;
-    function  RectanglesOverlap(aRect1: TRectangle; aRect2: TRectangle): Boolean;
-    function  RectangleIntersection(aRect1, aRect2: TRectangle): TRectangle;
-    function  LineIntersection(aX1, aY1, aX2, aY2, aX3, aY3, aX4, aY4: Integer; var aX: Integer; var aY: Integer): TLineIntersection;
-    function  RadiusOverlap(aRadius1, aX1, aY1, aRadius2, aX2, aY2, aShrinkFactor: Single): Boolean;
-
-    // --- Easing -----------------------------------------------------------
-    function EaseValue(aCurrentTime: Double; aStartValue: Double; aChangeInValue: Double; aDuration: Double; aEaseType: TEaseType): Double;
-    function EasePosition(aStartPos: Double; aEndPos: Double; aCurrentPos: Double; aEaseType: TEaseType): Double;
-
-    // --- Console ----------------------------------------------------------
-    function IsConsolePresent: Boolean;
-
-    // --- Math -------------------------------------------------------------
-    function InRange(const AValue, AMin, AMax: Int64): Boolean; overload;
-    function InRange(const AValue, AMin, AMax: UInt64): Boolean; overload;
-    function InRange(const AValue, AMin, AMax: Double): Boolean; overload;
-
-    // --- FileSystem -------------------------------------------------------
-    procedure SetFileSandBoxed(aEnable: Boolean);
-    function  GetFileSandBoxed: Boolean;
-    procedure SetFileSandboxWriteDir(aPath: string);
-    function  GetFileSandboxWriteDir: string;
-
-    // --- Math -------------------------------------------------------------
-    function  Min(const A, B: Int64): Int64; overload; inline;
-    function  Min(const A, B: UInt64): UInt64; overload; inline;
-    function  Min(const A, B: Double): Double; overload; inline;
-    function  Max(const A, B: Int64): Int64; overload; inline;
-    function  Max(const A, B: UInt64): UInt64; overload; inline;
-    function  Max(const A, B: Double): Double; overload; inline;
-    function  Sign(const aValue: Int64): Integer; overload; inline;
-    function  Sign(const aValue: Double): Integer; overload; inline;
-    function  EnsureRange(const aValue, aMin, aMax: Int64): Int64; overload;
-    function  EnsureRange(const aValue, aMin, aMax: UInt64): UInt64; overload;
-    function  EnsureRange(const aValue, aMin, aMax: Double): Double; overload;
-    function  Floor(const X: Extended): Integer;
-    function  IntPower(const Base: Extended; const Exponent: Integer): Extended;
-    function  Power(const Base, Exponent: Extended): Extended;
-
-    // --- Timer ------------------------------------------------------------
-    function  GetTime: Double;
-    procedure ResetTiming(aSpeed: Single=0; aFixedSpeed: Single=0);
-    procedure SetUpdateSpeed(aSpeed: Single);
-    function  GetUpdateSpeed: Single;
-    procedure SetFixedUpdateSpeed(aSpeed: Single);
-    function  GetFixedUpdateSpeed: Single;
-    function  GetDeltaTime: Double;
-    function  GetFrameRate: Cardinal;
-    function  FrameSpeed(var aTimer: Single; aSpeed: Single): Boolean;
-    function  FrameElapsed(var aTimer: Single; aFrames: Single): Boolean;
-
-    // --- Window -----------------------------------------------------------
-    procedure SetWindowTitle(aTitle: string);
-    function  IsWindowOpen: Boolean;
-    procedure ClearWindow(aColor: TColor);
-    procedure ShowWindow;
-    procedure ResetWindowTransform;
-    procedure SaveWidow(const aFilename: string);
-    procedure GetWindowViewportSize(var aSize: TRectangle);
-    procedure SetWindowRenderTarget(aRenderTarget: TRenderTarget);
-
+    procedure Open(aWidth, aHeight: Integer; const aTitle: string);
+    procedure Close;
+    procedure SetTitle(aTitle: string);
+    function  IsOpen: Boolean;
+    procedure Clear(aColor: TColor);
+    procedure Show;
+    procedure ResetTransform;
+    procedure Save(const aFilename: string);
+    procedure GetViewportSize(var aSize: TRectangle);
+    procedure SetRenderTarget(aRenderTarget: TRenderTarget);
+    procedure SetTransformPos(aX: Single; aY: Single);
 
     // --- Blending ---------------------------------------------------------
     procedure SetBlender(aOperation: Integer; aSource: Integer; aDestination: Integer);
@@ -3395,11 +3991,48 @@ type
     procedure DrawPolygon(aVertices: System.PSingle; aVertexCount: Integer; aThickness: Single; aColor: TColor);
     procedure DrawFilledPolygon(aVertices: System.PSingle; aVertexCount: Integer; aColor: TColor);
 
-    // --- Input ------------------------------------------------------------
-    function  KeyCode: Integer;
-    function  KeyCodeRepeat: Boolean;
-    procedure ClearInput;
-    procedure UpdateInput;
+  end;
+
+  { TJoystick }
+  TJoystick = record
+    Name: string;
+    Sticks: Integer;
+    Buttons: Integer;
+    StickName: array[0..MAX_STICKS-1] of string;
+    Axes: array[0..MAX_STICKS-1] of Integer;
+    AxesName: array[0..MAX_STICKS-1, 0..MAX_AXES-1] of string;
+    Pos: array[0..MAX_STICKS-1, 0..MAX_AXES-1] of Single;
+    Button: array[0..1, 0..MAX_BUTTONS-1] of Boolean;
+    ButtonName: array[0..MAX_BUTTONS- 1] of string;
+    procedure Setup(aNum: Integer);
+    function GetPos(aStick: Integer; aAxes: Integer): Single;
+    function GetButton(aButton: Integer): Boolean;
+    procedure Clear;
+  end;
+
+  { TInput }
+  TInput = class(TBaseObject)
+  protected
+  type
+    TMouse = record
+      Postion: TVector;
+      Delta: TVector;
+      Pressure: Single;
+    end;
+  protected
+    FKeyCode: Integer;
+    FKeyCodeRepeat: Boolean;
+    FMouseButtons: array [0..1, 0..256] of Boolean;
+    FKeyButtons: array [0..1, 0..256] of Boolean;
+    FJoyStick: TJoystick;
+    FMouse: TMouse;
+  public
+    constructor Create; override;
+    destructor Destroy; override;
+    property KeyCode: Integer read FKeyCode;
+    property KeyCodeRepeat: Boolean read FKeyCodeRepeat;
+    procedure Clear;
+    procedure Update;
     function  KeyDown(aKey: Cardinal): Boolean;
     function  KeyPressed(aKey: Cardinal): Boolean;
     function  KeyReleased(aKey: Cardinal): Boolean;
@@ -3412,18 +4045,36 @@ type
     function  JoystickPressed(aButton: Cardinal): Boolean;
     function  JoystickReleased(aButton: Cardinal): Boolean;
     function  JoystickPosition(aStick: Integer; aAxes: Integer): Single;
+  end;
 
-    // --- Hud --------------------------------------------------------------
-    procedure ResetHudPos;
-    procedure SetHudPos(aX: Integer; aY: Integer);
-    procedure SetHudLineSpace(aLineSpace: Integer);
-    procedure SetHudTextItemPadWidth(aWidth: Integer);
-    procedure HudText(aFont: TFont; aColor: TColor; aAlign: THAlign; const aMsg: string; const aArgs: array of const);
-    function  HudTextItem(const aKey: string; const aValue: string; const aSeperator: string='-'): string;
+{$ENDREGION}
 
-    // --- Audio ------------------------------------------------------------
-    procedure PauseAudio(aPause: Boolean);
-    procedure ClearAudio;
+{$REGION 'Spark.Audio'}
+const
+  AUDIO_CHANNEL_COUNT   = 16;
+  AUDIO_PAN_NONE        = -1000.0;
+
+type
+  { TSample }
+  TSample = type PALLEGRO_SAMPLE;
+
+  { TSampleID }
+  PSampleID = ^TSampleID;
+  TSampleID = record
+    Index: Integer;
+    Id: Integer;
+  end;
+
+  { TAudio }
+  TAudio = class(TBaseObject)
+  protected
+    FMusic: PALLEGRO_AUDIO_STREAM;
+    FMusicFilename: string;
+  public
+    constructor Create; override;
+    destructor Destroy; override;
+    procedure Pause(aPause: Boolean);
+    procedure Clear;
     procedure LoadMusic(aArchive: TArchive; const aFilename: string);
     procedure UnloadMusic;
     procedure PlayMusic(aVolume: Single; aLoop: Boolean); overload;
@@ -3444,304 +4095,210 @@ type
     procedure StopSample(aID: TSampleID);
     procedure StopAllSamples;
     function  GetSamplePlaying(aID: TSampleID): Boolean;
-
-    // --- Video ------------------------------------------------------------
-    function  LoadVideo(aArchive: TArchive; const aFilename: string): Boolean;
-    function  UnloadVideo: Boolean;
-    function  GetVideoPause: Boolean;
-    procedure SetVideoPause(aPause: Boolean);
-    function  GetVideoLooping:  Boolean;
-    procedure SetVideoLoping(aLoop: Boolean);
-    function  GetVideoPlaying: Boolean;
-    procedure SetVideoPlaying(aPlay: Boolean);
-    function  GetVideoFilename: string;
-    procedure PlayVideo(aArchive: TArchive; const aFilename: string; aLoop: Boolean; aVolume: Single); overload;
-    procedure DrawVideo(aX: Single; aY: Single; aScale: Single);
-    procedure GetVideoSize(aWidth: System.PSingle; aHeight: System.PSingle);
-    procedure SeekVideo(aSeconds: Single);
-    procedure RewindVideo;
-
-    // --- Callbacks --------------------------------------------------------
-    procedure OnSetSettings(var aSettings: TGameSettings); virtual;
-    function  OnStartup: Boolean; virtual;
-    procedure OnShutdown; virtual;
-    procedure OnUpdate(aDeltaTime: Double); virtual;
-    procedure OnFixedUpdate; virtual;
-    procedure OnRender; virtual;
-    procedure OnRenderHUD; virtual;
-    procedure OnReady(aReady: Boolean); virtual;
-    procedure OnVideoState(aState: TVideoState; const aFilename: string); virtual;
-    procedure OnOpenCmdConsole; virtual;
-    procedure OnCloseCmdConsole; virtual;
-
-    // --- Gameloop ---------------------------------------------------------
-    function  Run: Boolean;
   end;
 
-  { TGameClass }
-  TGameClass = class of TGame;
+{$ENDREGION}
 
+{$REGION 'Spark.Game'}
+type
+  { TCustomGameClass }
+  TCustomGameClass = class of TCustomGame;
+
+  { TCustomGame }
+  TCustomGame = class(TBaseObject)
+  public
+    constructor Create; override;
+    destructor Destroy; override;
+    procedure OnInit; virtual;
+    procedure OnDone; virtual;
+    procedure OnRun; virtual;
+  end;
+
+  { TGameSettings }
+  TGameSettings = record
+    // Window
+    WindowWidth: Integer;
+    WindowHeight: Integer;
+    WindowTitle: string;
+    WindowClearColor: TColor;
+
+    // ConfigFile
+    ConfigFilename: string;
+
+    // Archive
+    ArchivePassword: string;
+    ArchiveFilename: string;
+
+    // Font
+    FontSize: Cardinal;
+    FontFilename: string;
+
+    // Hud
+    HudTextItemPadWidth: Integer;
+    HudPosX: Integer;
+    HudPosY: Integer;
+    HudLineSpace: Integer;
+  end;
+
+  { TGame }
+  TGame = class(TCustomGame)
+  protected
+  type
+    { TTimer }
+    TTimer = record
+      LNow: Double;
+      Passed: Double;
+      Last: Double;
+      Accumulator: Double;
+      FrameAccumulator: Double;
+      DeltaTime: Double;
+      FrameCount: Cardinal;
+      FrameRate: Cardinal;
+      UpdateSpeed: Single;
+      FixedUpdateSpeed: Single;
+      FixedUpdateTimer: Single;
+    end;
+    { THud }
+    THud = record
+      TextItemPadWidth: Integer;
+      Pos: TVector;
+    end;
+  protected
+    FTerminate: Boolean;
+    FReady: Boolean;
+    FMousePos: TVector;
+    FMouseDelta: TVector;
+    FMousePressure: Single;
+    FTimer: TTimer;
+    FConfigFile: TConfigFile;
+    FArchive: TArchive;
+    FFont: TFont;
+    FSettings: TGameSettings;
+    FHud: THud;
+    procedure UpdateTiming;
+  public
+    property Terminate: Boolean read FTerminate write FTerminate;
+    property MousePos: TVector read FMousePos;
+    property MouseDelta: TVector read FMouseDelta;
+    property MousePressure: Single read FMousePressure;
+    property Settings: TGameSettings read FSettings;
+    property ConfigFile: TConfigFile read FConfigFile;
+    property Archive: TArchive read FArchive;
+    property Font: TFont read FFont;
+    constructor Create; override;
+    destructor Destroy; override;
+    procedure OnInit; override;
+    procedure OnDone; override;
+    procedure OnSetSettings(var aSettings: TGameSettings); virtual;
+    procedure OnApplySettings; virtual;
+    procedure OnUnapplySettings; virtual;
+    procedure OnStartup; virtual;
+    procedure OnShutdown; virtual;
+    procedure OnRun; override;
+    procedure OnReady(aReady: Boolean); virtual;
+    procedure OnUpdate(aDeltaTime: Double); virtual;
+    procedure OnFixedUpdate; virtual;
+    procedure OnClearWindow; virtual;
+    procedure OnShowWindow; virtual;
+    procedure OnRender; virtual;
+    procedure OnRenderHUD; virtual;
+    procedure OnPreShowWindow; virtual;
+    procedure OnPostShowWindow; virtual;
+    procedure OnCmdConsoleState(aState: TCmdConsoleState); virtual;
+    procedure OnVideoState(aState: TVideoState; aFilename: string); virtual;
+    procedure OnScreenshot(const aFilename: string); virtual;
+    function  GetTime: Double;
+    procedure ResetTiming(aSpeed: Single=0; aFixedSpeed: Single=0);
+    procedure SetUpdateSpeed(aSpeed: Single);
+    function  GetUpdateSpeed: Single;
+    procedure SetFixedUpdateSpeed(aSpeed: Single);
+    function  GetFixedUpdateSpeed: Single;
+    function  GetDeltaTime: Double;
+    function  GetFrameRate: Cardinal;
+    function  FrameSpeed(var aTimer: Single; aSpeed: Single): Boolean;
+    function  FrameElapsed(var aTimer: Single; aFrames: Single): Boolean;
+    procedure ResetHudPos;
+    procedure SetHudPos(aX: Integer; aY: Integer);
+    procedure SetHudLineSpace(aLineSpace: Integer);
+    procedure SetHudTextItemPadWidth(aWidth: Integer);
+    procedure HudText(aFont: TFont; aColor: TColor; aAlign: THAlign; const aMsg: string; const aArgs: array of const);
+    function  HudTextItem(const aKey: string; const aValue: string; const aSeperator: string='-'): string;
+  end;
+
+{ Variables }
 var
   Game: TGame = nil;
 
-// --- Routines -------------------------------------------------------------
-procedure RunGame(aGame: TGameClass);
+{ Routines }
+procedure RunGame(aGame: TCustomGameClass);
 
-{$REGION 'Common Colors'}
-const
-  ALICEBLUE           : TColor = (Red:$F0/$FF; Green:$F8/$FF; Blue:$FF/$FF; Alpha:$FF/$FF);
-  ANTIQUEWHITE        : TColor = (Red:$FA/$FF; Green:$EB/$FF; Blue:$D7/$FF; Alpha:$FF/$FF);
-  AQUA                : TColor = (Red:$00/$FF; Green:$FF/$FF; Blue:$FF/$FF; Alpha:$FF/$FF);
-  AQUAMARINE          : TColor = (Red:$7F/$FF; Green:$FF/$FF; Blue:$D4/$FF; Alpha:$FF/$FF);
-  AZURE               : TColor = (Red:$F0/$FF; Green:$FF/$FF; Blue:$FF/$FF; Alpha:$FF/$FF);
-  BEIGE               : TColor = (Red:$F5/$FF; Green:$F5/$FF; Blue:$DC/$FF; Alpha:$FF/$FF);
-  BISQUE              : TColor = (Red:$FF/$FF; Green:$E4/$FF; Blue:$C4/$FF; Alpha:$FF/$FF);
-  BLACK               : TColor = (Red:$00/$FF; Green:$00/$FF; Blue:$00/$FF; Alpha:$FF/$FF);
-  BLANCHEDALMOND      : TColor = (Red:$FF/$FF; Green:$EB/$FF; Blue:$CD/$FF; Alpha:$FF/$FF);
-  BLUE                : TColor = (Red:$00/$FF; Green:$00/$FF; Blue:$FF/$FF; Alpha:$FF/$FF);
-  BLUEVIOLET          : TColor = (Red:$8A/$FF; Green:$2B/$FF; Blue:$E2/$FF; Alpha:$FF/$FF);
-  BROWN               : TColor = (Red:$A5/$FF; Green:$2A/$FF; Blue:$2A/$FF; Alpha:$FF/$FF);
-  BURLYWOOD           : TColor = (Red:$DE/$FF; Green:$B8/$FF; Blue:$87/$FF; Alpha:$FF/$FF);
-  CADETBLUE           : TColor = (Red:$5F/$FF; Green:$9E/$FF; Blue:$A0/$FF; Alpha:$FF/$FF);
-  CHARTREUSE          : TColor = (Red:$7F/$FF; Green:$FF/$FF; Blue:$00/$FF; Alpha:$FF/$FF);
-  CHOCOLATE           : TColor = (Red:$D2/$FF; Green:$69/$FF; Blue:$1E/$FF; Alpha:$FF/$FF);
-  CORAL               : TColor = (Red:$FF/$FF; Green:$7F/$FF; Blue:$50/$FF; Alpha:$FF/$FF);
-  CORNFLOWERBLUE      : TColor = (Red:$64/$FF; Green:$95/$FF; Blue:$ED/$FF; Alpha:$FF/$FF);
-  CORNSILK            : TColor = (Red:$FF/$FF; Green:$F8/$FF; Blue:$DC/$FF; Alpha:$FF/$FF);
-  CRIMSON             : TColor = (Red:$DC/$FF; Green:$14/$FF; Blue:$3C/$FF; Alpha:$FF/$FF);
-  CYAN                : TColor = (Red:$00/$FF; Green:$FF/$FF; Blue:$FF/$FF; Alpha:$FF/$FF);
-  DARKBLUE            : TColor = (Red:$00/$FF; Green:$00/$FF; Blue:$8B/$FF; Alpha:$FF/$FF);
-  DARKCYAN            : TColor = (Red:$00/$FF; Green:$8B/$FF; Blue:$8B/$FF; Alpha:$FF/$FF);
-  DARKGOLDENROD       : TColor = (Red:$B8/$FF; Green:$86/$FF; Blue:$0B/$FF; Alpha:$FF/$FF);
-  DARKGRAY            : TColor = (Red:$A9/$FF; Green:$A9/$FF; Blue:$A9/$FF; Alpha:$FF/$FF);
-  DARKGREEN           : TColor = (Red:$00/$FF; Green:$64/$FF; Blue:$00/$FF; Alpha:$FF/$FF);
-  DARKGREY            : TColor = (Red:$A9/$FF; Green:$A9/$FF; Blue:$A9/$FF; Alpha:$FF/$FF);
-  DARKKHAKI           : TColor = (Red:$BD/$FF; Green:$B7/$FF; Blue:$6B/$FF; Alpha:$FF/$FF);
-  DARKMAGENTA         : TColor = (Red:$8B/$FF; Green:$00/$FF; Blue:$8B/$FF; Alpha:$FF/$FF);
-  DARKOLIVEGREEN      : TColor = (Red:$55/$FF; Green:$6B/$FF; Blue:$2F/$FF; Alpha:$FF/$FF);
-  DARKORANGE          : TColor = (Red:$FF/$FF; Green:$8C/$FF; Blue:$00/$FF; Alpha:$FF/$FF);
-  DARKORCHID          : TColor = (Red:$99/$FF; Green:$32/$FF; Blue:$CC/$FF; Alpha:$FF/$FF);
-  DARKRED             : TColor = (Red:$8B/$FF; Green:$00/$FF; Blue:$00/$FF; Alpha:$FF/$FF);
-  DARKSALMON          : TColor = (Red:$E9/$FF; Green:$96/$FF; Blue:$7A/$FF; Alpha:$FF/$FF);
-  DARKSEAGREEN        : TColor = (Red:$8F/$FF; Green:$BC/$FF; Blue:$8F/$FF; Alpha:$FF/$FF);
-  DARKSLATEBLUE       : TColor = (Red:$48/$FF; Green:$3D/$FF; Blue:$8B/$FF; Alpha:$FF/$FF);
-  DARKSLATEGRAY       : TColor = (Red:$2F/$FF; Green:$4F/$FF; Blue:$4F/$FF; Alpha:$FF/$FF);
-  DARKSLATEGREY       : TColor = (Red:$2F/$FF; Green:$4F/$FF; Blue:$4F/$FF; Alpha:$FF/$FF);
-  DARKTURQUOISE       : TColor = (Red:$00/$FF; Green:$CE/$FF; Blue:$D1/$FF; Alpha:$FF/$FF);
-  DARKVIOLET          : TColor = (Red:$94/$FF; Green:$00/$FF; Blue:$D3/$FF; Alpha:$FF/$FF);
-  DEEPPINK            : TColor = (Red:$FF/$FF; Green:$14/$FF; Blue:$93/$FF; Alpha:$FF/$FF);
-  DEEPSKYBLUE         : TColor = (Red:$00/$FF; Green:$BF/$FF; Blue:$FF/$FF; Alpha:$FF/$FF);
-  DIMGRAY             : TColor = (Red:$69/$FF; Green:$69/$FF; Blue:$69/$FF; Alpha:$FF/$FF);
-  DIMGREY             : TColor = (Red:$69/$FF; Green:$69/$FF; Blue:$69/$FF; Alpha:$FF/$FF);
-  DODGERBLUE          : TColor = (Red:$1E/$FF; Green:$90/$FF; Blue:$FF/$FF; Alpha:$FF/$FF);
-  FIREBRICK           : TColor = (Red:$B2/$FF; Green:$22/$FF; Blue:$22/$FF; Alpha:$FF/$FF);
-  FLORALWHITE         : TColor = (Red:$FF/$FF; Green:$FA/$FF; Blue:$F0/$FF; Alpha:$FF/$FF);
-  FORESTGREEN         : TColor = (Red:$22/$FF; Green:$8B/$FF; Blue:$22/$FF; Alpha:$FF/$FF);
-  FUCHSIA             : TColor = (Red:$FF/$FF; Green:$00/$FF; Blue:$FF/$FF; Alpha:$FF/$FF);
-  GAINSBORO           : TColor = (Red:$DC/$FF; Green:$DC/$FF; Blue:$DC/$FF; Alpha:$FF/$FF);
-  GHOSTWHITE          : TColor = (Red:$F8/$FF; Green:$F8/$FF; Blue:$FF/$FF; Alpha:$FF/$FF);
-  GOLD                : TColor = (Red:$FF/$FF; Green:$D7/$FF; Blue:$00/$FF; Alpha:$FF/$FF);
-  GOLDENROD           : TColor = (Red:$DA/$FF; Green:$A5/$FF; Blue:$20/$FF; Alpha:$FF/$FF);
-  GRAY                : TColor = (Red:$80/$FF; Green:$80/$FF; Blue:$80/$FF; Alpha:$FF/$FF);
-  GREEN               : TColor = (Red:$00/$FF; Green:$80/$FF; Blue:$00/$FF; Alpha:$FF/$FF);
-  GREENYELLOW         : TColor = (Red:$AD/$FF; Green:$FF/$FF; Blue:$2F/$FF; Alpha:$FF/$FF);
-  GREY                : TColor = (Red:$80/$FF; Green:$80/$FF; Blue:$80/$FF; Alpha:$FF/$FF);
-  HONEYDEW            : TColor = (Red:$F0/$FF; Green:$FF/$FF; Blue:$F0/$FF; Alpha:$FF/$FF);
-  HOTPINK             : TColor = (Red:$FF/$FF; Green:$69/$FF; Blue:$B4/$FF; Alpha:$FF/$FF);
-  INDIANRED           : TColor = (Red:$CD/$FF; Green:$5C/$FF; Blue:$5C/$FF; Alpha:$FF/$FF);
-  INDIGO              : TColor = (Red:$4B/$FF; Green:$00/$FF; Blue:$82/$FF; Alpha:$FF/$FF);
-  IVORY               : TColor = (Red:$FF/$FF; Green:$FF/$FF; Blue:$F0/$FF; Alpha:$FF/$FF);
-  KHAKI               : TColor = (Red:$F0/$FF; Green:$E6/$FF; Blue:$8C/$FF; Alpha:$FF/$FF);
-  LAVENDER            : TColor = (Red:$E6/$FF; Green:$E6/$FF; Blue:$FA/$FF; Alpha:$FF/$FF);
-  LAVENDERBLUSH       : TColor = (Red:$FF/$FF; Green:$F0/$FF; Blue:$F5/$FF; Alpha:$FF/$FF);
-  LAWNGREEN           : TColor = (Red:$7C/$FF; Green:$FC/$FF; Blue:$00/$FF; Alpha:$FF/$FF);
-  LEMONCHIFFON        : TColor = (Red:$FF/$FF; Green:$FA/$FF; Blue:$CD/$FF; Alpha:$FF/$FF);
-  LIGHTBLUE           : TColor = (Red:$AD/$FF; Green:$D8/$FF; Blue:$E6/$FF; Alpha:$FF/$FF);
-  LIGHTCORAL          : TColor = (Red:$F0/$FF; Green:$80/$FF; Blue:$80/$FF; Alpha:$FF/$FF);
-  LIGHTCYAN           : TColor = (Red:$E0/$FF; Green:$FF/$FF; Blue:$FF/$FF; Alpha:$FF/$FF);
-  LIGHTGOLDENRODYELLOW: TColor = (Red:$FA/$FF; Green:$FA/$FF; Blue:$D2/$FF; Alpha:$FF/$FF);
-  LIGHTGRAY           : TColor = (Red:$D3/$FF; Green:$D3/$FF; Blue:$D3/$FF; Alpha:$FF/$FF);
-  LIGHTGREEN          : TColor = (Red:$90/$FF; Green:$EE/$FF; Blue:$90/$FF; Alpha:$FF/$FF);
-  LIGHTGREY           : TColor = (Red:$D3/$FF; Green:$D3/$FF; Blue:$D3/$FF; Alpha:$FF/$FF);
-  LIGHTPINK           : TColor = (Red:$FF/$FF; Green:$B6/$FF; Blue:$C1/$FF; Alpha:$FF/$FF);
-  LIGHTSALMON         : TColor = (Red:$FF/$FF; Green:$A0/$FF; Blue:$7A/$FF; Alpha:$FF/$FF);
-  LIGHTSEAGREEN       : TColor = (Red:$20/$FF; Green:$B2/$FF; Blue:$AA/$FF; Alpha:$FF/$FF);
-  LIGHTSKYBLUE        : TColor = (Red:$87/$FF; Green:$CE/$FF; Blue:$FA/$FF; Alpha:$FF/$FF);
-  LIGHTSLATEGRAY      : TColor = (Red:$77/$FF; Green:$88/$FF; Blue:$99/$FF; Alpha:$FF/$FF);
-  LIGHTSLATEGREY      : TColor = (Red:$77/$FF; Green:$88/$FF; Blue:$99/$FF; Alpha:$FF/$FF);
-  LIGHTSTEELBLUE      : TColor = (Red:$B0/$FF; Green:$C4/$FF; Blue:$DE/$FF; Alpha:$FF/$FF);
-  LIGHTYELLOW         : TColor = (Red:$FF/$FF; Green:$FF/$FF; Blue:$E0/$FF; Alpha:$FF/$FF);
-  LIME                : TColor = (Red:$00/$FF; Green:$FF/$FF; Blue:$00/$FF; Alpha:$FF/$FF);
-  LIMEGREEN           : TColor = (Red:$32/$FF; Green:$CD/$FF; Blue:$32/$FF; Alpha:$FF/$FF);
-  LINEN               : TColor = (Red:$FA/$FF; Green:$F0/$FF; Blue:$E6/$FF; Alpha:$FF/$FF);
-  MAGENTA             : TColor = (Red:$FF/$FF; Green:$00/$FF; Blue:$FF/$FF; Alpha:$FF/$FF);
-  MAROON              : TColor = (Red:$80/$FF; Green:$00/$FF; Blue:$00/$FF; Alpha:$FF/$FF);
-  MEDIUMAQUAMARINE    : TColor = (Red:$66/$FF; Green:$CD/$FF; Blue:$AA/$FF; Alpha:$FF/$FF);
-  MEDIUMBLUE          : TColor = (Red:$00/$FF; Green:$00/$FF; Blue:$CD/$FF; Alpha:$FF/$FF);
-  MEDIUMORCHID        : TColor = (Red:$BA/$FF; Green:$55/$FF; Blue:$D3/$FF; Alpha:$FF/$FF);
-  MEDIUMPURPLE        : TColor = (Red:$93/$FF; Green:$70/$FF; Blue:$DB/$FF; Alpha:$FF/$FF);
-  MEDIUMSEAGREEN      : TColor = (Red:$3C/$FF; Green:$B3/$FF; Blue:$71/$FF; Alpha:$FF/$FF);
-  MEDIUMSLATEBLUE     : TColor = (Red:$7B/$FF; Green:$68/$FF; Blue:$EE/$FF; Alpha:$FF/$FF);
-  MEDIUMSPRINGGREEN   : TColor = (Red:$00/$FF; Green:$FA/$FF; Blue:$9A/$FF; Alpha:$FF/$FF);
-  MEDIUMTURQUOISE     : TColor = (Red:$48/$FF; Green:$D1/$FF; Blue:$CC/$FF; Alpha:$FF/$FF);
-  MEDIUMVIOLETRED     : TColor = (Red:$C7/$FF; Green:$15/$FF; Blue:$85/$FF; Alpha:$FF/$FF);
-  MIDNIGHTBLUE        : TColor = (Red:$19/$FF; Green:$19/$FF; Blue:$70/$FF; Alpha:$FF/$FF);
-  MINTCREAM           : TColor = (Red:$F5/$FF; Green:$FF/$FF; Blue:$FA/$FF; Alpha:$FF/$FF);
-  MISTYROSE           : TColor = (Red:$FF/$FF; Green:$E4/$FF; Blue:$E1/$FF; Alpha:$FF/$FF);
-  MOCCASIN            : TColor = (Red:$FF/$FF; Green:$E4/$FF; Blue:$B5/$FF; Alpha:$FF/$FF);
-  NAVAJOWHITE         : TColor = (Red:$FF/$FF; Green:$DE/$FF; Blue:$AD/$FF; Alpha:$FF/$FF);
-  NAVY                : TColor = (Red:$00/$FF; Green:$00/$FF; Blue:$80/$FF; Alpha:$FF/$FF);
-  OLDLACE             : TColor = (Red:$FD/$FF; Green:$F5/$FF; Blue:$E6/$FF; Alpha:$FF/$FF);
-  OLIVE               : TColor = (Red:$80/$FF; Green:$80/$FF; Blue:$00/$FF; Alpha:$FF/$FF);
-  OLIVEDRAB           : TColor = (Red:$6B/$FF; Green:$8E/$FF; Blue:$23/$FF; Alpha:$FF/$FF);
-  ORANGE              : TColor = (Red:$FF/$FF; Green:$A5/$FF; Blue:$00/$FF; Alpha:$FF/$FF);
-  ORANGERED           : TColor = (Red:$FF/$FF; Green:$45/$FF; Blue:$00/$FF; Alpha:$FF/$FF);
-  ORCHID              : TColor = (Red:$DA/$FF; Green:$70/$FF; Blue:$D6/$FF; Alpha:$FF/$FF);
-  PALEGOLDENROD       : TColor = (Red:$EE/$FF; Green:$E8/$FF; Blue:$AA/$FF; Alpha:$FF/$FF);
-  PALEGREEN           : TColor = (Red:$98/$FF; Green:$FB/$FF; Blue:$98/$FF; Alpha:$FF/$FF);
-  PALETURQUOISE       : TColor = (Red:$AF/$FF; Green:$EE/$FF; Blue:$EE/$FF; Alpha:$FF/$FF);
-  PALEVIOLETRED       : TColor = (Red:$DB/$FF; Green:$70/$FF; Blue:$93/$FF; Alpha:$FF/$FF);
-  PAPAYAWHIP          : TColor = (Red:$FF/$FF; Green:$EF/$FF; Blue:$D5/$FF; Alpha:$FF/$FF);
-  PEACHPUFF           : TColor = (Red:$FF/$FF; Green:$DA/$FF; Blue:$B9/$FF; Alpha:$FF/$FF);
-  PERU                : TColor = (Red:$CD/$FF; Green:$85/$FF; Blue:$3F/$FF; Alpha:$FF/$FF);
-  PINK                : TColor = (Red:$FF/$FF; Green:$C0/$FF; Blue:$CB/$FF; Alpha:$FF/$FF);
-  PLUM                : TColor = (Red:$DD/$FF; Green:$A0/$FF; Blue:$DD/$FF; Alpha:$FF/$FF);
-  POWDERBLUE          : TColor = (Red:$B0/$FF; Green:$E0/$FF; Blue:$E6/$FF; Alpha:$FF/$FF);
-  PURPLE              : TColor = (Red:$80/$FF; Green:$00/$FF; Blue:$80/$FF; Alpha:$FF/$FF);
-  REBECCAPURPLE       : TColor = (Red:$66/$FF; Green:$33/$FF; Blue:$99/$FF; Alpha:$FF/$FF);
-  RED                 : TColor = (Red:$FF/$FF; Green:$00/$FF; Blue:$00/$FF; Alpha:$FF/$FF);
-  ROSYBROWN           : TColor = (Red:$BC/$FF; Green:$8F/$FF; Blue:$8F/$FF; Alpha:$FF/$FF);
-  ROYALBLUE           : TColor = (Red:$41/$FF; Green:$69/$FF; Blue:$E1/$FF; Alpha:$FF/$FF);
-  SADDLEBROWN         : TColor = (Red:$8B/$FF; Green:$45/$FF; Blue:$13/$FF; Alpha:$FF/$FF);
-  SALMON              : TColor = (Red:$FA/$FF; Green:$80/$FF; Blue:$72/$FF; Alpha:$FF/$FF);
-  SANDYBROWN          : TColor = (Red:$F4/$FF; Green:$A4/$FF; Blue:$60/$FF; Alpha:$FF/$FF);
-  SEAGREEN            : TColor = (Red:$2E/$FF; Green:$8B/$FF; Blue:$57/$FF; Alpha:$FF/$FF);
-  SEASHELL            : TColor = (Red:$FF/$FF; Green:$F5/$FF; Blue:$EE/$FF; Alpha:$FF/$FF);
-  SIENNA              : TColor = (Red:$A0/$FF; Green:$52/$FF; Blue:$2D/$FF; Alpha:$FF/$FF);
-  SILVER              : TColor = (Red:$C0/$FF; Green:$C0/$FF; Blue:$C0/$FF; Alpha:$FF/$FF);
-  SKYBLUE             : TColor = (Red:$87/$FF; Green:$CE/$FF; Blue:$EB/$FF; Alpha:$FF/$FF);
-  SLATEBLUE           : TColor = (Red:$6A/$FF; Green:$5A/$FF; Blue:$CD/$FF; Alpha:$FF/$FF);
-  SLATEGRAY           : TColor = (Red:$70/$FF; Green:$80/$FF; Blue:$90/$FF; Alpha:$FF/$FF);
-  SLATEGREY           : TColor = (Red:$70/$FF; Green:$80/$FF; Blue:$90/$FF; Alpha:$FF/$FF);
-  SNOW                : TColor = (Red:$FF/$FF; Green:$FA/$FF; Blue:$FA/$FF; Alpha:$FF/$FF);
-  SPRINGGREEN         : TColor = (Red:$00/$FF; Green:$FF/$FF; Blue:$7F/$FF; Alpha:$FF/$FF);
-  STEELBLUE           : TColor = (Red:$46/$FF; Green:$82/$FF; Blue:$B4/$FF; Alpha:$FF/$FF);
-  TAN                 : TColor = (Red:$D2/$FF; Green:$B4/$FF; Blue:$8C/$FF; Alpha:$FF/$FF);
-  TEAL                : TColor = (Red:$00/$FF; Green:$80/$FF; Blue:$80/$FF; Alpha:$FF/$FF);
-  THISTLE             : TColor = (Red:$D8/$FF; Green:$BF/$FF; Blue:$D8/$FF; Alpha:$FF/$FF);
-  TOMATO              : TColor = (Red:$FF/$FF; Green:$63/$FF; Blue:$47/$FF; Alpha:$FF/$FF);
-  TURQUOISE           : TColor = (Red:$40/$FF; Green:$E0/$FF; Blue:$D0/$FF; Alpha:$FF/$FF);
-  VIOLET              : TColor = (Red:$EE/$FF; Green:$82/$FF; Blue:$EE/$FF; Alpha:$FF/$FF);
-  WHEAT               : TColor = (Red:$F5/$FF; Green:$DE/$FF; Blue:$B3/$FF; Alpha:$FF/$FF);
-  WHITE               : TColor = (Red:$FF/$FF; Green:$FF/$FF; Blue:$FF/$FF; Alpha:$FF/$FF);
-  WHITESMOKE          : TColor = (Red:$F5/$FF; Green:$F5/$FF; Blue:$F5/$FF; Alpha:$FF/$FF);
-  YELLOW              : TColor = (Red:$FF/$FF; Green:$FF/$FF; Blue:$00/$FF; Alpha:$FF/$FF);
-  YELLOWGREEN         : TColor = (Red:$9A/$FF; Green:$CD/$FF; Blue:$32/$FF; Alpha:$FF/$FF);
-  BLANK               : TColor = (Red:$00;     Green:$00;     Blue:$00;     Alpha:$00);
-  WHITE2              : TColor = (Red:$F5/$FF; Green:$F5/$FF; Blue:$F5/$FF; Alpha:$FF/$FF);
-  RED2                : TColor = (Red:$7E/$FF; Green:$32/$FF; Blue:$3F/$FF; Alpha:255/$FF);
-  COLORKEY            : TColor = (Red:$FF/$FF; Green:$00;     Blue:$FF/$FF; Alpha:$FF/$FF);
-  OVERLAY1            : TColor = (Red:$00/$FF; Green:$20/$FF; Blue:$29/$FF; Alpha:$B4/$FF);
-  OVERLAY2            : TColor = (Red:$01/$FF; Green:$1B/$FF; Blue:$01/$FF; Alpha:255/$FF);
-  DIMWHITE            : TColor = (Red:$10/$FF; Green:$10/$FF; Blue:$10/$FF; Alpha:$10/$FF);
-  DARKSLATEBROWN      : TColor = (Red:30/255; Green:31/255; Blue:30/255; Alpha:1);
 {$ENDREGION}
+
+{$REGION 'Spark.Core'}
+const
+  EVENT_CMDCON_ACTIVE   = 10000;
+  EVENT_CMDCON_INACTIVE = 10001;
+
+type
+
+  { TSGT }
+  TSGT = class(TBaseObject)
+  protected
+    FCodePage: Cardinal;
+    FEvent: ALLEGRO_EVENT;
+    FQueue: PALLEGRO_EVENT_QUEUE;
+    FVoice: PALLEGRO_VOICE;
+    FMixer: PALLEGRO_MIXER;
+    FFileState: array[False..True] of ALLEGRO_STATE;
+    FFileInterface: array[False..True] of PALLEGRO_FILE_INTERFACE;
+    FUserEventSrc: ALLEGRO_EVENT_SOURCE;
+    FCmdConActive: ALLEGRO_EVENT;
+    FCmdConInactive: ALLEGRO_EVENT;
+    FLog: TLog;
+    FInput: TInput;
+    FWindow: TWindow;
+    FCmdConsole: TCmdConsole;
+    FAudio: TAudio;
+    FVideo: TVideo;
+    FScreenshake: TScreenshake;
+    FScreenshot: TScreenshot;
+    procedure Startup;
+    procedure Shutdown;
+  public
+    property Event: ALLEGRO_EVENT read FEvent write FEVent;
+    property Queue: PALLEGRO_EVENT_QUEUE read FQueue write FQueue;
+    property Voice: PALLEGRO_VOICE read FVoice write FVoice;
+    property Mixer: PALLEGRO_MIXER read FMixer write FMixer;
+    property Log: TLog read FLog;
+    property Window: TWindow read FWindow;
+    property Input: TInput read FInput;
+    property CmdConsole: TCmdConsole read FCmdConsole;
+    property Audio: TAudio read FAudio;
+    property Video: TVideo read FVideo;
+    property Screenshake: TScreenshake read FScreenshake;
+    property Screenshot: TScreenshot read FScreenshot;
+    constructor Create; override;
+    destructor Destroy; override;
+    procedure SetFileSandBoxed(aEnable: Boolean);
+    function  GetFileSandBoxed: Boolean;
+    procedure SetFileSandboxWriteDir(aPath: string);
+    function  GetFileSandboxWriteDir: string;
+    procedure EmitCmdConInactiveEvent;
+    procedure EmitCmdConActiveEvent;
+    procedure RunGame(aGame: TCustomGameClass);
+  end;
+
+var
+  SGT: TSGT = nil;
 
 {$ENDREGION}
 
 implementation
 
-// Spark ====================================================================
-{$REGION 'Spark'}
-
-{$R Spark.res}
-
-const
-  cDllResName = 'e3136f1c192b4647aef9607e5f996d93';
-  cDefaultFontResName = 'f6eab4cd6d2a41bd986d72e59a3f1942';
-
-procedure RunGame(aGame: TGameClass);
+{$REGION 'Spark.Math'}
 var
-  LGame: TGame;
-begin
-  ReportMemoryLeaksOnShutdown := True;
-
-  // Create game instance
-  LGame := aGame.Create;
-
-  // Validate instance
-  Assert(LGame <> nil);
-
-  // Run game instance
-  LGame.Run;
-
-  // Free game instance
-  LGame.Free;
-end;
-
-{ TColor }
-function TColor.FromByte(aRed: Byte; aGreen: Byte; aBlue: Byte; aAlpha: Byte): TColor;
-var
-  LColor: ALLEGRO_COLOR;
-begin
-  LColor := al_map_rgba(aRed, aGreen, aBlue, aAlpha);
-  Red := LColor.r;
-  Green := LColor.g;
-  Blue := LColor.b;
-  Alpha := LColor.a;
-  Result := Self;
-end;
-
-function TColor.FromFloat(aRed: Single; aGreen: Single; aBlue: Single; aAlpha: Single): TColor;
-var
-  LColor: ALLEGRO_COLOR;
-begin
-  LColor := al_map_rgba_f(aRed, aGreen, aBlue, aAlpha);
-  Red := LColor.r;
-  Green := LColor.g;
-  Blue := LColor.b;
-  Alpha := LColor.a;
-  Result := Self;
-end;
-
-function TColor.FromName(const aName: string): TColor;
-var
-  LColor: ALLEGRO_COLOR absolute Result;
-begin
-  LColor := al_color_name(PAnsiChar(AnsiString(aName)));
-  Red := LColor.r;
-  Green := LColor.g;
-  Blue := LColor.b;
-  Alpha := LColor.a;
-  Result := Self;
-end;
-
-function TColor.Fade(aTo: TColor; aPos: Single): TColor;
-var
-  LColor: TColor;
-begin
-  // clip to ranage 0.0 - 1.0
-  if aPos < 0 then
-    aPos := 0
-  else if aPos > 1.0 then
-    aPos := 1.0;
-
-  // fade colors
-  LColor.Alpha := Alpha + ((aTo.Alpha - Alpha) * aPos);
-  LColor.Blue := Blue + ((aTo.Blue - Blue) * aPos);
-  LColor.Green := Green + ((aTo.Green - Green) * aPos);
-  LColor.Red := Red + ((aTo.Red - Red) * aPos);
-  Result := FromFloat(LColor.Red, LColor.Green, LColor.Blue, LColor.Alpha);
-end;
-
-function TColor.Equal(aColor: TColor): Boolean;
-begin
-  if (Red = aColor.Red) and (Green = aColor.Green) and
-    (Blue = aColor.Blue) and (Alpha = aColor.Alpha) then
-    Result := True
-  else
-    Result := False;
-end;
+  mCosTable: array [0 .. 360] of Single;
+  mSinTable: array [0 .. 360] of Single;
 
 { TVector }
 constructor TVector.Create(aX, aY: Single);
@@ -3901,10 +4458,10 @@ var
 begin
   LA := aAngle + 90.0;
 
-  Game.ClipValue(LA, 0, 360, True);
+  ClipValue(LA, 0, 360, True);
 
-  X := X + Game.AngleCos(Round(LA)) * -(aSpeed);
-  Y := Y + Game.AngleSin(Round(LA)) * -(aSpeed);
+  X := X + AngleCos(Round(LA)) * -(aSpeed);
+  Y := Y + AngleSin(Round(LA)) * -(aSpeed);
 end;
 
 function  TVector.MagnitudeSquared: Single;
@@ -3990,3739 +4547,6 @@ begin
   Result := (X < LR2R) and (LR1R > aRect.X) and (Y < LR2B) and (LR1B > aRect.Y);
 end;
 
-{ TJoystick }
-procedure TJoystick.Setup(aNum: Integer);
-var
-  LJoyCount: Integer;
-  LJoy: PALLEGRO_JOYSTICK;
-  LJoyState: ALLEGRO_JOYSTICK_STATE;
-  LI, LJ: Integer;
-begin
-  LJoyCount := al_get_num_joysticks;
-  if (aNum < 0) or (aNum > LJoyCount - 1) then
-    Exit;
-
-  LJoy := al_get_joystick(aNum);
-  if LJoy = nil then
-  begin
-    Sticks := 0;
-    Buttons := 0;
-    Exit;
-  end;
-
-  Name := string(al_get_joystick_name(LJoy));
-
-  al_get_joystick_state(LJoy, @LJoyState);
-
-  Sticks := al_get_joystick_num_sticks(LJoy);
-  if (Sticks > MAX_STICKS) then
-    Sticks := MAX_STICKS;
-
-  for LI := 0 to Sticks - 1 do
-  begin
-    StickName[LI] := string(al_get_joystick_stick_name(LJoy, LI));
-    Axes[LI] := al_get_joystick_num_axes(LJoy, LI);
-    for LJ := 0 to Axes[LI] - 1 do
-    begin
-      Pos[LI, LJ] := LJoyState.stick[LI].axis[LJ];
-      AxesName[LI, LJ] := string(al_get_joystick_axis_name(LJoy, LI, LJ));
-    end;
-  end;
-
-  Buttons := al_get_joystick_num_buttons(LJoy);
-  if (Buttons > MAX_BUTTONS) then
-    Buttons := MAX_BUTTONS;
-
-  for LI := 0 to Buttons - 1 do
-  begin
-    ButtonName[LI] := string(al_get_joystick_button_name(LJoy, LI));
-    Button[0, LI] := Boolean(LJoyState.Button[LI] >= 16384);
-  end
-end;
-
-function TJoystick.GetPos(aStick: Integer; aAxes: Integer): Single;
-begin
-  Result := Pos[aStick, aAxes];
-end;
-
-function TJoystick.GetButton(aButton: Integer): Boolean;
-begin
-  Result := Button[0, aButton];
-end;
-
-procedure TJoystick.Clear;
-begin
-  FillChar(Button, SizeOf(Button), False);
-  FillChar(Pos, SizeOf(Pos), 0);
-end;
-
-{ TBaseObject }
-constructor TBaseObject.Create;
-begin
-  inherited;
-end;
-
-destructor TBaseObject.Destroy;
-begin
-  inherited;
-end;
-
-{ TList }
-function TList.OutOfBounds(aIndex: Integer): Boolean;
-begin
-  if (aIndex < 0) or (aIndex >= FCount) then
-    Result := True
-  else
-    Result := False;
-end;
-
-function TList.GetItem(aIndex: Integer): Pointer;
-begin
-  Result := nil;
-  if OutOfBounds(aIndex) then Exit;
-  Result := FItems[aIndex];
-end;
-
-procedure TList.SetItem(aIndex: Integer; aValue: Pointer);
-begin
-  if OutOfBounds(aIndex) then Exit;
-  FItems[aIndex] := aValue;
-end;
-
-constructor TList.Create;
-begin
-  inherited;
-  Init;
-end;
-
-destructor TList.Destroy;
-begin
-  Clear;
-  inherited;
-end;
-
-procedure TList.Init(aCapacity: Integer = 1);
-begin
-  FItems := nil;
-  FCount := 0;
-  FCapacity := aCapacity;
-end;
-
-procedure TList.Clear;
-begin
-  FItems := nil;
-  FCount := 0;
-end;
-
-function TList.IndexOf(aItem: Pointer): Integer;
-var
-  I : Integer;
-begin
-  for I := 0 to FCount - 1 do
-    if FItems[i] = aItem then
-    begin
-      Result := I;
-      Exit;
-    end;
-  Result := -1;
-end;
-
-function TList.Add(aItem: Pointer): Integer;
-begin
-  if FCount mod FCapacity = 0 then
-    SetLength(FItems, Length(FItems) + FCapacity);
-  FItems[FCount] := aItem;
-  Result := FCount;
-  Inc(FCount);
-end;
-
-function TList.Delete(aIndex: Integer): Pointer;
-begin
-  Result := nil;
-  if OutOfBounds(aIndex) then Exit;
-  Result := FItems[aIndex];
-  Move(FItems[aIndex + 1], FItems[aIndex], (FCount - aIndex - 1) * SizeOf(FItems[0]));
-  Dec(FCount);
-  if Length(FItems) - FCount + 1 > FCapacity then
-    SetLength(FItems, Length(FItems) - FCapacity);
-end;
-
-procedure TList.Insert(aIndex: Integer; aItem: Pointer);
-begin
-  if OutOfBounds(aIndex) then Exit;
-  Add(nil);
-  Move(FItems[aIndex], FItems[aIndex + 1], (FCount - aIndex - 1) * SizeOf(FItems[0]));
-  FItems[aIndex] := aItem;
-end;
-
-procedure TList.Sort(aCompareFunc: TListCompareFunc);
-  procedure SortFragment(L, R: LongInt);
-  var
-    i, j : Integer;
-    P, T : Pointer;
-  begin
-    repeat
-      i := L;
-      j := R;
-      P := FItems[(L + R) div 2];
-      repeat
-        while aCompareFunc(FItems[i], P) < 0 do
-          Inc(i);
-        while aCompareFunc(FItems[j], P) > 0 do
-          Dec(j);
-        if i <= j then
-        begin
-          T := FItems[i];
-          FItems[i] := FItems[j];
-          FItems[j] := T;
-          Inc(i);
-          Dec(j);
-        end;
-      until i > j;
-      if L < j then
-        SortFragment(L, j);
-      L := i;
-    until i >= R;
-  end;
-
-begin
-  if FCount > 1 then
-    SortFragment(0, FCount - 1);
-end;
-
-{ TStringList }
-function TStringList.OutOfBounds(aIndex: Integer): Boolean;
-begin
-  if (aIndex < 0) or (aIndex >= FCount) then
-    Result := True
-  else
-    Result := False;
-end;
-
-function TStringList.GetItem(aIndex: Integer): string;
-begin
-  Result := '';
-  if OutOfBounds(aIndex) then Exit;
-  Result := FItems[aIndex];
-end;
-
-procedure TStringList.SetItem(aIndex: Integer; aValue: string);
-begin
-  if OutOfBounds(aIndex) then Exit;
-  FItems[aIndex] := aValue;
-end;
-
-constructor TStringList.Create;
-begin
-  inherited;
-  Init;
-end;
-
-destructor TStringList.Destroy;
-begin
-  Clear;
-  inherited;
-end;
-
-procedure TStringList.Init(aCapacity: Integer);
-begin
-  FItems := nil;
-  FCount := 0;
-  FCapacity := aCapacity;
-end;
-
-procedure TStringList.Clear;
-begin
-  FItems := nil;
-  FCount := 0;
-end;
-
-function TStringList.IndexOf(aItem: string): Integer;
-var
-  I : Integer;
-begin
-  for I := 0 to FCount - 1 do
-    if FItems[i] = aItem then
-    begin
-      Result := I;
-      Exit;
-    end;
-  Result := -1;
-end;
-
-function TStringList.Add(aItem: string): Integer;
-begin
-  if FCount mod FCapacity = 0 then
-    SetLength(FItems, Length(FItems) + FCapacity);
-  FItems[FCount] := aItem;
-  Result := FCount;
-  Inc(FCount);
-end;
-
-(*
-procedure TStringList.Delete(Index: Integer);
-var
-  Obj: TObject;
-begin
-  if (Index < 0) or (Index >= FCount) then Error(@SListIndexError, Index);
-  Changing;
-  // If this list owns its objects then free the associated TObject with this index
-  if OwnsObjects then
-    Obj := FList[Index].FObject
-  else
-    Obj := nil;
-
-  // Direct memory writing to managed array follows
-  //  see http://dn.embarcadero.com/article/33423
-  // Explicitly finalize the element we about to stomp on with move
-  Finalize(FList[Index]);
-  Dec(FCount);
-  if Index < FCount then
-  begin
-    System.Move(FList[Index + 1], FList[Index],
-      (FCount - Index) * SizeOf(TStringItem));
-    // Make sure there is no danglng pointer in the last (now unused) element
-    PPointer(@FList[FCount].FString)^ := nil;
-    PPointer(@FList[FCount].FObject)^ := nil;
-  end;
-  if Obj <> nil then
-    Obj.Free;
-  Changed;
-end;
-*)
-
-(*
-function TStringList.Delete(aIndex: Integer): string;
-begin
-  Result := '';
-  if OutOfBounds(aIndex) then Exit;
-  Result := FItems[aIndex];
-  Finalize(FItems[aIndex]);
-  Move(FItems[aIndex + 1], FItems[aIndex], (FCount - aIndex) * SizeOf(FItems[0]));
-  Dec(FCount);
-  if Length(FItems) - FCount + 1 > FCapacity then
-    SetLength(FItems, Length(FItems) - FCapacity);
-end;
-*)
-
-function TStringList.Delete(aIndex: Integer): string;
-begin
-  Result := '';
-  if OutOfBounds(aIndex) then Exit;
-  Result := FItems[aIndex];
-  Finalize(FItems[aIndex]);
-  Dec(FCount);
-  Move(FItems[aIndex + 1], FItems[aIndex], (FCount - aIndex-1) * SizeOf(FItems[0]));
-  if Length(FItems) - FCount + 1 > FCapacity then
-    SetLength(FItems, Length(FItems) - FCapacity);
-end;
-
-procedure TStringList.Insert(aIndex: Integer; aItem: string);
-begin
-  if OutOfBounds(aIndex) then Exit;
-  Add('');
-  Move(FItems[aIndex], FItems[aIndex + 1], (FCount - aIndex - 1) * SizeOf(FItems[0]));
-  FItems[aIndex] := aItem;
-end;
-
-procedure TStringList.Sort(aCompareFunc: TStringListCompareFunc);
-  procedure SortFragment(L, R: LongInt);
-  var
-    i, j : Integer;
-    P, T : string;
-  begin
-    repeat
-      i := L;
-      j := R;
-      P := FItems[(L + R) div 2];
-      repeat
-        while aCompareFunc(FItems[i], P) < 0 do
-          Inc(i);
-        while aCompareFunc(FItems[j], P) > 0 do
-          Dec(j);
-        if i <= j then
-        begin
-          T := FItems[i];
-          FItems[i] := FItems[j];
-          FItems[j] := T;
-          Inc(i);
-          Dec(j);
-        end;
-      until i > j;
-      if L < j then
-        SortFragment(L, j);
-      L := i;
-    until i >= R;
-  end;
-
-begin
-  if FCount > 1 then
-    SortFragment(0, FCount - 1);
-end;
-
-function TStringList.AddPair(const aName, aValue: string): TStringList;
-begin
-  Add(aName + '=' + aValue);
-  Result := Self;
-end;
-
-function TStringList.GetKey(aIndex: Integer): string;
-var
-  P: Integer;
-begin
-  Result := '';
-  if OutOfBounds(aIndex) then Exit;
-  Result := GetItem(aIndex);
-  P := Pos('=', Result);
-  if P <> 0 then
-    SetLength(Result, P-1);
-end;
-
-function TStringList.GetValue(aIndex: Integer): string;
-var
-  P: Integer;
-begin
-  Result := '';
-  if OutOfBounds(aIndex) then Exit;
-  Result := GetItem(aIndex);
-  P := Pos('=', Result);
-  if P > 0 then
-    System.Delete(Result, 1, P);
-end;
-
-{ TArchive }
-constructor TArchive.Create;
-begin
-  inherited;
-end;
-
-destructor TArchive.Destroy;
-begin
-  Close;
-  inherited;
-end;
-
-function TArchive.IsOpen: Boolean;
-begin
-  Result := FIsOpen;
-end;
-
-function TArchive.Open(const aPassword: string; const aFilename: string): Boolean;
-begin
-  Result := False;
-  if FIsOpen then Exit;
-  if not Game.FileExist(aFilename) then Exit;
-  Result := Boolean(PHYSFS_mount(PAnsiChar(AnsiString(aFilename)), nil, 1) <> 0);
-  if Result then
-  begin
-    FPassword := aPassword;
-    FFilename := aFilename;
-    FPasswordFilename := '';
-    FIsOpen := True;
-  end;
-end;
-
-function TArchive.Close: Boolean;
-begin
-  Result := False;
-  if not FIsOpen then Exit;
-  Result := Boolean(PHYSFS_unmount(PAnsiChar(AnsiString(FFilename))) <> 0);
-  if Result then
-  begin
-    FIsOpen := False;
-    FFilename := '';
-    FPassword := '';
-    FPasswordFilename := '';
-  end;
-end;
-
-function TArchive.FileExist(const aFilename: string): Boolean;
-var
-  LSandBoxed: Boolean;
-begin
-  LSandBoxed := Game.GetFileSandBoxed;
-  Game.SetFileSandBoxed(True);
-  Result := al_filename_exists(PAnsiChar(AnsiString(aFilename)));
-  Game.SetFileSandBoxed(LSandBoxed);
-end;
-
-function TArchive.GetPasswordFilename(const aFilename: string): PAnsiChar;
-begin
-  if FPassword = '' then
-    FPasswordFilename := aFilename
-  else
-    FPasswordFilename := aFilename + '$' + FPassword;
-  Result := PAnsiChar(AnsiString(FPasswordFilename));
-end;
-
-function TArchive.GetCRC32(aStream: PALLEGRO_FILE): Cardinal;
-var
-  LBytesRead: NativeUInt;
-  LBuffer: array of Byte;
-  LSandboxed: Boolean;
-begin
-  SetLength(LBuffer, 65521);
-  LSandboxed := Game.GetFileSandBoxed;
-  Game.SetFileSandBoxed(False);
-
-  Result := Crc32(0, nil, 0);
-  repeat
-    //LBytesRead := AStream.Read(LBuffer[0], Length(LBuffer));
-    LBytesRead := al_fread(aStream, @LBuffer[0], Length(LBuffer));
-    Result := Crc32(Result, @LBuffer[0], LBytesRead);
-  //until LBytesRead = 0;
-  until al_feof(aStream);
-  Game.SetFileSandBoxed(LSandboxed);
-
-  LBuffer := nil;
-end;
-
-function TArchive.Build(const aPassword: string; const aFilename: string; const aDirectory: string; aOnProgress: TArchiveBuildProgressEvent): Boolean;
-var
-  LFileList: TStringArray;
-  LFilename: string;
-  LZipFile: zipFile;
-  LZipFileInfo: zip_fileinfo;
-  LFile: PALLEGRO_FILE;
-  LCrc: Cardinal;
-  LBytesRead: Integer;
-  LBuffer: array of Byte;
-  LFileSize: Int64;
-  LProgress: Single;
-  LNewFile: Boolean;
-  LSandboxed: Boolean;
-begin
-  Result := False;
-
-  // check if directory exists
-  if not Game.DirExist(aDirectory) then Exit;
-
-  LSandboxed := Game.GetFileSandBoxed;
-  Game.SetFileSandBoxed(False);
-
-  // init variabls
-  SetLength(LBuffer, 1024*4);
-  FillChar(LZipFileInfo, SizeOf(LZipFileInfo), 0);
-
-  // scan folder and build file list
-  //LFileList := TDirectory.GetFiles(aDirectory, '*', TSearchOption.soAllDirectories);
-  LFileList := Game.GetFiles(aDirectory, True);
-
-  // create a zip file
-  LZipFile := zipOpen(PAnsiChar(AnsiString(aFilename)), APPEND_STATUS_CREATE);
-
-  // process zip file
-  if LZipFile <> nil then
-  begin
-    // loop through all files in list
-    for LFilename in LFileList do
-    begin
-      // open file
-      //LFile := TFile.OpenRead(LFilename);
-      LFile := al_fopen(PAnsiChar(AnsiString(LFilename)), 'rb');
-
-      // get file size
-      //LFileSize := LFile.Size;
-      LFileSize := al_fsize(LFile);
-
-      // get file crc
-      LCrc := GetCRC32(LFile);
-
-      // open new file in zip
-      if ZipOpenNewFileInZip3(LZipFile, PAnsiChar(AnsiString(LFilename)),
-        @LZipFileInfo, nil, 0, nil, 0, '',  Z_DEFLATED, 9, 0, 15, 9,
-        Z_DEFAULT_STRATEGY, PAnsiChar(AnsiString(aPassword)), LCrc) = Z_OK then
-      begin
-        // make sure we start at star of stream
-        //LFile.Position := 0;
-        al_fseek(LFile, 0, ALLEGRO_SEEK_SET);
-
-        // this is a new file
-        LNewFile := True;
-
-        // read through file
-        repeat
-          // read in a buffer length of file
-          //LBytesRead := LFile.Read(LBuffer[0], Length(LBuffer));
-          LBytesRead := al_fread(LFile, @LBuffer[0], Length(LBuffer));
-
-          // write buffer out to zip file
-          zipWriteInFileInZip(LZipFile, @LBuffer[0], LBytesRead);
-
-          // calc file progress percentage
-          //LProgress := 100.0 * (LFile.Position / LFileSize);
-          LProgress := 100.0 * (al_ftell(LFile) / LFileSize);
-          // show progress
-          if Assigned(aOnProgress) then
-            aOnProgress(LFilename, Round(LProgress), LNewFile);
-
-          // reset new file flag
-          LNewFile := False;
-        until LBytesRead = 0;
-
-        // close file in zip
-        zipCloseFileInZip(LZipFile);
-
-        // free file stream
-        //FreeAndNil(LFile);
-        al_fclose(LFile);
-      end;
-    end;
-
-    // close zip file
-    zipClose(LZipFile, '');
-  end;
-
-  // return true if new zip file exits
-  Result := Game.FileExist(aFilename);
-
-  Game.SetFileSandBoxed(LSandboxed);
-end;
-
-{ TFont }
-constructor TFont.Create;
-begin
-  inherited;
-  FHandle := nil;
-  FFilename := '';
-  FSize := 0;
-  LoadBuiltIn;
-end;
-
-destructor TFont.Destroy;
-begin
-  Unload;
-  inherited;
-end;
-
-function TFont.LoadBuiltIn: Boolean;
-var
-  LHandle: PALLEGRO_FONT;
-begin
-  Result := False;
-  if FHandle <> nil then Exit;
-  al_set_new_bitmap_flags(ALLEGRO_MIN_LINEAR or ALLEGRO_MAG_LINEAR or ALLEGRO_MIPMAP or ALLEGRO_VIDEO_BITMAP);
-  LHandle := al_create_builtin_font;
-  if LHandle = nil then Exit;
-
-  Unload;
-  FHandle := LHandle;
-  FFilename := '';
-  FSize := 8;
-
-  Result := True;
-end;
-
-function TFont.LoadDefault(aSize: Cardinal): Boolean;
-var
-  LMemFile: PALLEGRO_FILE;
-  LHandle: PALLEGRO_FONT;
-  LHResInfo: THandle;
-  LHGlobal: THandle;
-  LBuff: Pointer;
-  LSize: DWORD;
-begin
-  Result := False;
-  if aSize = 0 then Exit;
-
-  LHResInfo := FindResource(HInstance, cDefaultFontResName, RT_RCDATA);
-  if LHResInfo = 0 then Exit;
-  LHGlobal := LoadResource(HInstance, LHResInfo);
-  if LHGlobal = 0 then Exit;
-  LBuff := LockResource(LHGlobal);
-  LSize := SizeOfResource(HInstance, LHResInfo);
-
-  LMemFile := al_open_memfile(LBuff, LSize, 'rb');
-  if LMemFile = nil then
-  begin
-    FreeResource(LHGlobal);
-    Exit;
-  end;
-
-  al_set_new_bitmap_flags(ALLEGRO_MIN_LINEAR or ALLEGRO_MAG_LINEAR or ALLEGRO_MIPMAP or ALLEGRO_VIDEO_BITMAP);
-  LHandle := al_load_ttf_font_f(LMemFile, '', -aSize, 0);
-  if LHandle = nil then
-  begin
-    al_fclose(LMemFile);
-    FreeResource(LHGlobal);
-    Exit;
-  end;
-  FreeResource(LHGlobal);
-
-  Unload;
-  FHandle := LHandle;
-  FFilename := '';
-  FSize := aSize;
-
-end;
-
-function TFont.Load(aArchive: TArchive; aSize: Cardinal; aFilename: string): Boolean;
-var
-  LFilename: string;
-  LHandle: PALLEGRO_FONT;
-  LSandBoxed: Boolean;
-begin
-  Result := False;
-  if FHandle = nil then Exit;
-  if aFilename = '' then Exit;
-  if aSize = 0 then Exit;
-
-  if aArchive <> nil then
-    begin
-      if not aArchive.IsOpen then Exit;
-      if not aArchive.FileExist(aFilename) then
-      begin
-        //GV.Logger.Log('Failed to load font file: %s', [aFilename]);
-        Exit;
-      end;
-      LFilename := string(aArchive.GetPasswordFilename(aFilename));
-    end
-  else
-    begin
-      if not Game.FileExist(aFilename) then
-      begin
-        //GV.Logger.Log('Failed to load font file: %s', [aFilename]);
-        Exit;
-      end;
-      LFilename := aFilename;
-    end;
-
-  al_set_new_bitmap_flags(ALLEGRO_MIN_LINEAR or ALLEGRO_MAG_LINEAR or ALLEGRO_MIPMAP or ALLEGRO_VIDEO_BITMAP);
-  LSandBoxed := Game.GetFileSandBoxed;
-  if aArchive = nil then Game.SetFileSandBoxed(False);
-  LHandle := al_load_ttf_font(PAnsiChar(AnsiString(LFilename)), -aSize, 0);
-  if aArchive = nil then Game.SetFileSandBoxed(LSandBoxed);
-  if LHandle = nil then
-  begin
-    Exit;
-    //GV.Logger.Log('Failed to load font file: %s', [aFilename]);
-  end;
-
-  Unload;
-  //GV.Logger.Log('Sucessfully loaded texture file: "%s"', [aFilename]);
-  FHandle := LHandle;
-  FFilename := aFilename;
-  FSize := aSize;
-end;
-
-function TFont.Unload: Boolean;
-begin
-  Result := False;
-  if FHandle = nil then Exit;
-  al_destroy_font(FHandle);
-  //if not FFilename.IsEmpty then
-  //  GV.Logger.Log('Unloaded font file: "%s"', [FFilename]);
-  FHandle := nil;
-  FFilename := '';
-  FSize := 0;
-  Result := True;
-end;
-
-procedure TFont.PrintText(aX: Single; aY: Single; aColor: TColor; aAlign: THAlign; const aMsg: string; const aArgs: array of const);
-var
-  LUstr: PALLEGRO_USTR;
-  LColor: ALLEGRO_COLOR absolute aColor;
-  LText: string;
-begin
-  if FHandle = nil then Exit;
-  if aMsg = '' then Exit;
-  LText := Game.FormatStr(aMsg, aArgs);
-  LUstr := al_ustr_new_from_utf16(PUInt16(PChar(LText)));
-  //al_draw_ustr(FHandle, LColor, aX, aY, Ord(aAlign) or ALLEGRO_ALIGN_INTEGER, LUstr);
-  al_draw_ustr(FHandle, LColor, aX, aY, Ord(aAlign), LUstr);
-  al_ustr_free(LUstr);
-end;
-
-procedure TFont.PrintText(aX: Single; var aY: Single; aLineSpace: Single; aColor: TColor; aAlign: THAlign; const aMsg: string; const aArgs: array of const);
-begin
-  if FHandle = nil then Exit;
-  PrintText(aX, aY, aColor, aAlign, aMsg, aArgs);
-  aY := aY + GetLineHeight + aLineSpace;
-end;
-
-procedure TFont.PrintText(aX: Single; aY: Single; aColor: TColor; aAngle: Single; const aMsg: string; const aArgs: array of const);
-var
-  LUstr: PALLEGRO_USTR;
-  LFX, LFY: Single;
-  LTR: ALLEGRO_TRANSFORM;
-  LColor: ALLEGRO_COLOR absolute aColor;
-  LTrans: ALLEGRO_TRANSFORM;
-  LText: string;
-begin
-  if FHandle = nil then Exit;
-  if aMsg = '' then Exit;
-  LText := Game.FormatStr(aMsg, aArgs);
-  LFX := GetTextWidth(LText, []) / 2;
-  LFY := GetLineHeight / 2;
-  al_identity_transform(@LTR);
-  al_translate_transform(@LTR, -LFX, -LFY);
-  al_rotate_transform(@LTR, aAngle * DEG2RAD);
-  Game.AngleRotatePos(aAngle, LFX, LFY);
-  al_translate_transform(@LTR, aX + LFX, aY + LFY);
-  LTrans := Game.Window.Transform;
-  al_compose_transform(@LTR, @LTrans);
-  al_use_transform(@LTR);
-  LUstr := al_ustr_new_from_utf16(PUInt16(PChar(LText)));
-  al_draw_ustr(FHandle, LColor, 0, 0, ALLEGRO_ALIGN_LEFT or ALLEGRO_ALIGN_INTEGER, LUstr);
-  al_ustr_free(LUstr);
-  LTrans := Game.Window.Transform;
-  al_use_transform(@LTrans);
-end;
-
-
-function  TFont.GetTextWidth(const aMsg: string; const aArgs: array of const): Single;
-var
-  LUstr: PALLEGRO_USTR;
-  LText: string;
-begin
-  Result := 0;
-  if FHandle = nil then Exit;
-  if aMsg = '' then Exit;
-  LText := Game.FormatStr(aMsg, aArgs);
-  LUstr := al_ustr_new_from_utf16(PUInt16(PChar(LText)));
-  Result := al_get_ustr_width(FHandle, LUstr);
-  al_ustr_free(LUstr);
-end;
-
-function  TFont.GetLineHeight: Single;
-begin
-  Result := 0;
-  if FHandle = nil then Exit;
-  Result := al_get_font_line_height(FHandle);
-end;
-
-{ TTexture }
-constructor TTexture.Create;
-begin
-  inherited;
-end;
-
-destructor TTexture.Destroy;
-begin
-  Unload;
-  inherited;
-end;
-
-function  TTexture.Allocate(aWidth: Integer; aHeight: Integer): Boolean;
-var
-  LHandle: PALLEGRO_BITMAP;
-begin
-  Result := False;
-  al_set_new_bitmap_flags(ALLEGRO_MIN_LINEAR or ALLEGRO_MAG_LINEAR or ALLEGRO_MIPMAP or ALLEGRO_VIDEO_BITMAP);
-  LHandle := al_create_bitmap(aWidth, aHeight);
-  if LHandle = nil then Exit;
-  Unload;
-  FHandle := LHandle;
-  FWidth := al_get_bitmap_width(FHandle);
-  FHeight := al_get_bitmap_height(FHandle);
-  FFilename := '';
-  //GV.Logger.Log('Sucessfully allocated texture (%d:%d)', [Round(FWidth), Round(FHeight)]);
-  Result := True;
-end;
-
-function  TTexture.Load(aArchive: TArchive; const aFilename: string; aColorKey: PColor): Boolean;
-var
-  LHandle: PALLEGRO_BITMAP;
-  LFilename: string;
-  LColorKey: PALLEGRO_COLOR absolute aColorKey;
-  LSandboxed: Boolean;
-begin
-  Result := False;
-  if aFilename = '' then Exit;
-
-  if aArchive <> nil then
-    begin
-      if not aArchive.IsOpen then Exit;
-      if not aArchive.FileExist(aFilename) then Exit;
-      LFilename := string(aArchive.GetPasswordFilename(aFilename));
-    end
-  else
-    begin
-      if not Game.FileExist(aFilename) then Exit;
-      LFilename := aFilename;
-    end;
-  LSandBoxed := Game.GetFileSandBoxed;
-  if aArchive = nil then Game.SetFileSandBoxed(False);
-  LHandle := al_load_bitmap(PAnsiChar(AnsiString(LFilename)));
-  if aArchive = nil then Game.SetFileSandBoxed(LSandBoxed);
-  if LHandle = nil then
-  begin
-    //GV.Logger.Log('Failed to load texture file: %s', [aFilename]);
-    Exit;
-  end;
-
-  Unload;
-  FHandle := LHandle;
-  FWidth := al_get_bitmap_width(FHandle);
-  FHeight := al_get_bitmap_height(FHandle);
-  FFilename := aFilename;
-
-  if aColorKey <> nil then
-    al_convert_mask_to_alpha(FHandle, LColorKey^);
-
-  //GV.Logger.Log('Sucessfully loaded texture file: "%s"', [aFilename]);
-
-  Result := True;
-end;
-
-function TTexture.Unload: Boolean;
-begin
-  Result := False;
-  if FHandle = nil then Exit;
-  al_destroy_bitmap(FHandle);
-//  if FFilename.IsEmpty then
-//    GV.Logger.Log('Unloaded allocated texture (%d:%d)', [Round(FWidth), Round(FHeight)])
-//  else
-//    GV.Logger.Log('Unloaded texture file: "%s"', [FFilename]);
-  FHandle := nil;
-  FWidth := 0;
-  FHeight := 0;
-  FLocked := False;
-  FFilename := '';
-end;
-
-function TTexture.Lock(aRegion: PRectangle; aData: PTextureData): Boolean;
-var
-  LLock: PALLEGRO_LOCKED_REGION;
-begin
-  Result := False;
-
-  if FLocked then Exit;
-  if FHandle = nil then Exit;
-
-  LLock := nil;
-  if not FLocked then
-  begin
-    if aRegion <> nil then
-      begin
-        LLock := al_lock_bitmap_region(FHandle, Round(aRegion.X), Round(aRegion.Y), Round(aRegion.Width), Round(aRegion.Height), ALLEGRO_PIXEL_FORMAT_ANY, ALLEGRO_LOCK_READWRITE);
-        if LLock = nil then Exit;
-        FLockedRegion.X := aRegion.X;
-        FLockedRegion.Y := aRegion.Y;
-        FLockedRegion.Width := aRegion.Width;
-        FLockedRegion.Height := aRegion.Height;
-      end
-    else
-      begin
-        LLock := al_lock_bitmap(FHandle, ALLEGRO_PIXEL_FORMAT_ANY, ALLEGRO_LOCK_READWRITE);
-        if LLock = nil then Exit;
-        FLockedRegion.X := 0;
-        FLockedRegion.Y := 0;
-        FLockedRegion.Width := FWidth;
-        FLockedRegion.Height := FHeight;
-      end;
-    FLocked := True;
-  end;
-
-  if LLock <> nil then
-  begin
-    if aData <> nil then
-    begin
-      aData.Memory := LLock.data;
-      aData.Format := LLock.format;
-      aData.Pitch := LLock.pitch;
-      aData.PixelSize := LLock.pixel_size;
-    end;
-  end;
-
-  Result := True;
-end;
-
-function TTexture.Unlock: Boolean;
-begin
-  Result := False;
-  if not FLocked then Exit;
-  if FHandle = nil then Exit;
-
-  al_unlock_bitmap(FHandle);
-  FLocked := False;
-  FLockedRegion.X := 0;
-  FLockedRegion.Y := 0;
-  FLockedRegion.Width := 0;
-  FLockedRegion.Height := 0;
-
-  Result := True;
-end;
-
-function  TTexture.GetPixel(aX: Integer; aY: Integer): TColor;
-var
-  LX,LY: Integer;
-  LResult: ALLEGRO_COLOR absolute Result;
-begin
-  Result := BLANK;
-  if FHandle = nil then Exit;
-  LX := Round(aX + FLockedRegion.X);
-  LY := Round(aY + FlockedRegion.Y);
-  LResult := al_get_pixel(FHandle, LX, LY);
-end;
-
-procedure TTexture.SetPixel(aX: Integer; aY: Integer; aColor: TColor);
-var
-  LX,LY: Integer;
-  LColor: ALLEGRO_COLOR absolute aColor;
-begin
-  if FHandle = nil then Exit;
-  LX := Round(aX + FLockedRegion.X);
-  LY := Round(aY + FlockedRegion.Y);
-  al_put_pixel(LX, LY, LColor);
-end;
-
-procedure TTexture.Draw(aX, aY: Single; aRegion: PRectangle; aCenter: PVector;  aScale: PVector; aAngle: Single; aColor: TColor; aHFlip: Boolean; aVFlip: Boolean);
-var
-  LA: Single;
-  LRG: TRectangle;
-  LCP: TVector;
-  LSC: TVector;
-  LC: ALLEGRO_COLOR absolute aColor;
-  LFlags: Integer;
-begin
-  if FHandle = nil then Exit;
-
-  // angle
-  LA := aAngle * DEG2RAD;
-  LA := Game.EnsureRange(LA, 0, 359);
-
-  // region
-  if Assigned(aRegion) then
-    begin
-      LRG.X := aRegion.X;
-      LRG.Y := aRegion.Y;
-      LRG.Width := aRegion.Width;
-      LRG.Height := aRegion.Height;
-    end
-  else
-    begin
-      LRG.X := 0;
-      LRG.Y := 0;
-      LRG.Width := FWidth;
-      LRG.Height := FHeight;
-    end;
-
-  if LRG.X < 0 then
-    LRG.X := 0;
-  if LRG.X > FWidth - 1 then
-    LRG.X := FWidth - 1;
-
-  if LRG.Y < 0 then
-    LRG.Y := 0;
-  if LRG.Y > FHeight - 1 then
-    LRG.Y := FHeight - 1;
-
-  if LRG.Width < 0 then
-    LRG.Width := 0;
-  if LRG.Width > FWidth then
-    LRG.Width := LRG.Width;
-
-  if LRG.Height < 0 then
-    LRG.Height := 0;
-  if LRG.Height > FHeight then
-    LRG.Height := LRG.Height;
-
-  // center
-  if Assigned(aCenter) then
-    begin
-      LCP.X := (LRG.Width * aCenter.X);
-      LCP.Y := (LRG.Height * aCenter.Y);
-    end
-  else
-    begin
-      LCP.X := 0;
-      LCP.Y := 0;
-    end;
-
-  // scale
-  if Assigned(aScale) then
-    begin
-      LSC.X := aScale.X;
-      LSC.Y := aScale.Y;
-    end
-  else
-    begin
-      LSC.X := 1;
-      LSC.Y := 1;
-    end;
-
-  // flags
-  LFlags := 0;
-  if aHFlip then LFlags := LFlags or ALLEGRO_FLIP_HORIZONTAL;
-  if aVFlip then LFlags := LFlags or ALLEGRO_FLIP_VERTICAL;
-
-  // render
-  al_draw_tinted_scaled_rotated_bitmap_region(FHandle, LRG.X, LRG.Y, LRG.Width, LRG.Height, LC, LCP.X, LCP.Y, aX, aY, LSC.X, LSC.Y, LA, LFlags);
-end;
-
-procedure TTexture.Draw(aX, aY, aScale, aAngle: Single; aColor: TColor; aHAlign: THAlign; aVAlign: TVAlign; aHFlip: Boolean; aVFlip: Boolean);
-var
-  LCenter: TVector;
-  LScale: TVector;
-begin
-  if FHandle = nil then Exit;
-
-  LCenter.X := 0;
-  LCenter.Y := 0;
-
-  LScale.X := aScale;
-  LScale.Y := aScale;
-
-  case aHAlign of
-    haLeft  : LCenter.X := 0;
-    haCenter: LCenter.X := 0.5;
-    haRight : LCenter.X := 1;
-  end;
-
-  case aVAlign of
-    vaTop   : LCenter.Y := 0;
-    vaCenter: LCenter.Y := 0.5;
-    vaBottom: LCenter.Y := 1;
-  end;
-
-  Draw(aX, aY, nil, @LCenter, @LScale, aAngle, aColor, aHFlip, aVFlip);
-end;
-
-procedure TTexture.DrawTiled(aDeltaX: Single; aDeltaY: Single);
-var
-  LW,LH    : Integer;
-  LOX,LOY  : Integer;
-  LPX,LPY  : Single;
-  LFX,LFY  : Single;
-  LTX,LTY  : Integer;
-  LVP      : TRectangle;
-  LVR,LVB  : Integer;
-  LIX,LIY  : Integer;
-begin
-  if FHandle = nil then Exit;
-
-  Game.GetWindowViewportSize(LVP);
-
-  LW := Round(FWidth);
-  LH := Round(FHeight);
-
-  LOX := -LW+1;
-  LOY := -LH+1;
-
-  LPX := aDeltaX;
-  LPY := aDeltaY;
-
-  LFX := LPX-Game.Floor(LPX);
-  LFY := LPY-Game.Floor(LPY);
-
-  LTX := Game.Floor(LPX)-LOX;
-  LTY := Game.Floor(LPY)-LOY;
-
-  if (LTX>=0) then LTX := LTX mod LW + LOX else LTX := LW - -LTX mod LW + LOX;
-  if (LTY>=0) then LTY := LTY mod LH + LOY else LTY := LH - -LTY mod LH + LOY;
-
-  LVR := Round(LVP.Width);
-  LVB := Round(LVP.Height);
-  LIY := LTY;
-
-  while LIY<LVB do
-  begin
-    LIX := LTX;
-    while LIX<LVR do
-    begin
-      al_draw_bitmap(FHandle, LIX+LFX, LIY+LFY, 0);
-      LIX := LIX+LW;
-    end;
-   LIY := LIY+LH;
-  end;
-end;
-
-{ TRenderTarget }
-constructor TRenderTarget.Create;
-begin
-  inherited;
-  FTexture := TTexture.Create;
-end;
-
-destructor TRenderTarget.Destroy;
-begin
-  Game.FreeNilObject(@FTexture);
-  inherited;
-end;
-
-procedure TRenderTarget.Init(aX, aY, aWidth, aHeight: Integer);
-begin
-  FTexture.Allocate(aWidth, aHeight);
-  FPosition.Assign(aX, aY);
-  FRegion.Assign(0, 0, FTexture.Width, FTexture.Height);
-  FAngle := 0;
-  FCenter.Assign(0.5, 0.5);
-end;
-
-function  TRenderTarget.GetActive: Boolean;
-begin
-  Result := FActive;
-end;
-
-procedure TRenderTarget.SetActive(aActive: Boolean);
-begin
-  if FTexture.Handle = nil then Exit;
-  if aActive then
-    begin
-      al_set_target_bitmap(FTexture.Handle);
-      Game.SetWindowRenderTarget(Self);
-      FActive := True;
-    end
-  else
-    begin
-      al_set_target_backbuffer(Game.Window.Handle);
-      Game.SetWindowRenderTarget(nil);
-      FActive := False;
-    end;
-end;
-
-procedure TRenderTarget.SetPosition(aX: Single; aY: Single);
-begin
-  FPosition.Assign(aX, aY);
-end;
-
-procedure TRenderTarget.GetPosition(var aPosition: TVector);
-begin
-  FPosition.Assign(0, 0);
-  if FTexture.Handle = nil then Exit;
-  aPosition := FPosition;
-end;
-
-procedure TRenderTarget.GetSize(var aSize: TRectangle);
-begin
-  aSize.Assign(0, 0, 0, 0);
-  if FTexture.Handle = nil then Exit;
-  aSize.Assign(FPosition.X, FPosition.Y, FTexture.Width, FTexture.Height);
-end;
-
-procedure TRenderTarget.SetRegion(aX: Single; aY: Single; aWidth: Single; aHeight: Single);
-begin
-  if FTexture.Handle = nil then Exit;
-  FRegion.Assign(aX, aY, aWidth, aHeight);
-end;
-
-procedure TRenderTarget.GetRegion(var aRegion: TRectangle);
-begin
-  aRegion.Assign(0, 0, 0, 0);
-  if FTexture.Handle = nil then Exit;
-  aRegion := FRegion;
-end;
-
-procedure TRenderTarget.SetAngle(aAngle: Single);
-begin
-  FAngle := aAngle;
-  if FAngle > 359 then
-    begin
-      while FAngle > 359 do
-      begin
-        FAngle := FAngle - 359;
-      end;
-    end
-  else
-  if FAngle < 0 then
-    begin
-      while FAngle < 0 do
-      begin
-        FAngle := FAngle + 359;
-      end;
-    end;
-end;
-
-function  TRenderTarget.GetAngle: Single;
-begin
-  Result := FAngle;
-end;
-
-procedure TRenderTarget.Show;
-begin
-  if FActive then
-    al_set_target_backbuffer(Game.Window.Handle);
-  FTexture.Draw(FPosition.X+(FTexture.Width/2), FPosition.Y+(FTexture.Height/2), @FRegion, @FCenter, nil, FAngle, WHITE);
-  if FActive then
-    al_set_target_bitmap(FTexture.Handle);
-end;
-
-{ TShader }
-constructor TShader.Create;
-begin
-  inherited;
-  FHandle := al_create_shader(ALLEGRO_SHADER_GLSL);
-  Clear;
-end;
-
-destructor TShader.Destroy;
-begin
-  Clear;
-  if FHandle <> nil then al_destroy_shader(FHandle);
-  FHandle := nil;
-  inherited;
-end;
-
-procedure TShader.Clear;
-begin
-  if FHandle = nil then Exit;
-  al_use_shader(nil);
-  al_attach_shader_source(FHandle, ALLEGRO_VERTEX_SHADER, nil);
-  al_attach_shader_source(FHandle, ALLEGRO_PIXEL_SHADER, nil);
-
-  al_attach_shader_source(FHandle, ALLEGRO_VERTEX_SHADER,
-    al_get_default_shader_source(ALLEGRO_SHADER_GLSL, ALLEGRO_VERTEX_SHADER));
-
-  al_attach_shader_source(FHandle, ALLEGRO_PIXEL_SHADER,
-    al_get_default_shader_source(ALLEGRO_SHADER_GLSL, ALLEGRO_PIXEL_SHADER));
-end;
-
-function TShader.Load(aType: TShaderType; const aSource: string): Boolean;
-begin
-  Result := False;
-  if FHandle = nil then Exit;
-  if aSource = '' then Exit;
-  al_attach_shader_source(FHandle, Ord(aType), nil);
-  Result := al_attach_shader_source(FHandle, Ord(aType), PAnsiChar(AnsiString(aSource)));
-//  if Result then
-//    GV.Logger.Log('Sucessfully attached shader source', [])
-//  else
-//    GV.Logger.Log('Failed to attached shader source', []);
-end;
-
-function TShader.Load(aArchive: TArchive; aType: TShaderType; const aFilename: string): Boolean;
-var
-  LSandBoxed: Boolean;
-begin
-  Result := False;
-  if FHandle = nil then Exit;
-  if aFilename = '' then Exit;
-
-  if aArchive <> nil then
-    begin
-      if not aArchive.IsOpen then Exit;
-      if not aArchive.FileExist(aFilename) then Exit;
-      al_attach_shader_source(FHandle, Ord(aType), nil);
-      if not al_attach_shader_source_file(FHandle, Ord(aType), aArchive.GetPasswordFilename(aFilename)) then
-      begin
-        //GV.Logger.Log('Failed to attached shader file: %s', [aFilename]);
-        Exit;
-      end;
-    end
-  else
-    begin   //ALLEGRO_PIXEL_SHADER
-      if not Game.FileExist(aFilename) then Exit;
-      LSandBoxed := Game.GetFileSandBoxed;
-      if aArchive = nil then Game.SetFileSandBoxed(False);
-      if not al_attach_shader_source_file(FHandle, Ord(aType), PAnsiChar(AnsiString(aFilename))) then
-      begin
-        //GV.Logger.Log('Failed to attached shader file: %s', [aFilename]);
-        Exit;
-      end;
-      if aArchive = nil then Game.SetFileSandBoxed(LSandBoxed);
-    end;
-
-  //GV.Logger.Log('Sucessfully attached shader file: "%s"', [aFilename]);
-  Result := True;
-end;
-
-function TShader.Build: Boolean;
-begin
-  Result := False;
-  if FHandle = nil then Exit;
-  Result := al_build_shader(FHandle);
-end;
-
-function TShader.Enable(aEnable: Boolean): Boolean;
-begin
-  Result := False;
-  if FHandle = nil then Exit;
-  if aEnable then
-    Result := al_use_shader(FHandle)
-  else
-    Result := al_use_shader(nil);
-end;
-
-function TShader.Log: string;
-begin
-  Result := '';
-  if FHandle = nil then Exit;
-  Result := string(al_get_shader_log(FHandle));
-end;
-
-function TShader.SetIntUniform(const aName: string; aValue: Integer): Boolean;
-begin
-  Result := False;
-  if aName = '' then Exit;
-  if FHandle = nil then Exit;
-  Result := al_set_shader_int(PAnsiChar(AnsiString(aName)), aValue);
-end;
-
-function TShader.SetIntUniform(const aName: string; aNumComponents: Integer; aValue: PInteger; aNumElements: Integer): Boolean;
-begin
-  Result := False;
-  if aName = '' then Exit;
-  if FHandle = nil then Exit;
-  Result := al_set_shader_int_vector(PAnsiChar(AnsiString(aName)), aNumComponents, aValue, aNumElements);
-end;
-
-function TShader.SetFloatUniform(const aName: string; aValue: Single): Boolean;
-begin
-  Result := False;
-  if aName = '' then Exit;
-  if FHandle = nil then Exit;
-  Result := al_set_shader_float(PAnsiChar(AnsiString(aName)), aValue);
-end;
-
-function TShader.SetFloatUniform(const aName: string; aNumComponents: Integer; aValue: System.PSingle; aNumElements: Integer): Boolean;
-begin
-  Result := False;
-  if aName = '' then Exit;
-  if FHandle = nil then Exit;
-  Result := al_set_shader_float_vector(PAnsiChar(AnsiString(aName)), aNumComponents, aValue, aNumElements);
-end;
-
-function TShader.SetBoolUniform(const aName: string; aValue: Boolean): Boolean;
-begin
-  Result := False;
-  if aName = '' then Exit;
-  if FHandle = nil then Exit;
-  Result := al_set_shader_bool(PAnsiChar(AnsiString(aName)), aValue);
-end;
-
-function TShader.SetTextureUniform(const aName: string; aTexture: TTexture): Boolean;
-begin
-  Result := False;
-  if aName = '' then Exit;
-  if FHandle = nil then Exit;
-  if aTexture = nil then Exit;
-  Result := al_set_shader_sampler(PAnsiChar(AnsiString(aName)), aTexture.Handle, 1);
-end;
-
-function TShader.SetVec2Uniform(const aName: string; aValue: TVector): Boolean;
-var
-  LVec2: array[0..1] of Single;
-begin
-  LVec2[0] := aValue.X;
-  LVec2[1] := aValue.Y;
-  Result := SetFloatUniform(aName, 2, @LVec2, 1);
-end;
-
-function TShader.SetVec2Uniform(const aName: string; aX: Single; aY: Single): Boolean;
-var
-  LVec2: array[0..1] of Single;
-begin
-  LVec2[0] := aX;
-  LVec2[1] := aY;
-  Result := SetFloatUniform(aName, 2, @LVec2, 1);
-end;
-
-{ TStarfield }
-procedure TStarfield.TransformDrawPoint(aX, aY, aZ: Single; aVPX, aVPY, aVPW, aVPH: Integer);
-var
-  LX, LY: Single;
-  LSize: Single;
-  LOOZ: Single;
-  LCV: byte;
-  LColor: TColor;
-
-  function IsVisible(vx, vy, vw, vh: Single): Boolean;
-  begin
-    Result := False;
-    if ((vx - vw) < 0) then Exit;
-    if (vx > (aVPW - 1)) then Exit;
-    if ((vy - vh) < 0) then Exit;
-    if (vy > (aVPH - 1)) then Exit;
-    Result := True;
-  end;
-
-begin
-  FViewScaleRatio := aVPW / aVPH;
-  FCenter.X := (aVPW / 2) + aVPX;
-  FCenter.Y := (aVPH / 2) + aVPY;
-
-  LOOZ := ((1.0 / aZ) * FViewScale);
-  LX := (FCenter.X - aVPX) - (aX * LOOZ) * FViewScaleRatio;
-  LY := (FCenter.Y - aVPY) + (aY * LOOZ) * FViewScaleRatio;
-  LSize := (1.0 * LOOZ);
-  if LSize < 2 then LSize := 2;
-
-  LX := LX - FVirtualPos.X;
-  LY := LY - FVirtualPos.Y;
-  if not IsVisible(LX, LY, LSize, LSize) then Exit;
-
-  LCV := round(255.0 - (((1.0 / FMax.Z) / (1.0 / aZ)) * 255.0));
-  LColor.FromByte(LCV, LCV, LCV, LCV);
-
-  Game.DrawFilledRectangle(LX, LY, LSize, LSize, LColor);
-end;
-
-constructor TStarfield.Create;
-begin
-  inherited;
-  Init(250, -1000, -1000, 10, 1000, 1000, 1000, 120);
-end;
-
-destructor TStarfield.Destroy;
-begin
-  Done;
-  inherited;
-end;
-
-procedure TStarfield.Init(aStarCount: Cardinal; aMinX, aMinY, aMinZ, aMaxX, aMaxY, aMaxZ, aViewScale: Single);
-var
-  LVPX, LVPY: Integer;
-  LVPW, LVPH: Integer;
-  LI: Integer;
-  LSize: TRectangle;
-begin
-  Done;
-
-  FStarCount := aStarCount;
-  SetLength(FStar, FStarCount);
-  Game.GetWindowViewportSize(LSize);
-  LVPX := Round(LSize.X);
-  LVPY := Round(LSize.Y);
-  LVPW := Round(LSize.Width);
-  LVPH := Round(LSize.Height);
-
-  FViewScale := aViewScale;
-  FViewScaleRatio := LVPW / LVPH;
-  FCenter.X := (LVPW / 2) + LVPX;
-  FCenter.Y := (LVPH / 2) + LVPY;
-  FCenter.Z := 0;
-
-  FMin.X := aMinX;
-  FMin.Y := aMinY;
-  FMin.Z := aMinZ;
-  FMax.X := aMaxX;
-  FMax.Y := aMaxY;
-  FMax.Z := aMaxZ;
-
-  for LI := 0 to FStarCount - 1 do
-  begin
-    FStar[LI].X := Game.RandomRange(FMin.X, FMax.X);
-    FStar[LI].Y := Game.RandomRange(FMin.Y, FMax.Y);
-    FStar[LI].Z := Game.RandomRange(FMin.Z, FMax.Z);
-  end;
-
-  SetXSpeed(0.0);
-  SetYSpeed(0.0);
-  SetZSpeed(-60*3);
-  SetVirtualPos(0, 0);
-end;
-
-procedure TStarfield.Done;
-begin
-  FStar := nil;
-end;
-
-procedure TStarfield.SetVirtualPos(aX, aY: Single);
-begin
-  FVirtualPos.X := aX;
-  FVirtualPos.Y := aY;
-  FVirtualPos.Z := 0;
-end;
-
-procedure TStarfield.GetVirtualPos(var aX: Single; var aY: Single);
-begin
-  aX := FVirtualPos.X;
-  aY := FVirtualPos.Y;
-end;
-
-procedure TStarfield.SetXSpeed(aSpeed: Single);
-begin
-  FSpeed.X := aSpeed;
-end;
-
-procedure TStarfield.SetYSpeed(aSpeed: Single);
-begin
-  FSpeed.Y := aSpeed;
-end;
-
-procedure TStarfield.SetZSpeed(aSpeed: Single);
-begin
-  FSpeed.Z := aSpeed;
-end;
-
-procedure TStarfield.Update(aDeltaTime: Single);
-var
-  LI: Integer;
-
-  procedure SetRandomPos(aIndex: Integer);
-  begin
-    FStar[aIndex].X := Game.RandomRange(FMin.X, FMax.X);
-    FStar[aIndex].Y := Game.RandomRange(FMin.Y, FMax.Y);
-    FStar[aIndex].Z := Game.RandomRange(FMin.Z, FMax.Z);
-  end;
-
-begin
-
-  for LI := 0 to FStarCount - 1 do
-  begin
-    FStar[LI].X := FStar[LI].X + (FSpeed.X * aDeltaTime);
-    FStar[LI].Y := FStar[LI].Y + (FSpeed.Y * aDeltaTime);
-    FStar[LI].Z := FStar[LI].Z + (FSpeed.Z * aDeltaTime);
-
-    if FStar[LI].X < FMin.X then
-    begin
-      SetRandomPos(LI);
-      FStar[LI].X := FMax.X;
-    end;
-
-    if FStar[LI].X > FMax.X then
-    begin
-      SetRandomPos(LI);
-      FStar[LI].X := FMin.X;
-    end;
-
-    if FStar[LI].Y < FMin.Y then
-    begin
-      SetRandomPos(LI);
-      FStar[LI].Y := FMax.Y;
-    end;
-
-    if FStar[LI].Y > FMax.Y then
-    begin
-      SetRandomPos(LI);
-      FStar[LI].Y := FMin.Y;
-    end;
-
-    if FStar[LI].Z < FMin.Z then
-    begin
-      SetRandomPos(LI);
-      FStar[LI].Z := FMax.Z;
-    end;
-
-    if FStar[LI].Z > FMax.Z then
-    begin
-      SetRandomPos(LI);
-      FStar[LI].Z := FMin.Z;
-    end;
-
-  end;
-end;
-
-procedure TStarfield.Render;
-var
-  LI: Integer;
-  LVPX, LVPY, LVPW, LVPH: Integer;
-  LSize: TRectangle;
-begin
-  Game.GetWindowViewportSize(LSize);
-  LVPX := Round(LSize.X);
-  LVPY := Round(LSize.Y);
-  LVPW := Round(LSize.Width);
-  LVPH := Round(LSize.Height);
-  for LI := 0 to FStarCount - 1 do
-  begin
-    TransformDrawPoint(FStar[LI].X, FStar[LI].Y, FStar[LI].Z, LVPX, LVPY, LVPW, LVPH);
-  end;
-end;
-
-{ TCmdConsole }
-function TCmdConsole.ProcessCmd(aName: string; var aWasInternalCmd: Boolean): Boolean;
-var
-  LAction: PAction;
-  LMaxLen: Integer;
-  I: Integer;
-  LList: TStringList;
-begin
-  Result := False;
-
-  FCmdParams.Clear;
-
-  Game.ExtractStrings([#32], [#32], PChar(aName), FCmdParams);
-
-  // check internal commands
-  if Game.SameText('cls', FCmdParams.Items[0]) then
-    begin
-      FTextLines.Clear;
-      aWasInternalCmd := True;
-      Result := True;
-      Exit;
-    end
-  else
-  if Game.SameText('help', FCmdParams.Items[0]) then
-    begin
-      AddTextLine('', []);
-      AddTextLine('Options:', []);
-      LList := TStringList.Create;
-      try
-        LList.AddPair('up/down', 'Console history');
-        LList.AddPair('cls', 'Clear console window');
-        LList.AddPair('help', 'Display list of commands');
-
-        for I := 0 to FCmdActionList.Count-1 do
-        begin
-          LAction := FCmdActionList.GetItem(I);
-          LList.AddPair(LAction.Name, LAction.Discription);
-        end;
-
-        LMaxLen := 0;
-        for I := 0 to LList.Count-1 do
-        begin
-          if Length(LList.GetKey(I)) > LMaxLen then
-            LMaxLen := Length(LList.GetKey(I));
-        end;
-
-        for I := 0 to LList.Count-1 do
-        begin
-          AddTextLine('  #s - #s', [Game.PadRightStr(LList.GetKey(I), LMaxLen, ' '), LList.GetValue(I)]);
-        end;
-
-      finally
-        Game.FreeNilObject(@LList);
-      end;
-      aWasInternalCmd := True;
-      Result := True;
-      Exit;
-    end;
-
-  // check external commands
-  //for LRec in FCmdActionList do
-  for I := 0 to FCmdActionList.Count-1 do
-  begin
-    LAction := FCmdActionList.GetItem(I);
-    if Game.SameText(FCmdParams.Items[0], LAction.Name) then
-    begin
-      if Assigned(LAction.Handler) then
-      begin
-        FCmdParams.Delete(0);
-        LAction.Handler;
-        FCmdParams.Clear;
-        Result := True;
-      end;
-      Break;
-    end;
-  end;
-end;
-
-procedure TCmdConsole.AddTextLine(const aMsg: string; const aArgs: array of const);
-begin
-  if aMsg = '' then Exit;
-
-  FMaxTextLinesCount := Round(FSize.Height / FFontHeight);
-  if FTextLines.Count = FMaxTextLinesCount then
-  begin
-    FTextLines.Delete(0);
-  end;
-
-  FTextLines.Add(Game.FormatStr(aMsg, aArgs));;
-end;
-
-procedure TCmdConsole.Setup;
-begin
-  FActive := False;
-  FState := stInactive;
-  FEnabled := False;
-  FTextLines := TStringList.Create;
-  FCmdHistory := TStringList.Create;
-  FCmdParams := TStringList.Create;
-  FCmdActionList := TList.Create;
-  //GV.Logger.Log('Initialized %s Subsystem', ['CmdConsole']);
-end;
-
-procedure TCmdConsole.Shutdown;
-begin
-  Close;
-  Game.FreeNilObject(@FCmdActionList);
-  Game.FreeNilObject(@FCmdParams);
-  Game.FreeNilObject(@FCmdHistory);
-  Game.FreeNilObject(@FTextLines);
-  //GV.Logger.Log('Shutdown %s Subsystem', ['CmdConsole']);
-end;
-
-procedure TCmdConsole.Open;
-begin
-  FActive := False;
-  FState := stInactive;
-  FFont := TFont.Create;
-  FFont.LoadDefault(16);
-  FFontHeight := FFont.GetLineHeight;
-  FToggleKey :=  KEY_TILDE;
-  FSlideSpeed := cDefaultSlideSpeed;
-  FCmdLine := '';
-  FLastChar := 0;
-  FCmdCurPos := 0;
-  FCurFlashTimer := 0;
-  FCurFlash := True;
-  FTextLines.Clear;
-  FCmdHistory.Clear;
-  FCmdParams.Clear;
-  FCmdHistoryIndex := 0;
-  FMaxCmdHistoryCount := cDefaultMaxCmdHistoryCount;
-  FMaxTextLinesCount := cDefaultMaxTextLinesCount;
-  FEnabled := True;
-  FSlider := 1;
-end;
-
-procedure TCmdConsole.Close;
-var
-  LAction: PAction;
-  I: Integer;
-begin
-  Game.FreeNilObject(@FFont);
-  FTextLines.Clear;
-  FCmdHistory.Clear;
-  FCmdParams.Clear;
-
-  for I := 0 to FCmdActionList.Count-1 do
-  begin
-    LAction := FCmdActionList.GetItem(I);
-    Dispose(LAction);
-  end;
-
-  FCmdActionList.Clear;
-  FActive := False;
-  FState := stInactive;
-  FEnabled := False;
-end;
-
-procedure TCmdConsole.Render;
-var
-  LPos: TVector;
-  LFormat: string;
-  LIndex: Integer;
-begin
-  //if not FActive then Exit;
-  if not FEnabled then Exit;
-  if FState = stInactive then Exit;
-
-  Game.DrawFilledRectangle(FPos.X, FPos.Y, FSize.Width, FSize.Height, OVERLAY1);
-  Game.DrawRectangle(FPos.X, FPos.Y, FSize.Width, FSize.Height, cDefaultFrameWidth, DIMGRAY);
-  Game.DrawFilledRectangle(FPos.X+(cDefaultFrameWidth div 2), (FPos.Y+(cDefaultFrameWidth div 2)), FSize.Width-cDefaultFrameWidth, FFontHeight, DIMWHITE);
-  FFont.PrintText(FSize.Width/2, (FPos.Y+(cDefaultFrameWidth div 2)-cDefaultMargins), YELLOW, haCenter, '>>> Command Console <<<', []);
-  Game.DrawFilledRectangle(FPos.X+(cDefaultFrameWidth div 2), (FPos.Y+FSize.Height)-FFontHeight+(cDefaultFrameWidth div 2), FSize.Width-cDefaultFrameWidth, FFontHeight, DIMWHITE);
-
-  // draw input
-  LFormat := '>#s';
-  LPos.X := FPos.X+(cDefaultFrameWidth div 2) + cDefaultMargins;
-  LPos.Y := (FPos.Y+FSize.Height)-FFontHeight+(cDefaultFrameWidth div 2)-2;
-  FFont.PrintText(LPos.X, LPos.Y, WHITE, haLeft, LFormat, [FCmdLine]);
-  LPos.X := LPos.X + FFont.GetTextWidth(LFormat, [FCmdLine]) + cDefaultMargins;
-  if Game.FrameElapsed(FCurFlashTimer, 15) then FCurFlash := not FCurFlash;
-  if FCurFlash then Game.DrawFilledRectangle(LPos.X, LPos.Y+4, 6, FFontHeight-6, WHITE);
-
-  // draw text line
-  LPos.X := FPos.X+(cDefaultFrameWidth div 2) + cDefaultMargins;
-  LPos.Y := LPos.Y - FFontHeight;
-  for LIndex := FTextLines.Count-1 downto 0 do
-  begin
-    if LPos.Y < (FPos.Y+(cDefaultFrameWidth div 2)+FFontHeight) then continue;
-    FFont.PrintText(LPos.X, LPos.Y, WHITE, haLeft, FTextLines[LIndex], []);
-    LPos.Y := LPos.Y - FFontHeight;
-  end;
-end;
-
-function TCmdConsole.Toggle: Boolean;
-begin
-  Result := False;
-  if FState = stInactive then
-  begin
-    Game.GetWindowViewportSize(FSize);
-    FPos.X := FSize.X;
-    FPos.Y := FSize.Y - FSize.Height;
-    FState := stSlideDown;
-    FSlider := 1;
-    Result := True;
-  end
-  else
-  if FState = stSlideDown then
-  begin
-    FState := stSlideUp;
-    FSlider := 1;
-    Game.GetWindowViewportSize(FSize);
-    Result := True;
-  end;
-
-  if Result then
-  begin
-    Game.ClearInput;
-  end;
-end;
-
-procedure TCmdConsole.Update(aDeltaTime: Double);
-var
-  LChar: Integer;
-  LWasInternalCmd: Boolean;
-begin
-  if not FEnabled then Exit;
-
-  if Game.KeyPressed(FToggleKey) then
-  begin
-    Game.ClearInput;
-    if Toggle then Exit;
-  end;
-
-  if FState = stInactive then Exit;
-  FSlider := Game.EasePosition(1, 100, FSlider, etLinearTween);
-  if FState = stSlideDown then
-    begin
-      FPos.Y := (FSize.Y - FSize.Height) + (FSize.Height*(FSlider/100.00));
-      if FPos.Y >= FSize.Y then
-      begin
-        FPos.Y := FSize.Y;
-        if not FActive then Game.EmitCmdConActiveEvent;
-        FActive := True;
-      end;
-    end
-  else
-  if FState = stSlideUp then
-  begin
-    FPos.Y := FSize.Y - (FSize.Height*(FSlider/100.00));
-    if FPos.Y <= (FSize.Y - FSize.Height) then
-    begin
-      FState := stInactive;
-      FActive := False;
-      Game.EmitCmdConInactiveEvent;
-      Exit;
-    end;
-  end;
-  FSlider := FSlider + (FSlideSpeed * aDeltaTime);
-
-  // process input
-  LChar := Game.KeyCode;
-  if not Game.KeyCodeRepeat then
-  begin
-    if LChar <> FLastChar then
-      FLastChar := LChar
-    else
-      LChar := 0;
-  end;
-
-  // process input
-  if (LChar = 8) then
-    begin
-      if Length(FCmdLine) >= 1 then
-      begin
-        //FCmdLine := FCmdLine.Remove(FCmdLine.Length-1, 1);
-        Delete(FCmdLine,  Length(FCmdLine), 1);
-        FCurFlash := True;
-      end;
-    end
-  else
-  if (LChar = 13) then
-    begin
-      //FCmdLine := FCmdLine.Trim;
-      FCmdLine := Game.TrimStr(FCmdLine);
-
-      if FCmdLine <> '' then
-      begin
-        AddTextLine(FCmdLine, []);
-        LWasInternalCmd := False;
-        if ProcessCmd(FCmdLine, LWasInternalCmd) then
-        begin
-
-          // check to trim to maxium allowed
-          if FCmdHistory.Count = FMaxCmdHistoryCount then
-          begin
-            FCmdHistory.Delete(0);
-          end;
-          FCmdHistory.Add(FCmdLine);
-        end
-        else
-        begin
-          FTextLines.Add('Error: Unknown command!');
-        end;
-
-        FCmdLine := '';
-        FCurFlash := True;
-      end;
-
-    end
-  else
-  //ascii char
-  if (LChar >= 32) and
-     (LChar <= 127) then
-    begin
-      FCmdLine := FCmdLine + Chr(LChar);
-      FCurFlash := True;
-    end
-  else
-  begin
-    // process extended keys
-    if Game.KeyPressed(KEY_UP) then
-      begin
-        if FCmdHistoryIndex > 0 then
-        begin
-          Dec(FCmdHistoryIndex);
-          FCmdLine := FCmdHistory[FCmdHistoryIndex];
-          FCurFlash := True;
-        end;
-      end
-    else
-    if Game.KeyPressed(KEY_DOWN) then
-    begin
-      if FCmdHistoryIndex < FCmdHistory.Count-1 then
-      begin
-        Inc(FCmdHistoryIndex);
-        FCmdLine := FCmdHistory[FCmdHistoryIndex];
-        FCurFlash := True;
-      end;
-
-    end;
-  end;
-end;
-
-constructor TCmdConsole.Create;
-begin
-  inherited;
-
-  Setup;
-end;
-
-destructor TCmdConsole.Destroy;
-begin
-  Shutdown;
-
-  inherited;
-end;
-
-function  TCmdConsole.GetActive: Boolean;
-begin
-  Result := FActive;
-end;
-
-procedure TCmdConsole.LoadFont(aArchive: TArchive; aSize: Cardinal; const aFilename: string);
-begin
-  FFont.Load(aArchive, aSize, aFilename);
-  FFontHeight := FFont.GetLineHeight;
-end;
-
-procedure TCmdConsole.SetToggleKey(aKey: Integer);
-begin
-  FToggleKey := aKey;
-  if (FToggleKey < KEY_A) and
-     (FToggleKey >= KEY_MAX) then
-    FToggleKey := KEY_TILDE;
-end;
-
-procedure TCmdConsole.SetSlideSpeed(aSpeed: Single);
-begin
-  FSlideSpeed := aSpeed;
-  if (FSlideSpeed < 0) then
-    FSlideSpeed := cDefaultSlideSpeed;
-end;
-
-procedure TCmdConsole.ClearCommands;
-begin
-  FCmdActionList.Clear;
-end;
-
-procedure TCmdConsole.AddCommand(const aName: string; const aDiscription: string; aAction: TCmdConsoleActionEvent);
-var
-  LAction: PAction;
-  I: Integer;
-begin
-  if aName = '' then Exit;
-  if not Assigned(aAction) then Exit;
-
-  for I := 0 to FCmdActionList.Count-1 do
-  begin
-    LAction := FCmdActionList.GetItem(I);
-    if Game.SameText(aName, LAction.Name) then Exit;
-  end;
-
-  New(LAction);
-  LAction.Name := aName;
-  LAction.Discription := aDiscription;
-  LAction.Handler := aAction;
-  FCmdActionList.Add(LAction);
-end;
-
-procedure TCmdConsole.Enable(aEnable: Boolean);
-begin
-  FEnabled := aEnable;
-end;
-
-function  TCmdConsole.ParamCount: Integer;
-begin
-  Result := FCmdParams.Count;
-end;
-
-function  TCmdConsole.ParamStr(aIndex: Integer): string;
-begin
-  Result := '';
-  if (aIndex < 0) then Exit;
-  if (aIndex > FCmdParams.Count-1) then Exit;
-  Result := FCmdParams[aIndex];
-end;
-
-{ TGame }
-function TGame.LoadDLL: Boolean;
-const
-  CBufSize = 1;
-var
-  LHResInfo: THandle;
-  LHGlobal: THandle;
-  LFile: File;
-  LResult: Integer;
-  LBuff: Pointer;
-  LSize: DWORD;
-begin
-  Result := False;
-
-  // Get resource DLL
-  LHResInfo := FindResource(HInstance, cDllResName, RT_RCDATA);
-  if LHResInfo = 0 then Exit;
-  LHGlobal := LoadResource(HInstance, LHResInfo);
-  if LHGlobal = 0 then Exit;
-  LBuff := LockResource(LHGlobal);
-  LSize := SizeOfResource(HInstance, LHResInfo);
-
-  // Extract to temp file
-  FDllFilename :=  GetTempFileName;
-  AssignFile(LFile, FDllFilename);
-  Rewrite(LFile, CBufSize);
-  LResult := 0;
-  BlockWrite(LFile, LBuff^, LSize, LResult);
-  if LSize <> DWORD(LResult) then
-  begin
-    Exit;
-    FreeResource(LHGlobal);
-    CloseFile(LFile);
-  end;
-  CloseFile(LFile);
-  FreeResource(LHGlobal);
-
-  // Bind to extracted DLL
-  FDllHandle := LoadLibraryW(PChar(FDllFilename));
-  if FDllHandle = 0 then Exit;
-
-  {$REGION 'ZLib Imports'}
-  crc32 := GetProcAddress(FDllHandle, 'crc32');
-  zipOpen := GetProcAddress(FDllHandle, 'zipOpen');
-  zipOpenNewFileInZip3 := GetProcAddress(FDllHandle, 'zipOpenNewFileInZip3');
-  zipWriteInFileInZip := GetProcAddress(FDllHandle, 'zipWriteInFileInZip');
-  zipCloseFileInZip := GetProcAddress(FDllHandle, 'zipCloseFileInZip');
-  zipClose := GetProcAddress(FDllHandle, 'zipClose');
-  {$ENDREGION}
-
-  {$REGION 'Allegro Imports'}
-  al_get_allegro_version := GetProcAddress(FDllHandle, 'al_get_allegro_version');
-  al_get_time := GetProcAddress(FDllHandle, 'al_get_time');
-  al_rest := GetProcAddress(FDllHandle, 'al_rest');
-  al_init_timeout := GetProcAddress(FDllHandle, 'al_init_timeout');
-  al_map_rgb := GetProcAddress(FDllHandle, 'al_map_rgb');
-  al_map_rgba := GetProcAddress(FDllHandle, 'al_map_rgba');
-  al_map_rgb_f := GetProcAddress(FDllHandle, 'al_map_rgb_f');
-  al_map_rgba_f := GetProcAddress(FDllHandle, 'al_map_rgba_f');
-  al_premul_rgba := GetProcAddress(FDllHandle, 'al_premul_rgba');
-  al_premul_rgba_f := GetProcAddress(FDllHandle, 'al_premul_rgba_f');
-  al_unmap_rgb := GetProcAddress(FDllHandle, 'al_unmap_rgb');
-  al_unmap_rgba := GetProcAddress(FDllHandle, 'al_unmap_rgba');
-  al_unmap_rgb_f := GetProcAddress(FDllHandle, 'al_unmap_rgb_f');
-  al_unmap_rgba_f := GetProcAddress(FDllHandle, 'al_unmap_rgba_f');
-  al_get_pixel_size := GetProcAddress(FDllHandle, 'al_get_pixel_size');
-  al_get_pixel_format_bits := GetProcAddress(FDllHandle, 'al_get_pixel_format_bits');
-  al_get_pixel_block_size := GetProcAddress(FDllHandle, 'al_get_pixel_block_size');
-  al_get_pixel_block_width := GetProcAddress(FDllHandle, 'al_get_pixel_block_width');
-  al_get_pixel_block_height := GetProcAddress(FDllHandle, 'al_get_pixel_block_height');
-  al_set_new_bitmap_format := GetProcAddress(FDllHandle, 'al_set_new_bitmap_format');
-  al_set_new_bitmap_flags := GetProcAddress(FDllHandle, 'al_set_new_bitmap_flags');
-  al_get_new_bitmap_format := GetProcAddress(FDllHandle, 'al_get_new_bitmap_format');
-  al_get_new_bitmap_flags := GetProcAddress(FDllHandle, 'al_get_new_bitmap_flags');
-  al_add_new_bitmap_flag := GetProcAddress(FDllHandle, 'al_add_new_bitmap_flag');
-  al_get_new_bitmap_depth := GetProcAddress(FDllHandle, 'al_get_new_bitmap_depth');
-  al_set_new_bitmap_depth := GetProcAddress(FDllHandle, 'al_set_new_bitmap_depth');
-  al_get_new_bitmap_samples := GetProcAddress(FDllHandle, 'al_get_new_bitmap_samples');
-  al_set_new_bitmap_samples := GetProcAddress(FDllHandle, 'al_set_new_bitmap_samples');
-  al_get_new_bitmap_wrap := GetProcAddress(FDllHandle, 'al_get_new_bitmap_wrap');
-  al_set_new_bitmap_wrap := GetProcAddress(FDllHandle, 'al_set_new_bitmap_wrap');
-  al_get_bitmap_width := GetProcAddress(FDllHandle, 'al_get_bitmap_width');
-  al_get_bitmap_height := GetProcAddress(FDllHandle, 'al_get_bitmap_height');
-  al_get_bitmap_format := GetProcAddress(FDllHandle, 'al_get_bitmap_format');
-  al_get_bitmap_flags := GetProcAddress(FDllHandle, 'al_get_bitmap_flags');
-  al_get_bitmap_depth := GetProcAddress(FDllHandle, 'al_get_bitmap_depth');
-  al_get_bitmap_samples := GetProcAddress(FDllHandle, 'al_get_bitmap_samples');
-  al_create_bitmap := GetProcAddress(FDllHandle, 'al_create_bitmap');
-  al_destroy_bitmap := GetProcAddress(FDllHandle, 'al_destroy_bitmap');
-  al_put_pixel := GetProcAddress(FDllHandle, 'al_put_pixel');
-  al_put_blended_pixel := GetProcAddress(FDllHandle, 'al_put_blended_pixel');
-  al_get_pixel := GetProcAddress(FDllHandle, 'al_get_pixel');
-  al_convert_mask_to_alpha := GetProcAddress(FDllHandle, 'al_convert_mask_to_alpha');
-  al_get_bitmap_blend_color := GetProcAddress(FDllHandle, 'al_get_bitmap_blend_color');
-  al_get_bitmap_blender := GetProcAddress(FDllHandle, 'al_get_bitmap_blender');
-  al_get_separate_bitmap_blender := GetProcAddress(FDllHandle, 'al_get_separate_bitmap_blender');
-  al_set_bitmap_blend_color := GetProcAddress(FDllHandle, 'al_set_bitmap_blend_color');
-  al_set_bitmap_blender := GetProcAddress(FDllHandle, 'al_set_bitmap_blender');
-  al_set_separate_bitmap_blender := GetProcAddress(FDllHandle, 'al_set_separate_bitmap_blender');
-  al_reset_bitmap_blender := GetProcAddress(FDllHandle, 'al_reset_bitmap_blender');
-  al_set_clipping_rectangle := GetProcAddress(FDllHandle, 'al_set_clipping_rectangle');
-  al_reset_clipping_rectangle := GetProcAddress(FDllHandle, 'al_reset_clipping_rectangle');
-  al_get_clipping_rectangle := GetProcAddress(FDllHandle, 'al_get_clipping_rectangle');
-  al_create_sub_bitmap := GetProcAddress(FDllHandle, 'al_create_sub_bitmap');
-  al_is_sub_bitmap := GetProcAddress(FDllHandle, 'al_is_sub_bitmap');
-  al_get_parent_bitmap := GetProcAddress(FDllHandle, 'al_get_parent_bitmap');
-  al_get_bitmap_x := GetProcAddress(FDllHandle, 'al_get_bitmap_x');
-  al_get_bitmap_y := GetProcAddress(FDllHandle, 'al_get_bitmap_y');
-  al_reparent_bitmap := GetProcAddress(FDllHandle, 'al_reparent_bitmap');
-  al_clone_bitmap := GetProcAddress(FDllHandle, 'al_clone_bitmap');
-  al_convert_bitmap := GetProcAddress(FDllHandle, 'al_convert_bitmap');
-  al_convert_memory_bitmaps := GetProcAddress(FDllHandle, 'al_convert_memory_bitmaps');
-  al_backup_dirty_bitmap := GetProcAddress(FDllHandle, 'al_backup_dirty_bitmap');
-  al_draw_bitmap := GetProcAddress(FDllHandle, 'al_draw_bitmap');
-  al_draw_bitmap_region := GetProcAddress(FDllHandle, 'al_draw_bitmap_region');
-  al_draw_scaled_bitmap := GetProcAddress(FDllHandle, 'al_draw_scaled_bitmap');
-  al_draw_rotated_bitmap := GetProcAddress(FDllHandle, 'al_draw_rotated_bitmap');
-  al_draw_scaled_rotated_bitmap := GetProcAddress(FDllHandle, 'al_draw_scaled_rotated_bitmap');
-  al_draw_tinted_bitmap := GetProcAddress(FDllHandle, 'al_draw_tinted_bitmap');
-  al_draw_tinted_bitmap_region := GetProcAddress(FDllHandle, 'al_draw_tinted_bitmap_region');
-  al_draw_tinted_scaled_bitmap := GetProcAddress(FDllHandle, 'al_draw_tinted_scaled_bitmap');
-  al_draw_tinted_rotated_bitmap := GetProcAddress(FDllHandle, 'al_draw_tinted_rotated_bitmap');
-  al_draw_tinted_scaled_rotated_bitmap := GetProcAddress(FDllHandle, 'al_draw_tinted_scaled_rotated_bitmap');
-  al_draw_tinted_scaled_rotated_bitmap_region := GetProcAddress(FDllHandle, 'al_draw_tinted_scaled_rotated_bitmap_region');
-  al_ustr_new := GetProcAddress(FDllHandle, 'al_ustr_new');
-  al_ustr_new_from_buffer := GetProcAddress(FDllHandle, 'al_ustr_new_from_buffer');
-  al_ustr_newf := GetProcAddress(FDllHandle, 'al_ustr_newf');
-  al_ustr_free := GetProcAddress(FDllHandle, 'al_ustr_free');
-  al_cstr := GetProcAddress(FDllHandle, 'al_cstr');
-  al_ustr_to_buffer := GetProcAddress(FDllHandle, 'al_ustr_to_buffer');
-  al_cstr_dup := GetProcAddress(FDllHandle, 'al_cstr_dup');
-  al_ustr_dup := GetProcAddress(FDllHandle, 'al_ustr_dup');
-  al_ustr_dup_substr := GetProcAddress(FDllHandle, 'al_ustr_dup_substr');
-  al_ustr_empty_string := GetProcAddress(FDllHandle, 'al_ustr_empty_string');
-  al_ref_cstr := GetProcAddress(FDllHandle, 'al_ref_cstr');
-  al_ref_buffer := GetProcAddress(FDllHandle, 'al_ref_buffer');
-  al_ref_ustr := GetProcAddress(FDllHandle, 'al_ref_ustr');
-  al_ustr_size := GetProcAddress(FDllHandle, 'al_ustr_size');
-  al_ustr_length := GetProcAddress(FDllHandle, 'al_ustr_length');
-  al_ustr_offset := GetProcAddress(FDllHandle, 'al_ustr_offset');
-  al_ustr_next := GetProcAddress(FDllHandle, 'al_ustr_next');
-  al_ustr_prev := GetProcAddress(FDllHandle, 'al_ustr_prev');
-  al_ustr_get := GetProcAddress(FDllHandle, 'al_ustr_get');
-  al_ustr_get_next := GetProcAddress(FDllHandle, 'al_ustr_get_next');
-  al_ustr_prev_get := GetProcAddress(FDllHandle, 'al_ustr_prev_get');
-  al_ustr_insert := GetProcAddress(FDllHandle, 'al_ustr_insert');
-  al_ustr_insert_cstr := GetProcAddress(FDllHandle, 'al_ustr_insert_cstr');
-  al_ustr_insert_chr := GetProcAddress(FDllHandle, 'al_ustr_insert_chr');
-  al_ustr_append := GetProcAddress(FDllHandle, 'al_ustr_append');
-  al_ustr_append_cstr := GetProcAddress(FDllHandle, 'al_ustr_append_cstr');
-  al_ustr_append_chr := GetProcAddress(FDllHandle, 'al_ustr_append_chr');
-  al_ustr_appendf := GetProcAddress(FDllHandle, 'al_ustr_appendf');
-  al_ustr_vappendf := GetProcAddress(FDllHandle, 'al_ustr_vappendf');
-  al_ustr_remove_chr := GetProcAddress(FDllHandle, 'al_ustr_remove_chr');
-  al_ustr_remove_range := GetProcAddress(FDllHandle, 'al_ustr_remove_range');
-  al_ustr_truncate := GetProcAddress(FDllHandle, 'al_ustr_truncate');
-  al_ustr_ltrim_ws := GetProcAddress(FDllHandle, 'al_ustr_ltrim_ws');
-  al_ustr_rtrim_ws := GetProcAddress(FDllHandle, 'al_ustr_rtrim_ws');
-  al_ustr_trim_ws := GetProcAddress(FDllHandle, 'al_ustr_trim_ws');
-  al_ustr_assign := GetProcAddress(FDllHandle, 'al_ustr_assign');
-  al_ustr_assign_substr := GetProcAddress(FDllHandle, 'al_ustr_assign_substr');
-  al_ustr_assign_cstr := GetProcAddress(FDllHandle, 'al_ustr_assign_cstr');
-  al_ustr_set_chr := GetProcAddress(FDllHandle, 'al_ustr_set_chr');
-  al_ustr_replace_range := GetProcAddress(FDllHandle, 'al_ustr_replace_range');
-  al_ustr_find_chr := GetProcAddress(FDllHandle, 'al_ustr_find_chr');
-  al_ustr_rfind_chr := GetProcAddress(FDllHandle, 'al_ustr_rfind_chr');
-  al_ustr_find_set := GetProcAddress(FDllHandle, 'al_ustr_find_set');
-  al_ustr_find_set_cstr := GetProcAddress(FDllHandle, 'al_ustr_find_set_cstr');
-  al_ustr_find_cset := GetProcAddress(FDllHandle, 'al_ustr_find_cset');
-  al_ustr_find_cset_cstr := GetProcAddress(FDllHandle, 'al_ustr_find_cset_cstr');
-  al_ustr_find_str := GetProcAddress(FDllHandle, 'al_ustr_find_str');
-  al_ustr_find_cstr := GetProcAddress(FDllHandle, 'al_ustr_find_cstr');
-  al_ustr_rfind_str := GetProcAddress(FDllHandle, 'al_ustr_rfind_str');
-  al_ustr_rfind_cstr := GetProcAddress(FDllHandle, 'al_ustr_rfind_cstr');
-  al_ustr_find_replace := GetProcAddress(FDllHandle, 'al_ustr_find_replace');
-  al_ustr_find_replace_cstr := GetProcAddress(FDllHandle, 'al_ustr_find_replace_cstr');
-  al_ustr_equal := GetProcAddress(FDllHandle, 'al_ustr_equal');
-  al_ustr_compare := GetProcAddress(FDllHandle, 'al_ustr_compare');
-  al_ustr_ncompare := GetProcAddress(FDllHandle, 'al_ustr_ncompare');
-  al_ustr_has_prefix := GetProcAddress(FDllHandle, 'al_ustr_has_prefix');
-  al_ustr_has_prefix_cstr := GetProcAddress(FDllHandle, 'al_ustr_has_prefix_cstr');
-  al_ustr_has_suffix := GetProcAddress(FDllHandle, 'al_ustr_has_suffix');
-  al_ustr_has_suffix_cstr := GetProcAddress(FDllHandle, 'al_ustr_has_suffix_cstr');
-  al_utf8_width := GetProcAddress(FDllHandle, 'al_utf8_width');
-  al_utf8_encode := GetProcAddress(FDllHandle, 'al_utf8_encode');
-  al_ustr_new_from_utf16 := GetProcAddress(FDllHandle, 'al_ustr_new_from_utf16');
-  al_ustr_size_utf16 := GetProcAddress(FDllHandle, 'al_ustr_size_utf16');
-  al_ustr_encode_utf16 := GetProcAddress(FDllHandle, 'al_ustr_encode_utf16');
-  al_utf16_width := GetProcAddress(FDllHandle, 'al_utf16_width');
-  al_utf16_encode := GetProcAddress(FDllHandle, 'al_utf16_encode');
-  al_create_path := GetProcAddress(FDllHandle, 'al_create_path');
-  al_create_path_for_directory := GetProcAddress(FDllHandle, 'al_create_path_for_directory');
-  al_clone_path := GetProcAddress(FDllHandle, 'al_clone_path');
-  al_get_path_num_components := GetProcAddress(FDllHandle, 'al_get_path_num_components');
-  al_get_path_component := GetProcAddress(FDllHandle, 'al_get_path_component');
-  al_replace_path_component := GetProcAddress(FDllHandle, 'al_replace_path_component');
-  al_remove_path_component := GetProcAddress(FDllHandle, 'al_remove_path_component');
-  al_insert_path_component := GetProcAddress(FDllHandle, 'al_insert_path_component');
-  al_get_path_tail := GetProcAddress(FDllHandle, 'al_get_path_tail');
-  al_drop_path_tail := GetProcAddress(FDllHandle, 'al_drop_path_tail');
-  al_append_path_component := GetProcAddress(FDllHandle, 'al_append_path_component');
-  al_join_paths := GetProcAddress(FDllHandle, 'al_join_paths');
-  al_rebase_path := GetProcAddress(FDllHandle, 'al_rebase_path');
-  al_path_cstr := GetProcAddress(FDllHandle, 'al_path_cstr');
-  al_path_ustr := GetProcAddress(FDllHandle, 'al_path_ustr');
-  al_destroy_path := GetProcAddress(FDllHandle, 'al_destroy_path');
-  al_set_path_drive := GetProcAddress(FDllHandle, 'al_set_path_drive');
-  al_get_path_drive := GetProcAddress(FDllHandle, 'al_get_path_drive');
-  al_set_path_filename := GetProcAddress(FDllHandle, 'al_set_path_filename');
-  al_get_path_filename := GetProcAddress(FDllHandle, 'al_get_path_filename');
-  al_get_path_extension := GetProcAddress(FDllHandle, 'al_get_path_extension');
-  al_set_path_extension := GetProcAddress(FDllHandle, 'al_set_path_extension');
-  al_get_path_basename := GetProcAddress(FDllHandle, 'al_get_path_basename');
-  al_make_path_canonical := GetProcAddress(FDllHandle, 'al_make_path_canonical');
-  al_fopen := GetProcAddress(FDllHandle, 'al_fopen');
-  al_fopen_interface := GetProcAddress(FDllHandle, 'al_fopen_interface');
-  al_create_file_handle := GetProcAddress(FDllHandle, 'al_create_file_handle');
-  al_fclose := GetProcAddress(FDllHandle, 'al_fclose');
-  al_fread := GetProcAddress(FDllHandle, 'al_fread');
-  al_fwrite := GetProcAddress(FDllHandle, 'al_fwrite');
-  al_fflush := GetProcAddress(FDllHandle, 'al_fflush');
-  al_ftell := GetProcAddress(FDllHandle, 'al_ftell');
-  al_fseek := GetProcAddress(FDllHandle, 'al_fseek');
-  al_feof := GetProcAddress(FDllHandle, 'al_feof');
-  al_ferror := GetProcAddress(FDllHandle, 'al_ferror');
-  al_ferrmsg := GetProcAddress(FDllHandle, 'al_ferrmsg');
-  al_fclearerr := GetProcAddress(FDllHandle, 'al_fclearerr');
-  al_fungetc := GetProcAddress(FDllHandle, 'al_fungetc');
-  al_fsize := GetProcAddress(FDllHandle, 'al_fsize');
-  al_fgetc := GetProcAddress(FDllHandle, 'al_fgetc');
-  al_fputc := GetProcAddress(FDllHandle, 'al_fputc');
-  al_fread16le := GetProcAddress(FDllHandle, 'al_fread16le');
-  al_fread16be := GetProcAddress(FDllHandle, 'al_fread16be');
-  al_fwrite16le := GetProcAddress(FDllHandle, 'al_fwrite16le');
-  al_fwrite16be := GetProcAddress(FDllHandle, 'al_fwrite16be');
-  al_fread32le := GetProcAddress(FDllHandle, 'al_fread32le');
-  al_fread32be := GetProcAddress(FDllHandle, 'al_fread32be');
-  al_fwrite32le := GetProcAddress(FDllHandle, 'al_fwrite32le');
-  al_fwrite32be := GetProcAddress(FDllHandle, 'al_fwrite32be');
-  al_fgets := GetProcAddress(FDllHandle, 'al_fgets');
-  al_fget_ustr := GetProcAddress(FDllHandle, 'al_fget_ustr');
-  al_fputs := GetProcAddress(FDllHandle, 'al_fputs');
-  al_fprintf := GetProcAddress(FDllHandle, 'al_fprintf');
-  //al_vfprintf := GetProcAddress(FDllHandle, 'al_vfprintf');
-  al_fopen_fd := GetProcAddress(FDllHandle, 'al_fopen_fd');
-  al_make_temp_file := GetProcAddress(FDllHandle, 'al_make_temp_file');
-  al_fopen_slice := GetProcAddress(FDllHandle, 'al_fopen_slice');
-  al_get_new_file_interface := GetProcAddress(FDllHandle, 'al_get_new_file_interface');
-  al_set_new_file_interface := GetProcAddress(FDllHandle, 'al_set_new_file_interface');
-  al_set_standard_file_interface := GetProcAddress(FDllHandle, 'al_set_standard_file_interface');
-  al_get_file_userdata := GetProcAddress(FDllHandle, 'al_get_file_userdata');
-  al_register_bitmap_loader := GetProcAddress(FDllHandle, 'al_register_bitmap_loader');
-  al_register_bitmap_saver := GetProcAddress(FDllHandle, 'al_register_bitmap_saver');
-  al_register_bitmap_loader_f := GetProcAddress(FDllHandle, 'al_register_bitmap_loader_f');
-  al_register_bitmap_saver_f := GetProcAddress(FDllHandle, 'al_register_bitmap_saver_f');
-  al_register_bitmap_identifier := GetProcAddress(FDllHandle, 'al_register_bitmap_identifier');
-  al_load_bitmap := GetProcAddress(FDllHandle, 'al_load_bitmap');
-  al_load_bitmap_flags := GetProcAddress(FDllHandle, 'al_load_bitmap_flags');
-  al_load_bitmap_f := GetProcAddress(FDllHandle, 'al_load_bitmap_f');
-  al_load_bitmap_flags_f := GetProcAddress(FDllHandle, 'al_load_bitmap_flags_f');
-  al_save_bitmap := GetProcAddress(FDllHandle, 'al_save_bitmap');
-  al_save_bitmap_f := GetProcAddress(FDllHandle, 'al_save_bitmap_f');
-  al_identify_bitmap_f := GetProcAddress(FDllHandle, 'al_identify_bitmap_f');
-  al_identify_bitmap := GetProcAddress(FDllHandle, 'al_identify_bitmap');
-  al_lock_bitmap := GetProcAddress(FDllHandle, 'al_lock_bitmap');
-  al_lock_bitmap_region := GetProcAddress(FDllHandle, 'al_lock_bitmap_region');
-  al_lock_bitmap_blocked := GetProcAddress(FDllHandle, 'al_lock_bitmap_blocked');
-  al_lock_bitmap_region_blocked := GetProcAddress(FDllHandle, 'al_lock_bitmap_region_blocked');
-  al_unlock_bitmap := GetProcAddress(FDllHandle, 'al_unlock_bitmap');
-  al_is_bitmap_locked := GetProcAddress(FDllHandle, 'al_is_bitmap_locked');
-  al_set_blender := GetProcAddress(FDllHandle, 'al_set_blender');
-  al_set_blend_color := GetProcAddress(FDllHandle, 'al_set_blend_color');
-  al_get_blender := GetProcAddress(FDllHandle, 'al_get_blender');
-  al_get_blend_color := GetProcAddress(FDllHandle, 'al_get_blend_color');
-  al_set_separate_blender := GetProcAddress(FDllHandle, 'al_set_separate_blender');
-  al_get_separate_blender := GetProcAddress(FDllHandle, 'al_get_separate_blender');
-  al_init_user_event_source := GetProcAddress(FDllHandle, 'al_init_user_event_source');
-  al_destroy_user_event_source := GetProcAddress(FDllHandle, 'al_destroy_user_event_source');
-  al_emit_user_event := GetProcAddress(FDllHandle, 'al_emit_user_event');
-  al_unref_user_event := GetProcAddress(FDllHandle, 'al_unref_user_event');
-  al_set_event_source_data := GetProcAddress(FDllHandle, 'al_set_event_source_data');
-  al_get_event_source_data := GetProcAddress(FDllHandle, 'al_get_event_source_data');
-  al_create_event_queue := GetProcAddress(FDllHandle, 'al_create_event_queue');
-  al_destroy_event_queue := GetProcAddress(FDllHandle, 'al_destroy_event_queue');
-  al_is_event_source_registered := GetProcAddress(FDllHandle, 'al_is_event_source_registered');
-  al_register_event_source := GetProcAddress(FDllHandle, 'al_register_event_source');
-  al_unregister_event_source := GetProcAddress(FDllHandle, 'al_unregister_event_source');
-  al_pause_event_queue := GetProcAddress(FDllHandle, 'al_pause_event_queue');
-  al_is_event_queue_paused := GetProcAddress(FDllHandle, 'al_is_event_queue_paused');
-  al_is_event_queue_empty := GetProcAddress(FDllHandle, 'al_is_event_queue_empty');
-  al_get_next_event := GetProcAddress(FDllHandle, 'al_get_next_event');
-  al_peek_next_event := GetProcAddress(FDllHandle, 'al_peek_next_event');
-  al_drop_next_event := GetProcAddress(FDllHandle, 'al_drop_next_event');
-  al_flush_event_queue := GetProcAddress(FDllHandle, 'al_flush_event_queue');
-  al_wait_for_event := GetProcAddress(FDllHandle, 'al_wait_for_event');
-  al_wait_for_event_timed := GetProcAddress(FDllHandle, 'al_wait_for_event_timed');
-  al_wait_for_event_until := GetProcAddress(FDllHandle, 'al_wait_for_event_until');
-  al_set_new_display_refresh_rate := GetProcAddress(FDllHandle, 'al_set_new_display_refresh_rate');
-  al_set_new_display_flags := GetProcAddress(FDllHandle, 'al_set_new_display_flags');
-  al_get_new_display_refresh_rate := GetProcAddress(FDllHandle, 'al_get_new_display_refresh_rate');
-  al_get_new_display_flags := GetProcAddress(FDllHandle, 'al_get_new_display_flags');
-  al_set_new_window_title := GetProcAddress(FDllHandle, 'al_set_new_window_title');
-  al_get_new_window_title := GetProcAddress(FDllHandle, 'al_get_new_window_title');
-  al_get_display_width := GetProcAddress(FDllHandle, 'al_get_display_width');
-  al_get_display_height := GetProcAddress(FDllHandle, 'al_get_display_height');
-  al_get_display_format := GetProcAddress(FDllHandle, 'al_get_display_format');
-  al_get_display_refresh_rate := GetProcAddress(FDllHandle, 'al_get_display_refresh_rate');
-  al_get_display_flags := GetProcAddress(FDllHandle, 'al_get_display_flags');
-  al_get_display_orientation := GetProcAddress(FDllHandle, 'al_get_display_orientation');
-  al_set_display_flag := GetProcAddress(FDllHandle, 'al_set_display_flag');
-  al_create_display := GetProcAddress(FDllHandle, 'al_create_display');
-  al_destroy_display := GetProcAddress(FDllHandle, 'al_destroy_display');
-  al_get_current_display := GetProcAddress(FDllHandle, 'al_get_current_display');
-  al_set_target_bitmap := GetProcAddress(FDllHandle, 'al_set_target_bitmap');
-  al_set_target_backbuffer := GetProcAddress(FDllHandle, 'al_set_target_backbuffer');
-  al_get_backbuffer := GetProcAddress(FDllHandle, 'al_get_backbuffer');
-  al_get_target_bitmap := GetProcAddress(FDllHandle, 'al_get_target_bitmap');
-  al_acknowledge_resize := GetProcAddress(FDllHandle, 'al_acknowledge_resize');
-  al_resize_display := GetProcAddress(FDllHandle, 'al_resize_display');
-  al_flip_display := GetProcAddress(FDllHandle, 'al_flip_display');
-  al_update_display_region := GetProcAddress(FDllHandle, 'al_update_display_region');
-  al_is_compatible_bitmap := GetProcAddress(FDllHandle, 'al_is_compatible_bitmap');
-  al_wait_for_vsync := GetProcAddress(FDllHandle, 'al_wait_for_vsync');
-  al_get_display_event_source := GetProcAddress(FDllHandle, 'al_get_display_event_source');
-  al_set_display_icon := GetProcAddress(FDllHandle, 'al_set_display_icon');
-  al_set_display_icons := GetProcAddress(FDllHandle, 'al_set_display_icons');
-  al_get_new_display_adapter := GetProcAddress(FDllHandle, 'al_get_new_display_adapter');
-  al_set_new_display_adapter := GetProcAddress(FDllHandle, 'al_set_new_display_adapter');
-  al_set_new_window_position := GetProcAddress(FDllHandle, 'al_set_new_window_position');
-  al_get_new_window_position := GetProcAddress(FDllHandle, 'al_get_new_window_position');
-  al_set_window_position := GetProcAddress(FDllHandle, 'al_set_window_position');
-  al_get_window_position := GetProcAddress(FDllHandle, 'al_get_window_position');
-  al_set_window_constraints := GetProcAddress(FDllHandle, 'al_set_window_constraints');
-  al_get_window_constraints := GetProcAddress(FDllHandle, 'al_get_window_constraints');
-  al_apply_window_constraints := GetProcAddress(FDllHandle, 'al_apply_window_constraints');
-  al_set_window_title := GetProcAddress(FDllHandle, 'al_set_window_title');
-  al_set_new_display_option := GetProcAddress(FDllHandle, 'al_set_new_display_option');
-  al_get_new_display_option := GetProcAddress(FDllHandle, 'al_get_new_display_option');
-  al_reset_new_display_options := GetProcAddress(FDllHandle, 'al_reset_new_display_options');
-  al_set_display_option := GetProcAddress(FDllHandle, 'al_set_display_option');
-  al_get_display_option := GetProcAddress(FDllHandle, 'al_get_display_option');
-  al_hold_bitmap_drawing := GetProcAddress(FDllHandle, 'al_hold_bitmap_drawing');
-  al_is_bitmap_drawing_held := GetProcAddress(FDllHandle, 'al_is_bitmap_drawing_held');
-  al_acknowledge_drawing_halt := GetProcAddress(FDllHandle, 'al_acknowledge_drawing_halt');
-  al_acknowledge_drawing_resume := GetProcAddress(FDllHandle, 'al_acknowledge_drawing_resume');
-  al_backup_dirty_bitmaps := GetProcAddress(FDllHandle, 'al_backup_dirty_bitmaps');
-  al_get_clipboard_text := GetProcAddress(FDllHandle, 'al_get_clipboard_text');
-  al_set_clipboard_text := GetProcAddress(FDllHandle, 'al_set_clipboard_text');
-  al_clipboard_has_text := GetProcAddress(FDllHandle, 'al_clipboard_has_text');
-  al_create_config := GetProcAddress(FDllHandle, 'al_create_config');
-  al_add_config_section := GetProcAddress(FDllHandle, 'al_add_config_section');
-  al_set_config_value := GetProcAddress(FDllHandle, 'al_set_config_value');
-  al_add_config_comment := GetProcAddress(FDllHandle, 'al_add_config_comment');
-  al_get_config_value := GetProcAddress(FDllHandle, 'al_get_config_value');
-  al_load_config_file := GetProcAddress(FDllHandle, 'al_load_config_file');
-  al_load_config_file_f := GetProcAddress(FDllHandle, 'al_load_config_file_f');
-  al_save_config_file := GetProcAddress(FDllHandle, 'al_save_config_file');
-  al_save_config_file_f := GetProcAddress(FDllHandle, 'al_save_config_file_f');
-  al_merge_config_into := GetProcAddress(FDllHandle, 'al_merge_config_into');
-  al_merge_config := GetProcAddress(FDllHandle, 'al_merge_config');
-  al_destroy_config := GetProcAddress(FDllHandle, 'al_destroy_config');
-  al_remove_config_section := GetProcAddress(FDllHandle, 'al_remove_config_section');
-  al_remove_config_key := GetProcAddress(FDllHandle, 'al_remove_config_key');
-  al_get_first_config_section := GetProcAddress(FDllHandle, 'al_get_first_config_section');
-  al_get_next_config_section := GetProcAddress(FDllHandle, 'al_get_next_config_section');
-  al_get_first_config_entry := GetProcAddress(FDllHandle, 'al_get_first_config_entry');
-  al_get_next_config_entry := GetProcAddress(FDllHandle, 'al_get_next_config_entry');
-  al_get_cpu_count := GetProcAddress(FDllHandle, 'al_get_cpu_count');
-  al_get_ram_size := GetProcAddress(FDllHandle, 'al_get_ram_size');
-  _al_trace_prefix := GetProcAddress(FDllHandle, '_al_trace_prefix');
-  _al_trace_suffix := GetProcAddress(FDllHandle, '_al_trace_suffix');
-  al_register_assert_handler := GetProcAddress(FDllHandle, 'al_register_assert_handler');
-  al_register_trace_handler := GetProcAddress(FDllHandle, 'al_register_trace_handler');
-  al_clear_to_color := GetProcAddress(FDllHandle, 'al_clear_to_color');
-  al_clear_depth_buffer := GetProcAddress(FDllHandle, 'al_clear_depth_buffer');
-  al_draw_pixel := GetProcAddress(FDllHandle, 'al_draw_pixel');
-  al_get_errno := GetProcAddress(FDllHandle, 'al_get_errno');
-  al_set_errno := GetProcAddress(FDllHandle, 'al_set_errno');
-  al_fixsqrt := GetProcAddress(FDllHandle, 'al_fixsqrt');
-  al_fixhypot := GetProcAddress(FDllHandle, 'al_fixhypot');
-  al_fixatan := GetProcAddress(FDllHandle, 'al_fixatan');
-  al_fixatan2 := GetProcAddress(FDllHandle, 'al_fixatan2');
-  al_create_fs_entry := GetProcAddress(FDllHandle, 'al_create_fs_entry');
-  al_destroy_fs_entry := GetProcAddress(FDllHandle, 'al_destroy_fs_entry');
-  al_get_fs_entry_name := GetProcAddress(FDllHandle, 'al_get_fs_entry_name');
-  al_update_fs_entry := GetProcAddress(FDllHandle, 'al_update_fs_entry');
-  al_get_fs_entry_mode := GetProcAddress(FDllHandle, 'al_get_fs_entry_mode');
-  al_get_fs_entry_atime := GetProcAddress(FDllHandle, 'al_get_fs_entry_atime');
-  al_get_fs_entry_mtime := GetProcAddress(FDllHandle, 'al_get_fs_entry_mtime');
-  al_get_fs_entry_ctime := GetProcAddress(FDllHandle, 'al_get_fs_entry_ctime');
-  al_get_fs_entry_size := GetProcAddress(FDllHandle, 'al_get_fs_entry_size');
-  al_fs_entry_exists := GetProcAddress(FDllHandle, 'al_fs_entry_exists');
-  al_remove_fs_entry := GetProcAddress(FDllHandle, 'al_remove_fs_entry');
-  al_open_directory := GetProcAddress(FDllHandle, 'al_open_directory');
-  al_read_directory := GetProcAddress(FDllHandle, 'al_read_directory');
-  al_close_directory := GetProcAddress(FDllHandle, 'al_close_directory');
-  al_filename_exists := GetProcAddress(FDllHandle, 'al_filename_exists');
-  al_remove_filename := GetProcAddress(FDllHandle, 'al_remove_filename');
-  al_get_current_directory := GetProcAddress(FDllHandle, 'al_get_current_directory');
-  al_change_directory := GetProcAddress(FDllHandle, 'al_change_directory');
-  al_make_directory := GetProcAddress(FDllHandle, 'al_make_directory');
-  al_open_fs_entry := GetProcAddress(FDllHandle, 'al_open_fs_entry');
-  al_for_each_fs_entry := GetProcAddress(FDllHandle, 'al_for_each_fs_entry');
-  al_get_fs_interface := GetProcAddress(FDllHandle, 'al_get_fs_interface');
-  al_set_fs_interface := GetProcAddress(FDllHandle, 'al_set_fs_interface');
-  al_set_standard_fs_interface := GetProcAddress(FDllHandle, 'al_set_standard_fs_interface');
-  al_get_num_display_modes := GetProcAddress(FDllHandle, 'al_get_num_display_modes');
-  al_get_display_mode := GetProcAddress(FDllHandle, 'al_get_display_mode');
-  al_install_joystick := GetProcAddress(FDllHandle, 'al_install_joystick');
-  al_uninstall_joystick := GetProcAddress(FDllHandle, 'al_uninstall_joystick');
-  al_is_joystick_installed := GetProcAddress(FDllHandle, 'al_is_joystick_installed');
-  al_reconfigure_joysticks := GetProcAddress(FDllHandle, 'al_reconfigure_joysticks');
-  al_get_num_joysticks := GetProcAddress(FDllHandle, 'al_get_num_joysticks');
-  al_get_joystick := GetProcAddress(FDllHandle, 'al_get_joystick');
-  al_release_joystick := GetProcAddress(FDllHandle, 'al_release_joystick');
-  al_get_joystick_active := GetProcAddress(FDllHandle, 'al_get_joystick_active');
-  al_get_joystick_name := GetProcAddress(FDllHandle, 'al_get_joystick_name');
-  al_get_joystick_num_sticks := GetProcAddress(FDllHandle, 'al_get_joystick_num_sticks');
-  al_get_joystick_stick_flags := GetProcAddress(FDllHandle, 'al_get_joystick_stick_flags');
-  al_get_joystick_stick_name := GetProcAddress(FDllHandle, 'al_get_joystick_stick_name');
-  al_get_joystick_num_axes := GetProcAddress(FDllHandle, 'al_get_joystick_num_axes');
-  al_get_joystick_axis_name := GetProcAddress(FDllHandle, 'al_get_joystick_axis_name');
-  al_get_joystick_num_buttons := GetProcAddress(FDllHandle, 'al_get_joystick_num_buttons');
-  al_get_joystick_button_name := GetProcAddress(FDllHandle, 'al_get_joystick_button_name');
-  al_get_joystick_state := GetProcAddress(FDllHandle, 'al_get_joystick_state');
-  al_get_joystick_event_source := GetProcAddress(FDllHandle, 'al_get_joystick_event_source');
-  al_is_keyboard_installed := GetProcAddress(FDllHandle, 'al_is_keyboard_installed');
-  al_install_keyboard := GetProcAddress(FDllHandle, 'al_install_keyboard');
-  al_uninstall_keyboard := GetProcAddress(FDllHandle, 'al_uninstall_keyboard');
-  al_set_keyboard_leds := GetProcAddress(FDllHandle, 'al_set_keyboard_leds');
-  al_keycode_to_name := GetProcAddress(FDllHandle, 'al_keycode_to_name');
-  al_get_keyboard_state := GetProcAddress(FDllHandle, 'al_get_keyboard_state');
-  al_clear_keyboard_state := GetProcAddress(FDllHandle, 'al_clear_keyboard_state');
-  al_key_down := GetProcAddress(FDllHandle, 'al_key_down');
-  al_get_keyboard_event_source := GetProcAddress(FDllHandle, 'al_get_keyboard_event_source');
-  al_is_mouse_installed := GetProcAddress(FDllHandle, 'al_is_mouse_installed');
-  al_install_mouse := GetProcAddress(FDllHandle, 'al_install_mouse');
-  al_uninstall_mouse := GetProcAddress(FDllHandle, 'al_uninstall_mouse');
-  al_get_mouse_num_buttons := GetProcAddress(FDllHandle, 'al_get_mouse_num_buttons');
-  al_get_mouse_num_axes := GetProcAddress(FDllHandle, 'al_get_mouse_num_axes');
-  al_set_mouse_xy := GetProcAddress(FDllHandle, 'al_set_mouse_xy');
-  al_set_mouse_z := GetProcAddress(FDllHandle, 'al_set_mouse_z');
-  al_set_mouse_w := GetProcAddress(FDllHandle, 'al_set_mouse_w');
-  al_set_mouse_axis := GetProcAddress(FDllHandle, 'al_set_mouse_axis');
-  al_get_mouse_state := GetProcAddress(FDllHandle, 'al_get_mouse_state');
-  al_mouse_button_down := GetProcAddress(FDllHandle, 'al_mouse_button_down');
-  al_get_mouse_state_axis := GetProcAddress(FDllHandle, 'al_get_mouse_state_axis');
-  al_get_mouse_cursor_position := GetProcAddress(FDllHandle, 'al_get_mouse_cursor_position');
-  al_grab_mouse := GetProcAddress(FDllHandle, 'al_grab_mouse');
-  al_ungrab_mouse := GetProcAddress(FDllHandle, 'al_ungrab_mouse');
-  al_set_mouse_wheel_precision := GetProcAddress(FDllHandle, 'al_set_mouse_wheel_precision');
-  al_get_mouse_wheel_precision := GetProcAddress(FDllHandle, 'al_get_mouse_wheel_precision');
-  al_get_mouse_event_source := GetProcAddress(FDllHandle, 'al_get_mouse_event_source');
-  al_is_touch_input_installed := GetProcAddress(FDllHandle, 'al_is_touch_input_installed');
-  al_install_touch_input := GetProcAddress(FDllHandle, 'al_install_touch_input');
-  al_uninstall_touch_input := GetProcAddress(FDllHandle, 'al_uninstall_touch_input');
-  al_get_touch_input_state := GetProcAddress(FDllHandle, 'al_get_touch_input_state');
-  al_get_touch_input_event_source := GetProcAddress(FDllHandle, 'al_get_touch_input_event_source');
-  al_set_mouse_emulation_mode := GetProcAddress(FDllHandle, 'al_set_mouse_emulation_mode');
-  al_get_mouse_emulation_mode := GetProcAddress(FDllHandle, 'al_get_mouse_emulation_mode');
-  al_get_touch_input_mouse_emulation_event_source := GetProcAddress(FDllHandle, 'al_get_touch_input_mouse_emulation_event_source');
-  al_install_haptic := GetProcAddress(FDllHandle, 'al_install_haptic');
-  al_uninstall_haptic := GetProcAddress(FDllHandle, 'al_uninstall_haptic');
-  al_is_haptic_installed := GetProcAddress(FDllHandle, 'al_is_haptic_installed');
-  al_is_mouse_haptic := GetProcAddress(FDllHandle, 'al_is_mouse_haptic');
-  al_is_joystick_haptic := GetProcAddress(FDllHandle, 'al_is_joystick_haptic');
-  al_is_keyboard_haptic := GetProcAddress(FDllHandle, 'al_is_keyboard_haptic');
-  al_is_display_haptic := GetProcAddress(FDllHandle, 'al_is_display_haptic');
-  al_is_touch_input_haptic := GetProcAddress(FDllHandle, 'al_is_touch_input_haptic');
-  al_get_haptic_from_mouse := GetProcAddress(FDllHandle, 'al_get_haptic_from_mouse');
-  al_get_haptic_from_joystick := GetProcAddress(FDllHandle, 'al_get_haptic_from_joystick');
-  al_get_haptic_from_keyboard := GetProcAddress(FDllHandle, 'al_get_haptic_from_keyboard');
-  al_get_haptic_from_display := GetProcAddress(FDllHandle, 'al_get_haptic_from_display');
-  al_get_haptic_from_touch_input := GetProcAddress(FDllHandle, 'al_get_haptic_from_touch_input');
-  al_release_haptic := GetProcAddress(FDllHandle, 'al_release_haptic');
-  al_is_haptic_active := GetProcAddress(FDllHandle, 'al_is_haptic_active');
-  al_get_haptic_capabilities := GetProcAddress(FDllHandle, 'al_get_haptic_capabilities');
-  al_is_haptic_capable := GetProcAddress(FDllHandle, 'al_is_haptic_capable');
-  al_set_haptic_gain := GetProcAddress(FDllHandle, 'al_set_haptic_gain');
-  al_get_haptic_gain := GetProcAddress(FDllHandle, 'al_get_haptic_gain');
-  al_set_haptic_autocenter := GetProcAddress(FDllHandle, 'al_set_haptic_autocenter');
-  al_get_haptic_autocenter := GetProcAddress(FDllHandle, 'al_get_haptic_autocenter');
-  al_get_max_haptic_effects := GetProcAddress(FDllHandle, 'al_get_max_haptic_effects');
-  al_is_haptic_effect_ok := GetProcAddress(FDllHandle, 'al_is_haptic_effect_ok');
-  al_upload_haptic_effect := GetProcAddress(FDllHandle, 'al_upload_haptic_effect');
-  al_play_haptic_effect := GetProcAddress(FDllHandle, 'al_play_haptic_effect');
-  al_upload_and_play_haptic_effect := GetProcAddress(FDllHandle, 'al_upload_and_play_haptic_effect');
-  al_stop_haptic_effect := GetProcAddress(FDllHandle, 'al_stop_haptic_effect');
-  al_is_haptic_effect_playing := GetProcAddress(FDllHandle, 'al_is_haptic_effect_playing');
-  al_release_haptic_effect := GetProcAddress(FDllHandle, 'al_release_haptic_effect');
-  al_get_haptic_effect_duration := GetProcAddress(FDllHandle, 'al_get_haptic_effect_duration');
-  al_rumble_haptic := GetProcAddress(FDllHandle, 'al_rumble_haptic');
-  al_set_memory_interface := GetProcAddress(FDllHandle, 'al_set_memory_interface');
-  al_malloc_with_context := GetProcAddress(FDllHandle, 'al_malloc_with_context');
-  al_free_with_context := GetProcAddress(FDllHandle, 'al_free_with_context');
-  al_realloc_with_context := GetProcAddress(FDllHandle, 'al_realloc_with_context');
-  al_calloc_with_context := GetProcAddress(FDllHandle, 'al_calloc_with_context');
-  al_get_num_video_adapters := GetProcAddress(FDllHandle, 'al_get_num_video_adapters');
-  al_get_monitor_info := GetProcAddress(FDllHandle, 'al_get_monitor_info');
-  al_get_monitor_dpi := GetProcAddress(FDllHandle, 'al_get_monitor_dpi');
-  al_get_monitor_refresh_rate := GetProcAddress(FDllHandle, 'al_get_monitor_refresh_rate');
-  al_create_mouse_cursor := GetProcAddress(FDllHandle, 'al_create_mouse_cursor');
-  al_destroy_mouse_cursor := GetProcAddress(FDllHandle, 'al_destroy_mouse_cursor');
-  al_set_mouse_cursor := GetProcAddress(FDllHandle, 'al_set_mouse_cursor');
-  al_set_system_mouse_cursor := GetProcAddress(FDllHandle, 'al_set_system_mouse_cursor');
-  al_show_mouse_cursor := GetProcAddress(FDllHandle, 'al_show_mouse_cursor');
-  al_hide_mouse_cursor := GetProcAddress(FDllHandle, 'al_hide_mouse_cursor');
-  al_set_render_state := GetProcAddress(FDllHandle, 'al_set_render_state');
-  al_use_transform := GetProcAddress(FDllHandle, 'al_use_transform');
-  al_use_projection_transform := GetProcAddress(FDllHandle, 'al_use_projection_transform');
-  al_copy_transform := GetProcAddress(FDllHandle, 'al_copy_transform');
-  al_identity_transform := GetProcAddress(FDllHandle, 'al_identity_transform');
-  al_build_transform := GetProcAddress(FDllHandle, 'al_build_transform');
-  al_build_camera_transform := GetProcAddress(FDllHandle, 'al_build_camera_transform');
-  al_translate_transform := GetProcAddress(FDllHandle, 'al_translate_transform');
-  al_translate_transform_3d := GetProcAddress(FDllHandle, 'al_translate_transform_3d');
-  al_rotate_transform := GetProcAddress(FDllHandle, 'al_rotate_transform');
-  al_rotate_transform_3d := GetProcAddress(FDllHandle, 'al_rotate_transform_3d');
-  al_scale_transform := GetProcAddress(FDllHandle, 'al_scale_transform');
-  al_scale_transform_3d := GetProcAddress(FDllHandle, 'al_scale_transform_3d');
-  al_transform_coordinates := GetProcAddress(FDllHandle, 'al_transform_coordinates');
-  al_transform_coordinates_3d := GetProcAddress(FDllHandle, 'al_transform_coordinates_3d');
-  al_transform_coordinates_4d := GetProcAddress(FDllHandle, 'al_transform_coordinates_4d');
-  al_transform_coordinates_3d_projective := GetProcAddress(FDllHandle, 'al_transform_coordinates_3d_projective');
-  al_compose_transform := GetProcAddress(FDllHandle, 'al_compose_transform');
-  al_get_current_transform := GetProcAddress(FDllHandle, 'al_get_current_transform');
-  al_get_current_inverse_transform := GetProcAddress(FDllHandle, 'al_get_current_inverse_transform');
-  al_get_current_projection_transform := GetProcAddress(FDllHandle, 'al_get_current_projection_transform');
-  al_invert_transform := GetProcAddress(FDllHandle, 'al_invert_transform');
-  al_transpose_transform := GetProcAddress(FDllHandle, 'al_transpose_transform');
-  al_check_inverse := GetProcAddress(FDllHandle, 'al_check_inverse');
-  al_orthographic_transform := GetProcAddress(FDllHandle, 'al_orthographic_transform');
-  al_perspective_transform := GetProcAddress(FDllHandle, 'al_perspective_transform');
-  al_horizontal_shear_transform := GetProcAddress(FDllHandle, 'al_horizontal_shear_transform');
-  al_vertical_shear_transform := GetProcAddress(FDllHandle, 'al_vertical_shear_transform');
-  al_create_shader := GetProcAddress(FDllHandle, 'al_create_shader');
-  al_attach_shader_source := GetProcAddress(FDllHandle, 'al_attach_shader_source');
-  al_attach_shader_source_file := GetProcAddress(FDllHandle, 'al_attach_shader_source_file');
-  al_build_shader := GetProcAddress(FDllHandle, 'al_build_shader');
-  al_get_shader_log := GetProcAddress(FDllHandle, 'al_get_shader_log');
-  al_get_shader_platform := GetProcAddress(FDllHandle, 'al_get_shader_platform');
-  al_use_shader := GetProcAddress(FDllHandle, 'al_use_shader');
-  al_destroy_shader := GetProcAddress(FDllHandle, 'al_destroy_shader');
-  al_set_shader_sampler := GetProcAddress(FDllHandle, 'al_set_shader_sampler');
-  al_set_shader_matrix := GetProcAddress(FDllHandle, 'al_set_shader_matrix');
-  al_set_shader_int := GetProcAddress(FDllHandle, 'al_set_shader_int');
-  al_set_shader_float := GetProcAddress(FDllHandle, 'al_set_shader_float');
-  al_set_shader_int_vector := GetProcAddress(FDllHandle, 'al_set_shader_int_vector');
-  al_set_shader_float_vector := GetProcAddress(FDllHandle, 'al_set_shader_float_vector');
-  al_set_shader_bool := GetProcAddress(FDllHandle, 'al_set_shader_bool');
-  al_get_default_shader_source := GetProcAddress(FDllHandle, 'al_get_default_shader_source');
-  al_install_system := GetProcAddress(FDllHandle, 'al_install_system');
-  al_uninstall_system := GetProcAddress(FDllHandle, 'al_uninstall_system');
-  al_is_system_installed := GetProcAddress(FDllHandle, 'al_is_system_installed');
-  al_get_system_driver := GetProcAddress(FDllHandle, 'al_get_system_driver');
-  al_get_system_config := GetProcAddress(FDllHandle, 'al_get_system_config');
-  al_get_system_id := GetProcAddress(FDllHandle, 'al_get_system_id');
-  al_get_standard_path := GetProcAddress(FDllHandle, 'al_get_standard_path');
-  al_set_exe_name := GetProcAddress(FDllHandle, 'al_set_exe_name');
-  al_set_org_name := GetProcAddress(FDllHandle, 'al_set_org_name');
-  al_set_app_name := GetProcAddress(FDllHandle, 'al_set_app_name');
-  al_get_org_name := GetProcAddress(FDllHandle, 'al_get_org_name');
-  al_get_app_name := GetProcAddress(FDllHandle, 'al_get_app_name');
-  al_inhibit_screensaver := GetProcAddress(FDllHandle, 'al_inhibit_screensaver');
-  al_create_thread := GetProcAddress(FDllHandle, 'al_create_thread');
-  al_create_thread_with_stacksize := GetProcAddress(FDllHandle, 'al_create_thread_with_stacksize');
-  al_start_thread := GetProcAddress(FDllHandle, 'al_start_thread');
-  al_join_thread := GetProcAddress(FDllHandle, 'al_join_thread');
-  al_set_thread_should_stop := GetProcAddress(FDllHandle, 'al_set_thread_should_stop');
-  al_get_thread_should_stop := GetProcAddress(FDllHandle, 'al_get_thread_should_stop');
-  al_destroy_thread := GetProcAddress(FDllHandle, 'al_destroy_thread');
-  al_run_detached_thread := GetProcAddress(FDllHandle, 'al_run_detached_thread');
-  al_create_mutex := GetProcAddress(FDllHandle, 'al_create_mutex');
-  al_create_mutex_recursive := GetProcAddress(FDllHandle, 'al_create_mutex_recursive');
-  al_lock_mutex := GetProcAddress(FDllHandle, 'al_lock_mutex');
-  al_unlock_mutex := GetProcAddress(FDllHandle, 'al_unlock_mutex');
-  al_destroy_mutex := GetProcAddress(FDllHandle, 'al_destroy_mutex');
-  al_create_cond := GetProcAddress(FDllHandle, 'al_create_cond');
-  al_destroy_cond := GetProcAddress(FDllHandle, 'al_destroy_cond');
-  al_wait_cond := GetProcAddress(FDllHandle, 'al_wait_cond');
-  al_wait_cond_until := GetProcAddress(FDllHandle, 'al_wait_cond_until');
-  al_broadcast_cond := GetProcAddress(FDllHandle, 'al_broadcast_cond');
-  al_signal_cond := GetProcAddress(FDllHandle, 'al_signal_cond');
-  al_create_timer := GetProcAddress(FDllHandle, 'al_create_timer');
-  al_destroy_timer := GetProcAddress(FDllHandle, 'al_destroy_timer');
-  al_start_timer := GetProcAddress(FDllHandle, 'al_start_timer');
-  al_stop_timer := GetProcAddress(FDllHandle, 'al_stop_timer');
-  al_resume_timer := GetProcAddress(FDllHandle, 'al_resume_timer');
-  al_get_timer_started := GetProcAddress(FDllHandle, 'al_get_timer_started');
-  al_get_timer_speed := GetProcAddress(FDllHandle, 'al_get_timer_speed');
-  al_set_timer_speed := GetProcAddress(FDllHandle, 'al_set_timer_speed');
-  al_get_timer_count := GetProcAddress(FDllHandle, 'al_get_timer_count');
-  al_set_timer_count := GetProcAddress(FDllHandle, 'al_set_timer_count');
-  al_add_timer_count := GetProcAddress(FDllHandle, 'al_add_timer_count');
-  al_get_timer_event_source := GetProcAddress(FDllHandle, 'al_get_timer_event_source');
-  al_store_state := GetProcAddress(FDllHandle, 'al_store_state');
-  al_restore_state := GetProcAddress(FDllHandle, 'al_restore_state');
-  al_create_sample := GetProcAddress(FDllHandle, 'al_create_sample');
-  al_destroy_sample := GetProcAddress(FDllHandle, 'al_destroy_sample');
-  al_create_sample_instance := GetProcAddress(FDllHandle, 'al_create_sample_instance');
-  al_destroy_sample_instance := GetProcAddress(FDllHandle, 'al_destroy_sample_instance');
-  al_get_sample_frequency := GetProcAddress(FDllHandle, 'al_get_sample_frequency');
-  al_get_sample_length := GetProcAddress(FDllHandle, 'al_get_sample_length');
-  al_get_sample_depth := GetProcAddress(FDllHandle, 'al_get_sample_depth');
-  al_get_sample_channels := GetProcAddress(FDllHandle, 'al_get_sample_channels');
-  al_get_sample_data := GetProcAddress(FDllHandle, 'al_get_sample_data');
-  al_get_sample_instance_frequency := GetProcAddress(FDllHandle, 'al_get_sample_instance_frequency');
-  al_get_sample_instance_length := GetProcAddress(FDllHandle, 'al_get_sample_instance_length');
-  al_get_sample_instance_position := GetProcAddress(FDllHandle, 'al_get_sample_instance_position');
-  al_get_sample_instance_speed := GetProcAddress(FDllHandle, 'al_get_sample_instance_speed');
-  al_get_sample_instance_gain := GetProcAddress(FDllHandle, 'al_get_sample_instance_gain');
-  al_get_sample_instance_pan := GetProcAddress(FDllHandle, 'al_get_sample_instance_pan');
-  al_get_sample_instance_time := GetProcAddress(FDllHandle, 'al_get_sample_instance_time');
-  al_get_sample_instance_depth := GetProcAddress(FDllHandle, 'al_get_sample_instance_depth');
-  al_get_sample_instance_channels := GetProcAddress(FDllHandle, 'al_get_sample_instance_channels');
-  al_get_sample_instance_playmode := GetProcAddress(FDllHandle, 'al_get_sample_instance_playmode');
-  al_get_sample_instance_playing := GetProcAddress(FDllHandle, 'al_get_sample_instance_playing');
-  al_get_sample_instance_attached := GetProcAddress(FDllHandle, 'al_get_sample_instance_attached');
-  al_set_sample_instance_position := GetProcAddress(FDllHandle, 'al_set_sample_instance_position');
-  al_set_sample_instance_length := GetProcAddress(FDllHandle, 'al_set_sample_instance_length');
-  al_set_sample_instance_speed := GetProcAddress(FDllHandle, 'al_set_sample_instance_speed');
-  al_set_sample_instance_gain := GetProcAddress(FDllHandle, 'al_set_sample_instance_gain');
-  al_set_sample_instance_pan := GetProcAddress(FDllHandle, 'al_set_sample_instance_pan');
-  al_set_sample_instance_playmode := GetProcAddress(FDllHandle, 'al_set_sample_instance_playmode');
-  al_set_sample_instance_playing := GetProcAddress(FDllHandle, 'al_set_sample_instance_playing');
-  al_detach_sample_instance := GetProcAddress(FDllHandle, 'al_detach_sample_instance');
-  al_set_sample := GetProcAddress(FDllHandle, 'al_set_sample');
-  al_get_sample := GetProcAddress(FDllHandle, 'al_get_sample');
-  al_play_sample_instance := GetProcAddress(FDllHandle, 'al_play_sample_instance');
-  al_stop_sample_instance := GetProcAddress(FDllHandle, 'al_stop_sample_instance');
-  al_set_sample_instance_channel_matrix := GetProcAddress(FDllHandle, 'al_set_sample_instance_channel_matrix');
-  al_create_audio_stream := GetProcAddress(FDllHandle, 'al_create_audio_stream');
-  al_destroy_audio_stream := GetProcAddress(FDllHandle, 'al_destroy_audio_stream');
-  al_drain_audio_stream := GetProcAddress(FDllHandle, 'al_drain_audio_stream');
-  al_get_audio_stream_frequency := GetProcAddress(FDllHandle, 'al_get_audio_stream_frequency');
-  al_get_audio_stream_length := GetProcAddress(FDllHandle, 'al_get_audio_stream_length');
-  al_get_audio_stream_fragments := GetProcAddress(FDllHandle, 'al_get_audio_stream_fragments');
-  al_get_available_audio_stream_fragments := GetProcAddress(FDllHandle, 'al_get_available_audio_stream_fragments');
-  al_get_audio_stream_speed := GetProcAddress(FDllHandle, 'al_get_audio_stream_speed');
-  al_get_audio_stream_gain := GetProcAddress(FDllHandle, 'al_get_audio_stream_gain');
-  al_get_audio_stream_pan := GetProcAddress(FDllHandle, 'al_get_audio_stream_pan');
-  al_get_audio_stream_channels := GetProcAddress(FDllHandle, 'al_get_audio_stream_channels');
-  al_get_audio_stream_depth := GetProcAddress(FDllHandle, 'al_get_audio_stream_depth');
-  al_get_audio_stream_playmode := GetProcAddress(FDllHandle, 'al_get_audio_stream_playmode');
-  al_get_audio_stream_playing := GetProcAddress(FDllHandle, 'al_get_audio_stream_playing');
-  al_get_audio_stream_attached := GetProcAddress(FDllHandle, 'al_get_audio_stream_attached');
-  al_get_audio_stream_played_samples := GetProcAddress(FDllHandle, 'al_get_audio_stream_played_samples');
-  al_get_audio_stream_fragment := GetProcAddress(FDllHandle, 'al_get_audio_stream_fragment');
-  al_set_audio_stream_speed := GetProcAddress(FDllHandle, 'al_set_audio_stream_speed');
-  al_set_audio_stream_gain := GetProcAddress(FDllHandle, 'al_set_audio_stream_gain');
-  al_set_audio_stream_pan := GetProcAddress(FDllHandle, 'al_set_audio_stream_pan');
-  al_set_audio_stream_playmode := GetProcAddress(FDllHandle, 'al_set_audio_stream_playmode');
-  al_set_audio_stream_playing := GetProcAddress(FDllHandle, 'al_set_audio_stream_playing');
-  al_detach_audio_stream := GetProcAddress(FDllHandle, 'al_detach_audio_stream');
-  al_set_audio_stream_fragment := GetProcAddress(FDllHandle, 'al_set_audio_stream_fragment');
-  al_rewind_audio_stream := GetProcAddress(FDllHandle, 'al_rewind_audio_stream');
-  al_seek_audio_stream_secs := GetProcAddress(FDllHandle, 'al_seek_audio_stream_secs');
-  al_get_audio_stream_position_secs := GetProcAddress(FDllHandle, 'al_get_audio_stream_position_secs');
-  al_get_audio_stream_length_secs := GetProcAddress(FDllHandle, 'al_get_audio_stream_length_secs');
-  al_set_audio_stream_loop_secs := GetProcAddress(FDllHandle, 'al_set_audio_stream_loop_secs');
-  al_get_audio_stream_event_source := GetProcAddress(FDllHandle, 'al_get_audio_stream_event_source');
-  al_set_audio_stream_channel_matrix := GetProcAddress(FDllHandle, 'al_set_audio_stream_channel_matrix');
-  al_create_mixer := GetProcAddress(FDllHandle, 'al_create_mixer');
-  al_destroy_mixer := GetProcAddress(FDllHandle, 'al_destroy_mixer');
-  al_attach_sample_instance_to_mixer := GetProcAddress(FDllHandle, 'al_attach_sample_instance_to_mixer');
-  al_attach_audio_stream_to_mixer := GetProcAddress(FDllHandle, 'al_attach_audio_stream_to_mixer');
-  al_attach_mixer_to_mixer := GetProcAddress(FDllHandle, 'al_attach_mixer_to_mixer');
-  al_set_mixer_postprocess_callback := GetProcAddress(FDllHandle, 'al_set_mixer_postprocess_callback');
-  al_get_mixer_frequency := GetProcAddress(FDllHandle, 'al_get_mixer_frequency');
-  al_get_mixer_channels := GetProcAddress(FDllHandle, 'al_get_mixer_channels');
-  al_get_mixer_depth := GetProcAddress(FDllHandle, 'al_get_mixer_depth');
-  al_get_mixer_quality := GetProcAddress(FDllHandle, 'al_get_mixer_quality');
-  al_get_mixer_gain := GetProcAddress(FDllHandle, 'al_get_mixer_gain');
-  al_get_mixer_playing := GetProcAddress(FDllHandle, 'al_get_mixer_playing');
-  al_get_mixer_attached := GetProcAddress(FDllHandle, 'al_get_mixer_attached');
-  al_set_mixer_frequency := GetProcAddress(FDllHandle, 'al_set_mixer_frequency');
-  al_set_mixer_quality := GetProcAddress(FDllHandle, 'al_set_mixer_quality');
-  al_set_mixer_gain := GetProcAddress(FDllHandle, 'al_set_mixer_gain');
-  al_set_mixer_playing := GetProcAddress(FDllHandle, 'al_set_mixer_playing');
-  al_detach_mixer := GetProcAddress(FDllHandle, 'al_detach_mixer');
-  al_create_voice := GetProcAddress(FDllHandle, 'al_create_voice');
-  al_destroy_voice := GetProcAddress(FDllHandle, 'al_destroy_voice');
-  al_attach_sample_instance_to_voice := GetProcAddress(FDllHandle, 'al_attach_sample_instance_to_voice');
-  al_attach_audio_stream_to_voice := GetProcAddress(FDllHandle, 'al_attach_audio_stream_to_voice');
-  al_attach_mixer_to_voice := GetProcAddress(FDllHandle, 'al_attach_mixer_to_voice');
-  al_detach_voice := GetProcAddress(FDllHandle, 'al_detach_voice');
-  al_get_voice_frequency := GetProcAddress(FDllHandle, 'al_get_voice_frequency');
-  al_get_voice_position := GetProcAddress(FDllHandle, 'al_get_voice_position');
-  al_get_voice_channels := GetProcAddress(FDllHandle, 'al_get_voice_channels');
-  al_get_voice_depth := GetProcAddress(FDllHandle, 'al_get_voice_depth');
-  al_get_voice_playing := GetProcAddress(FDllHandle, 'al_get_voice_playing');
-  al_set_voice_position := GetProcAddress(FDllHandle, 'al_set_voice_position');
-  al_set_voice_playing := GetProcAddress(FDllHandle, 'al_set_voice_playing');
-  al_install_audio := GetProcAddress(FDllHandle, 'al_install_audio');
-  al_uninstall_audio := GetProcAddress(FDllHandle, 'al_uninstall_audio');
-  al_is_audio_installed := GetProcAddress(FDllHandle, 'al_is_audio_installed');
-  al_get_allegro_audio_version := GetProcAddress(FDllHandle, 'al_get_allegro_audio_version');
-  al_get_channel_count := GetProcAddress(FDllHandle, 'al_get_channel_count');
-  al_get_audio_depth_size := GetProcAddress(FDllHandle, 'al_get_audio_depth_size');
-  al_fill_silence := GetProcAddress(FDllHandle, 'al_fill_silence');
-  al_get_num_audio_output_devices := GetProcAddress(FDllHandle, 'al_get_num_audio_output_devices');
-  al_get_audio_output_device := GetProcAddress(FDllHandle, 'al_get_audio_output_device');
-  al_get_audio_device_name := GetProcAddress(FDllHandle, 'al_get_audio_device_name');
-  al_reserve_samples := GetProcAddress(FDllHandle, 'al_reserve_samples');
-  al_get_default_mixer := GetProcAddress(FDllHandle, 'al_get_default_mixer');
-  al_set_default_mixer := GetProcAddress(FDllHandle, 'al_set_default_mixer');
-  al_restore_default_mixer := GetProcAddress(FDllHandle, 'al_restore_default_mixer');
-  al_play_sample := GetProcAddress(FDllHandle, 'al_play_sample');
-  al_stop_sample := GetProcAddress(FDllHandle, 'al_stop_sample');
-  al_stop_samples := GetProcAddress(FDllHandle, 'al_stop_samples');
-  al_get_default_voice := GetProcAddress(FDllHandle, 'al_get_default_voice');
-  al_set_default_voice := GetProcAddress(FDllHandle, 'al_set_default_voice');
-  al_lock_sample_id := GetProcAddress(FDllHandle, 'al_lock_sample_id');
-  al_unlock_sample_id := GetProcAddress(FDllHandle, 'al_unlock_sample_id');
-  al_register_sample_loader := GetProcAddress(FDllHandle, 'al_register_sample_loader');
-  al_register_sample_saver := GetProcAddress(FDllHandle, 'al_register_sample_saver');
-  al_register_audio_stream_loader := GetProcAddress(FDllHandle, 'al_register_audio_stream_loader');
-  al_register_sample_loader_f := GetProcAddress(FDllHandle, 'al_register_sample_loader_f');
-  al_register_sample_saver_f := GetProcAddress(FDllHandle, 'al_register_sample_saver_f');
-  al_register_audio_stream_loader_f := GetProcAddress(FDllHandle, 'al_register_audio_stream_loader_f');
-  al_register_sample_identifier := GetProcAddress(FDllHandle, 'al_register_sample_identifier');
-  al_load_sample := GetProcAddress(FDllHandle, 'al_load_sample');
-  al_save_sample := GetProcAddress(FDllHandle, 'al_save_sample');
-  al_load_audio_stream := GetProcAddress(FDllHandle, 'al_load_audio_stream');
-  al_load_sample_f := GetProcAddress(FDllHandle, 'al_load_sample_f');
-  al_save_sample_f := GetProcAddress(FDllHandle, 'al_save_sample_f');
-  al_load_audio_stream_f := GetProcAddress(FDllHandle, 'al_load_audio_stream_f');
-  al_identify_sample_f := GetProcAddress(FDllHandle, 'al_identify_sample_f');
-  al_identify_sample := GetProcAddress(FDllHandle, 'al_identify_sample');
-  al_create_audio_recorder := GetProcAddress(FDllHandle, 'al_create_audio_recorder');
-  al_start_audio_recorder := GetProcAddress(FDllHandle, 'al_start_audio_recorder');
-  al_stop_audio_recorder := GetProcAddress(FDllHandle, 'al_stop_audio_recorder');
-  al_is_audio_recorder_recording := GetProcAddress(FDllHandle, 'al_is_audio_recorder_recording');
-  al_get_audio_recorder_event_source := GetProcAddress(FDllHandle, 'al_get_audio_recorder_event_source');
-  al_get_audio_recorder_event := GetProcAddress(FDllHandle, 'al_get_audio_recorder_event');
-  al_destroy_audio_recorder := GetProcAddress(FDllHandle, 'al_destroy_audio_recorder');
-  al_init_acodec_addon := GetProcAddress(FDllHandle, 'al_init_acodec_addon');
-  al_is_acodec_addon_initialized := GetProcAddress(FDllHandle, 'al_is_acodec_addon_initialized');
-  al_get_allegro_acodec_version := GetProcAddress(FDllHandle, 'al_get_allegro_acodec_version');
-  al_get_allegro_color_version := GetProcAddress(FDllHandle, 'al_get_allegro_color_version');
-  al_color_hsv_to_rgb := GetProcAddress(FDllHandle, 'al_color_hsv_to_rgb');
-  al_color_rgb_to_hsl := GetProcAddress(FDllHandle, 'al_color_rgb_to_hsl');
-  al_color_rgb_to_hsv := GetProcAddress(FDllHandle, 'al_color_rgb_to_hsv');
-  al_color_hsl_to_rgb := GetProcAddress(FDllHandle, 'al_color_hsl_to_rgb');
-  al_color_name_to_rgb := GetProcAddress(FDllHandle, 'al_color_name_to_rgb');
-  al_color_rgb_to_name := GetProcAddress(FDllHandle, 'al_color_rgb_to_name');
-  al_color_cmyk_to_rgb := GetProcAddress(FDllHandle, 'al_color_cmyk_to_rgb');
-  al_color_rgb_to_cmyk := GetProcAddress(FDllHandle, 'al_color_rgb_to_cmyk');
-  al_color_yuv_to_rgb := GetProcAddress(FDllHandle, 'al_color_yuv_to_rgb');
-  al_color_rgb_to_yuv := GetProcAddress(FDllHandle, 'al_color_rgb_to_yuv');
-  al_color_rgb_to_html := GetProcAddress(FDllHandle, 'al_color_rgb_to_html');
-  al_color_html_to_rgb := GetProcAddress(FDllHandle, 'al_color_html_to_rgb');
-  al_color_yuv := GetProcAddress(FDllHandle, 'al_color_yuv');
-  al_color_cmyk := GetProcAddress(FDllHandle, 'al_color_cmyk');
-  al_color_hsl := GetProcAddress(FDllHandle, 'al_color_hsl');
-  al_color_hsv := GetProcAddress(FDllHandle, 'al_color_hsv');
-  al_color_name := GetProcAddress(FDllHandle, 'al_color_name');
-  al_color_html := GetProcAddress(FDllHandle, 'al_color_html');
-  al_color_xyz_to_rgb := GetProcAddress(FDllHandle, 'al_color_xyz_to_rgb');
-  al_color_rgb_to_xyz := GetProcAddress(FDllHandle, 'al_color_rgb_to_xyz');
-  al_color_xyz := GetProcAddress(FDllHandle, 'al_color_xyz');
-  al_color_lab_to_rgb := GetProcAddress(FDllHandle, 'al_color_lab_to_rgb');
-  al_color_rgb_to_lab := GetProcAddress(FDllHandle, 'al_color_rgb_to_lab');
-  al_color_lab := GetProcAddress(FDllHandle, 'al_color_lab');
-  al_color_xyy_to_rgb := GetProcAddress(FDllHandle, 'al_color_xyy_to_rgb');
-  al_color_rgb_to_xyy := GetProcAddress(FDllHandle, 'al_color_rgb_to_xyy');
-  al_color_xyy := GetProcAddress(FDllHandle, 'al_color_xyy');
-  al_color_distance_ciede2000 := GetProcAddress(FDllHandle, 'al_color_distance_ciede2000');
-  al_color_lch_to_rgb := GetProcAddress(FDllHandle, 'al_color_lch_to_rgb');
-  al_color_rgb_to_lch := GetProcAddress(FDllHandle, 'al_color_rgb_to_lch');
-  al_color_lch := GetProcAddress(FDllHandle, 'al_color_lch');
-  al_is_color_valid := GetProcAddress(FDllHandle, 'al_is_color_valid');
-  al_color_oklab_to_rgb := GetProcAddress(FDllHandle, 'al_color_oklab_to_rgb');
-  al_color_rgb_to_oklab := GetProcAddress(FDllHandle, 'al_color_rgb_to_oklab');
-  al_color_oklab := GetProcAddress(FDllHandle, 'al_color_oklab');
-  al_color_linear_to_rgb := GetProcAddress(FDllHandle, 'al_color_linear_to_rgb');
-  al_color_rgb_to_linear := GetProcAddress(FDllHandle, 'al_color_rgb_to_linear');
-  al_color_linear := GetProcAddress(FDllHandle, 'al_color_linear');
-  al_register_font_loader := GetProcAddress(FDllHandle, 'al_register_font_loader');
-  al_load_bitmap_font := GetProcAddress(FDllHandle, 'al_load_bitmap_font');
-  al_load_bitmap_font_flags := GetProcAddress(FDllHandle, 'al_load_bitmap_font_flags');
-  al_load_font := GetProcAddress(FDllHandle, 'al_load_font');
-  al_grab_font_from_bitmap := GetProcAddress(FDllHandle, 'al_grab_font_from_bitmap');
-  al_create_builtin_font := GetProcAddress(FDllHandle, 'al_create_builtin_font');
-  al_draw_ustr := GetProcAddress(FDllHandle, 'al_draw_ustr');
-  al_draw_text := GetProcAddress(FDllHandle, 'al_draw_text');
-  al_draw_justified_text := GetProcAddress(FDllHandle, 'al_draw_justified_text');
-  al_draw_justified_ustr := GetProcAddress(FDllHandle, 'al_draw_justified_ustr');
-  al_draw_textf := GetProcAddress(FDllHandle, 'al_draw_textf');
-  al_draw_justified_textf := GetProcAddress(FDllHandle, 'al_draw_justified_textf');
-  al_get_text_width := GetProcAddress(FDllHandle, 'al_get_text_width');
-  al_get_ustr_width := GetProcAddress(FDllHandle, 'al_get_ustr_width');
-  al_get_font_line_height := GetProcAddress(FDllHandle, 'al_get_font_line_height');
-  al_get_font_ascent := GetProcAddress(FDllHandle, 'al_get_font_ascent');
-  al_get_font_descent := GetProcAddress(FDllHandle, 'al_get_font_descent');
-  al_destroy_font := GetProcAddress(FDllHandle, 'al_destroy_font');
-  al_get_ustr_dimensions := GetProcAddress(FDllHandle, 'al_get_ustr_dimensions');
-  al_get_text_dimensions := GetProcAddress(FDllHandle, 'al_get_text_dimensions');
-  al_init_font_addon := GetProcAddress(FDllHandle, 'al_init_font_addon');
-  al_is_font_addon_initialized := GetProcAddress(FDllHandle, 'al_is_font_addon_initialized');
-  al_shutdown_font_addon := GetProcAddress(FDllHandle, 'al_shutdown_font_addon');
-  al_get_allegro_font_version := GetProcAddress(FDllHandle, 'al_get_allegro_font_version');
-  al_get_font_ranges := GetProcAddress(FDllHandle, 'al_get_font_ranges');
-  al_draw_glyph := GetProcAddress(FDllHandle, 'al_draw_glyph');
-  al_get_glyph_width := GetProcAddress(FDllHandle, 'al_get_glyph_width');
-  al_get_glyph_dimensions := GetProcAddress(FDllHandle, 'al_get_glyph_dimensions');
-  al_get_glyph_advance := GetProcAddress(FDllHandle, 'al_get_glyph_advance');
-  al_get_glyph := GetProcAddress(FDllHandle, 'al_get_glyph');
-  al_draw_multiline_text := GetProcAddress(FDllHandle, 'al_draw_multiline_text');
-  al_draw_multiline_textf := GetProcAddress(FDllHandle, 'al_draw_multiline_textf');
-  al_draw_multiline_ustr := GetProcAddress(FDllHandle, 'al_draw_multiline_ustr');
-  al_do_multiline_text := GetProcAddress(FDllHandle, 'al_do_multiline_text');
-  al_do_multiline_ustr := GetProcAddress(FDllHandle, 'al_do_multiline_ustr');
-  al_set_fallback_font := GetProcAddress(FDllHandle, 'al_set_fallback_font');
-  al_get_fallback_font := GetProcAddress(FDllHandle, 'al_get_fallback_font');
-  al_init_image_addon := GetProcAddress(FDllHandle, 'al_init_image_addon');
-  al_is_image_addon_initialized := GetProcAddress(FDllHandle, 'al_is_image_addon_initialized');
-  al_shutdown_image_addon := GetProcAddress(FDllHandle, 'al_shutdown_image_addon');
-  al_get_allegro_image_version := GetProcAddress(FDllHandle, 'al_get_allegro_image_version');
-  al_open_memfile := GetProcAddress(FDllHandle, 'al_open_memfile');
-  al_get_allegro_memfile_version := GetProcAddress(FDllHandle, 'al_get_allegro_memfile_version');
-  al_init_native_dialog_addon := GetProcAddress(FDllHandle, 'al_init_native_dialog_addon');
-  al_is_native_dialog_addon_initialized := GetProcAddress(FDllHandle, 'al_is_native_dialog_addon_initialized');
-  al_shutdown_native_dialog_addon := GetProcAddress(FDllHandle, 'al_shutdown_native_dialog_addon');
-  al_create_native_file_dialog := GetProcAddress(FDllHandle, 'al_create_native_file_dialog');
-  al_show_native_file_dialog := GetProcAddress(FDllHandle, 'al_show_native_file_dialog');
-  al_get_native_file_dialog_count := GetProcAddress(FDllHandle, 'al_get_native_file_dialog_count');
-  al_get_native_file_dialog_path := GetProcAddress(FDllHandle, 'al_get_native_file_dialog_path');
-  al_destroy_native_file_dialog := GetProcAddress(FDllHandle, 'al_destroy_native_file_dialog');
-  al_show_native_message_box := GetProcAddress(FDllHandle, 'al_show_native_message_box');
-  al_open_native_text_log := GetProcAddress(FDllHandle, 'al_open_native_text_log');
-  al_close_native_text_log := GetProcAddress(FDllHandle, 'al_close_native_text_log');
-  al_append_native_text_log := GetProcAddress(FDllHandle, 'al_append_native_text_log');
-  al_get_native_text_log_event_source := GetProcAddress(FDllHandle, 'al_get_native_text_log_event_source');
-  al_create_menu := GetProcAddress(FDllHandle, 'al_create_menu');
-  al_create_popup_menu := GetProcAddress(FDllHandle, 'al_create_popup_menu');
-  al_build_menu := GetProcAddress(FDllHandle, 'al_build_menu');
-  al_append_menu_item := GetProcAddress(FDllHandle, 'al_append_menu_item');
-  al_insert_menu_item := GetProcAddress(FDllHandle, 'al_insert_menu_item');
-  al_remove_menu_item := GetProcAddress(FDllHandle, 'al_remove_menu_item');
-  al_clone_menu := GetProcAddress(FDllHandle, 'al_clone_menu');
-  al_clone_menu_for_popup := GetProcAddress(FDllHandle, 'al_clone_menu_for_popup');
-  al_destroy_menu := GetProcAddress(FDllHandle, 'al_destroy_menu');
-  al_get_menu_item_caption := GetProcAddress(FDllHandle, 'al_get_menu_item_caption');
-  al_set_menu_item_caption := GetProcAddress(FDllHandle, 'al_set_menu_item_caption');
-  al_get_menu_item_flags := GetProcAddress(FDllHandle, 'al_get_menu_item_flags');
-  al_set_menu_item_flags := GetProcAddress(FDllHandle, 'al_set_menu_item_flags');
-  al_get_menu_item_icon := GetProcAddress(FDllHandle, 'al_get_menu_item_icon');
-  al_set_menu_item_icon := GetProcAddress(FDllHandle, 'al_set_menu_item_icon');
-  al_toggle_menu_item_flags := GetProcAddress(FDllHandle, 'al_toggle_menu_item_flags');
-  al_find_menu := GetProcAddress(FDllHandle, 'al_find_menu');
-  al_find_menu_item := GetProcAddress(FDllHandle, 'al_find_menu_item');
-  al_get_default_menu_event_source := GetProcAddress(FDllHandle, 'al_get_default_menu_event_source');
-  al_enable_menu_event_source := GetProcAddress(FDllHandle, 'al_enable_menu_event_source');
-  al_disable_menu_event_source := GetProcAddress(FDllHandle, 'al_disable_menu_event_source');
-  al_get_display_menu := GetProcAddress(FDllHandle, 'al_get_display_menu');
-  al_set_display_menu := GetProcAddress(FDllHandle, 'al_set_display_menu');
-  al_popup_menu := GetProcAddress(FDllHandle, 'al_popup_menu');
-  al_remove_display_menu := GetProcAddress(FDllHandle, 'al_remove_display_menu');
-  al_get_allegro_native_dialog_version := GetProcAddress(FDllHandle, 'al_get_allegro_native_dialog_version');
-  al_set_physfs_file_interface := GetProcAddress(FDllHandle, 'al_set_physfs_file_interface');
-  al_get_allegro_physfs_version := GetProcAddress(FDllHandle, 'al_get_allegro_physfs_version');
-  al_get_allegro_primitives_version := GetProcAddress(FDllHandle, 'al_get_allegro_primitives_version');
-  al_init_primitives_addon := GetProcAddress(FDllHandle, 'al_init_primitives_addon');
-  al_is_primitives_addon_initialized := GetProcAddress(FDllHandle, 'al_is_primitives_addon_initialized');
-  al_shutdown_primitives_addon := GetProcAddress(FDllHandle, 'al_shutdown_primitives_addon');
-  al_draw_prim := GetProcAddress(FDllHandle, 'al_draw_prim');
-  al_draw_indexed_prim := GetProcAddress(FDllHandle, 'al_draw_indexed_prim');
-  al_draw_vertex_buffer := GetProcAddress(FDllHandle, 'al_draw_vertex_buffer');
-  al_draw_indexed_buffer := GetProcAddress(FDllHandle, 'al_draw_indexed_buffer');
-  al_create_vertex_decl := GetProcAddress(FDllHandle, 'al_create_vertex_decl');
-  al_destroy_vertex_decl := GetProcAddress(FDllHandle, 'al_destroy_vertex_decl');
-  al_create_vertex_buffer := GetProcAddress(FDllHandle, 'al_create_vertex_buffer');
-  al_destroy_vertex_buffer := GetProcAddress(FDllHandle, 'al_destroy_vertex_buffer');
-  al_lock_vertex_buffer := GetProcAddress(FDllHandle, 'al_lock_vertex_buffer');
-  al_unlock_vertex_buffer := GetProcAddress(FDllHandle, 'al_unlock_vertex_buffer');
-  al_get_vertex_buffer_size := GetProcAddress(FDllHandle, 'al_get_vertex_buffer_size');
-  al_create_index_buffer := GetProcAddress(FDllHandle, 'al_create_index_buffer');
-  al_destroy_index_buffer := GetProcAddress(FDllHandle, 'al_destroy_index_buffer');
-  al_lock_index_buffer := GetProcAddress(FDllHandle, 'al_lock_index_buffer');
-  al_unlock_index_buffer := GetProcAddress(FDllHandle, 'al_unlock_index_buffer');
-  al_get_index_buffer_size := GetProcAddress(FDllHandle, 'al_get_index_buffer_size');
-  al_triangulate_polygon := GetProcAddress(FDllHandle, 'al_triangulate_polygon');
-  al_draw_soft_triangle := GetProcAddress(FDllHandle, 'al_draw_soft_triangle');
-  al_draw_soft_line := GetProcAddress(FDllHandle, 'al_draw_soft_line');
-  al_draw_line := GetProcAddress(FDllHandle, 'al_draw_line');
-  al_draw_triangle := GetProcAddress(FDllHandle, 'al_draw_triangle');
-  al_draw_rectangle := GetProcAddress(FDllHandle, 'al_draw_rectangle');
-  al_draw_rounded_rectangle := GetProcAddress(FDllHandle, 'al_draw_rounded_rectangle');
-  al_calculate_arc := GetProcAddress(FDllHandle, 'al_calculate_arc');
-  al_draw_circle := GetProcAddress(FDllHandle, 'al_draw_circle');
-  al_draw_ellipse := GetProcAddress(FDllHandle, 'al_draw_ellipse');
-  al_draw_arc := GetProcAddress(FDllHandle, 'al_draw_arc');
-  al_draw_elliptical_arc := GetProcAddress(FDllHandle, 'al_draw_elliptical_arc');
-  al_draw_pieslice := GetProcAddress(FDllHandle, 'al_draw_pieslice');
-  al_calculate_spline := GetProcAddress(FDllHandle, 'al_calculate_spline');
-  al_draw_spline := GetProcAddress(FDllHandle, 'al_draw_spline');
-  al_calculate_ribbon := GetProcAddress(FDllHandle, 'al_calculate_ribbon');
-  al_draw_ribbon := GetProcAddress(FDllHandle, 'al_draw_ribbon');
-  al_draw_filled_triangle := GetProcAddress(FDllHandle, 'al_draw_filled_triangle');
-  al_draw_filled_rectangle := GetProcAddress(FDllHandle, 'al_draw_filled_rectangle');
-  al_draw_filled_ellipse := GetProcAddress(FDllHandle, 'al_draw_filled_ellipse');
-  al_draw_filled_circle := GetProcAddress(FDllHandle, 'al_draw_filled_circle');
-  al_draw_filled_pieslice := GetProcAddress(FDllHandle, 'al_draw_filled_pieslice');
-  al_draw_filled_rounded_rectangle := GetProcAddress(FDllHandle, 'al_draw_filled_rounded_rectangle');
-  al_draw_polyline := GetProcAddress(FDllHandle, 'al_draw_polyline');
-  al_draw_polygon := GetProcAddress(FDllHandle, 'al_draw_polygon');
-  al_draw_filled_polygon := GetProcAddress(FDllHandle, 'al_draw_filled_polygon');
-  al_draw_filled_polygon_with_holes := GetProcAddress(FDllHandle, 'al_draw_filled_polygon_with_holes');
-  al_load_ttf_font := GetProcAddress(FDllHandle, 'al_load_ttf_font');
-  al_load_ttf_font_f := GetProcAddress(FDllHandle, 'al_load_ttf_font_f');
-  al_load_ttf_font_stretch := GetProcAddress(FDllHandle, 'al_load_ttf_font_stretch');
-  al_load_ttf_font_stretch_f := GetProcAddress(FDllHandle, 'al_load_ttf_font_stretch_f');
-  al_init_ttf_addon := GetProcAddress(FDllHandle, 'al_init_ttf_addon');
-  al_is_ttf_addon_initialized := GetProcAddress(FDllHandle, 'al_is_ttf_addon_initialized');
-  al_shutdown_ttf_addon := GetProcAddress(FDllHandle, 'al_shutdown_ttf_addon');
-  al_get_allegro_ttf_version := GetProcAddress(FDllHandle, 'al_get_allegro_ttf_version');
-  al_open_video := GetProcAddress(FDllHandle, 'al_open_video');
-  al_close_video := GetProcAddress(FDllHandle, 'al_close_video');
-  al_start_video := GetProcAddress(FDllHandle, 'al_start_video');
-  al_start_video_with_voice := GetProcAddress(FDllHandle, 'al_start_video_with_voice');
-  al_get_video_event_source := GetProcAddress(FDllHandle, 'al_get_video_event_source');
-  al_set_video_playing := GetProcAddress(FDllHandle, 'al_set_video_playing');
-  al_is_video_playing := GetProcAddress(FDllHandle, 'al_is_video_playing');
-  al_get_video_audio_rate := GetProcAddress(FDllHandle, 'al_get_video_audio_rate');
-  al_get_video_fps := GetProcAddress(FDllHandle, 'al_get_video_fps');
-  al_get_video_scaled_width := GetProcAddress(FDllHandle, 'al_get_video_scaled_width');
-  al_get_video_scaled_height := GetProcAddress(FDllHandle, 'al_get_video_scaled_height');
-  al_get_video_frame := GetProcAddress(FDllHandle, 'al_get_video_frame');
-  al_get_video_position := GetProcAddress(FDllHandle, 'al_get_video_position');
-  al_seek_video := GetProcAddress(FDllHandle, 'al_seek_video');
-  al_init_video_addon := GetProcAddress(FDllHandle, 'al_init_video_addon');
-  al_is_video_addon_initialized := GetProcAddress(FDllHandle, 'al_is_video_addon_initialized');
-  al_shutdown_video_addon := GetProcAddress(FDllHandle, 'al_shutdown_video_addon');
-  al_get_allegro_video_version := GetProcAddress(FDllHandle, 'al_get_allegro_video_version');
-  al_identify_video_f := GetProcAddress(FDllHandle, 'al_identify_video_f');
-  al_identify_video := GetProcAddress(FDllHandle, 'al_identify_video');
-  PHYSFS_init := GetProcAddress(FDllHandle, 'PHYSFS_init');
-  PHYSFS_deinit := GetProcAddress(FDllHandle, 'PHYSFS_deinit');
-  PHYSFS_getWriteDir := GetProcAddress(FDllHandle, 'PHYSFS_getWriteDir');
-  PHYSFS_setWriteDir := GetProcAddress(FDllHandle, 'PHYSFS_setWriteDir');
-  PHYSFS_mount := GetProcAddress(FDllHandle, 'PHYSFS_mount');
-  PHYSFS_unmount := GetProcAddress(FDllHandle, 'PHYSFS_unmount');
-  al_get_win_window_handle := GetProcAddress(FDllHandle, 'al_get_win_window_handle');
-  {$ENDREGION}
-
-  Result := True;
-end;
-
-procedure TGame.UnloadDLL;
-var
-  LOutF: File;
-begin
-  if not FreeLibrary(FDllHandle) then Exit;
-  AssignFile(LOutF, FDllFilename);
-  Erase(LOutF);
-end;
-
-function TGame.StartupAllegro: Boolean;
-begin
-  Result := False;
-
-  if al_is_system_installed then Exit;
-
-  // init allegro
-  al_install_system(ALLEGRO_VERSION_INT, nil);
-
-  // init devices
-  al_install_joystick;
-  al_install_keyboard;
-  al_install_mouse;
-  al_install_touch_input;
-  al_install_audio;
-
-  // init addons
-  al_init_acodec_addon;
-  al_init_font_addon;
-  al_init_image_addon;
-  al_init_native_dialog_addon;
-  al_init_primitives_addon;
-  al_init_ttf_addon;
-  al_init_video_addon;
-
-  // int user event source
-  al_init_user_event_source(@FUserEventSrc);
-
-  // init event queues
-  FQueue := al_create_event_queue;
-  al_register_event_source(FQueue, al_get_joystick_event_source);
-  al_register_event_source(FQueue, al_get_keyboard_event_source);
-  al_register_event_source(FQueue, al_get_mouse_event_source);
-  al_register_event_source(FQueue, al_get_touch_input_event_source);
-  al_register_event_source(FQueue, al_get_touch_input_mouse_emulation_event_source);
-  al_register_event_source(FQueue , @FUserEventSrc);
-
-  FCmdConActive.type_ := EVENT_CMDCON_ACTIVE;
-  FCmdConInactive.type_ := EVENT_CMDCON_INACTIVE;
-
-  // init audio
-  if al_is_audio_installed then
-  begin
-    FVoice := al_create_voice(44100, ALLEGRO_AUDIO_DEPTH_INT16,  ALLEGRO_CHANNEL_CONF_2);
-    FMixer := al_create_mixer(44100, ALLEGRO_AUDIO_DEPTH_FLOAT32,  ALLEGRO_CHANNEL_CONF_2);
-    al_set_default_mixer(FMixer);
-    al_attach_mixer_to_voice(FMixer, FVoice);
-    al_reserve_samples(AUDIO_CHANNEL_COUNT);
-  end;
-
-  // init physfs
-  FFileInterface[False] := al_get_new_file_interface;
-  al_store_state(@FFileState[False], ALLEGRO_STATE_NEW_FILE_INTERFACE);
-  PHYSFS_init(nil);
-  al_set_physfs_file_interface;
-  FFileInterface[True] := al_get_new_file_interface;
-  al_store_state(@FFileState[True], ALLEGRO_STATE_NEW_FILE_INTERFACE);
-
-  Result := True;
-end;
-
-procedure TGame.ShutdownAllegro;
-begin
-  if not al_is_system_installed then Exit;
-
-  // shutdown physfs
-  al_set_standard_file_interface;
-  PHYSFS_deinit;
-
-  // shutdown audio
-  if al_is_audio_installed then
-  begin
-    al_stop_samples;
-    al_detach_mixer(FMixer);
-    al_destroy_mixer(FMixer);
-    al_destroy_voice(FVoice);
-    al_uninstall_audio;
-  end;
-
-  // shutdown event queues
-  if al_is_event_source_registered(FQueue, al_get_touch_input_mouse_emulation_event_source) then
-    al_unregister_event_source(FQueue, al_get_touch_input_mouse_emulation_event_source);
-
-  if al_is_event_source_registered(FQueue, al_get_touch_input_event_source) then
-    al_unregister_event_source(FQueue, al_get_touch_input_event_source);
-
-  if al_is_event_source_registered(FQueue, al_get_keyboard_event_source) then
-    al_unregister_event_source(FQueue, al_get_keyboard_event_source);
-
-  if al_is_event_source_registered(FQueue, al_get_mouse_event_source) then
-    al_unregister_event_source(FQueue, al_get_mouse_event_source);
-
-  if al_is_event_source_registered(FQueue, al_get_joystick_event_source) then
-    al_unregister_event_source(FQueue, al_get_joystick_event_source);
-
-  // shutdown devices
-  if al_is_touch_input_installed then
-  begin
-    al_uninstall_touch_input;
-  end;
-
-  if al_is_mouse_installed then
-  begin
-    al_uninstall_mouse;
-  end;
-
-  if al_is_keyboard_installed then
-  begin
-    al_uninstall_keyboard;
-  end;
-
-  if al_is_joystick_installed then
-  begin
-    al_uninstall_joystick;
-  end;
-
-  if al_is_system_installed then
-  begin
-    al_uninstall_system;
-  end;
-end;
-
-function TGame.ApplySettings: Boolean;
-var
-  I: Integer;
-begin
-  Result := False;
-
-  System.Randomize;
-
-  if not LoadDLL then Exit;
-  if not StartupAllegro then Exit;
-  if not OpenWindow then Exit;
-
-  for I := 0 to 360 do
-  begin
-    FCosTable[I] := cos((I * PI / 180.0));
-    FSinTable[I] := sin((I * PI / 180.0));
-  end;
-
-  // Archive
-  FArchive := TArchive.Create;
-  if FileExist(FSettings.ArchiveFilename) then
-  begin
-    FArchive.Open(FSettings.ArchivePassword, FSettings.ArchiveFilename);
-  end;
-
-  // Font
-  FFont := TFont.Create;
-  if FArchive.IsOpen and (FSettings.FontFilename <> '') then
-    FFont.Load(FArchive, FSettings.FontSize, FSettings.FontFilename)
-  else
-    if FileExist(FSettings.FontFilename) then
-      FFont.Load(nil, FSettings.FontSize, FSettings.FontFilename)
-    else
-      FFont.LoadDefault(FSettings.FontSize);
-
-  // Hud
-  SetHudPos(FSettings.HudPosX, FSettings.HudPosY);
-  SetHudLineSpace(FSettings.HudLineSpace);
-  SetHudTextItemPadWidth(FSettings.HudTextItemPadWidth);
-
-  // CmdConsole
-  FCmdConsole := TCmdConsole.Create;
-
-  ClearInput;
-  FInput.JoyStick.Setup(0);
-  ResetTiming(60.0, 1.0);
-
-  Result := True;
-end;
-
-procedure TGame.UnapplySettings;
-begin
-  FreeNilObject(@FCmdConsole);
-  FreeNilObject(@FFont);
-  FreeNilObject(@FArchive);
-  CloseWindow;
-  ShutdownAllegro;
-  UnloadDLL;
-end;
-
-// --- Misc -----------------------------------------------------------------
-procedure TGame.EmitCmdConInactiveEvent;
-begin
-  al_emit_user_event(@FUserEventSrc , @FCmdConInactive , nil);
-end;
-
-procedure TGame.EmitCmdConActiveEvent;
-begin
-  al_emit_user_event(@FUserEventSrc , @FCmdConActive , nil);
-end;
-
-// --- Constructor ----------------------------------------------------------
-constructor TGame.Create;
-begin
-  inherited;
-  Game := Self;
-  FCodePage := GetConsoleOutputCP;
-  SetConsoleOutputCP(CP_UTF8);
-end;
-
-destructor TGame.Destroy;
-begin
-  SetConsoleOutputCP(FCodePage);
-  Game := nil;
-  inherited;
-end;
-
-function TGame.ManualStartup: Boolean;
-begin
-  Result := False;
-  if not LoadDLL then Exit;
-  if not StartupAllegro then Exit;
-end;
-
-procedure TGame.ManualShutdown;
-begin
-  ShutdownAllegro;
-  UnloadDLL;
-end;
-
-// --- Utils ----------------------------------------------------------------
-function TGame.GetTempPath: string;
-var
-  Tmp: array[0..MAX_PATH] of Char;
-  Len: Integer;
-begin
-  Len := GetTempPathW(MAX_PATH, Tmp);
-  if Len <> 0 then
-  begin
-    Len := GetLongPathNameW(Tmp, nil, 0);
-    SetLength(Result, Len - 1);
-    GetLongPathNameW(Tmp, PChar(Result), Len);
-  end
-  else
-    Result := '';
-end;
-
-function TGame.GetTempFileName: string;
-var
-  TempPath: string;
-  ErrCode: UINT;
-begin
-  TempPath := GetTempPath;
-  SetLength(Result, MAX_PATH);
-  ErrCode := GetTempFileNameW(PChar(TempPath), 'tmp', 0, PChar(Result));
-  if ErrCode = 0 then Exit;
-  SetLength(Result, Length(PChar(Result)));
-end;
-
-procedure TGame.ProcessMessages;
-var
-  LMsg: TMsg;
-begin
-  while Integer(PeekMessageW(LMsg, 0, 0, 0, PM_REMOVE)) <> 0 do
-  begin
-    TranslateMessage(LMsg);
-    DispatchMessageW(LMsg);
-  end;
-end;
-
-function TGame.NumToStr(aValue: Int64): string;
-var
-  LResult: ShortString;
-begin
-  Str(aValue, LResult);
-  Result := string(LResult);
-end;
-
-function  TGame.NumToStr(aValue: UInt64): string;
-var
-  LResult: ShortString;
-begin
-  Str(aValue, LResult);
-  Result := string(LResult);
-end;
-
-function  TGame.NumToStr(aValue: Double; aWidth: Integer; aDecimals: Integer): string;
-var
-  LResult: ShortString;
-begin
-  if aWidth = 0 then
-    begin
-      Str(aValue:16:aDecimals, LResult);
-      Result := TrimStr(string(LResult));
-      Exit;
-    end
-  else
-    Str(aValue:aWidth:aDecimals, LResult);
-  Result := string(LResult);
-end;
-
-function  TGame.NumToStr(aValue: Extended; aWidth: Integer; aDecimals: Integer): string;
-var
-  LResult: ShortString;
-begin
-  if aWidth = 0 then
-    begin
-      Str(aValue:16:aDecimals, LResult);
-      Result := TrimStr(string(LResult));
-      Exit;
-    end
-  else
-    Str(aValue:aWidth:aDecimals, LResult);
-  Result := string(LResult);
-end;
-
-function TGame.TrimChars(const aValue: string; Chars: TSysCharSet): string;
-var
-  i, j : LongInt;
-begin
-  j := Length(aValue);
-  i := 1;
-  while (i <= j) and (AnsiChar(aValue[i]) in Chars) do
-    Inc(i);
-  if i <= j then
-  begin
-    while AnsiChar(aValue[j]) in Chars do
-      Dec(j);
-    Result := Copy(aValue, i, j - i + 1);
-  end else
-    Result := '';
-end;
-
-function  TGame.TrimStr(aValue: string): string;
-begin
-  Result := TrimChars(aValue, [#9, #10, #13, #32, #34, #39]);
-end;
-
-function  TGame.StrToInt(aValue: string): Int64;
-var
-  LCode: Integer;
-begin
-  Val(aValue, Result, LCode);
-end;
-
-function  TGame.StrToUInt(aValue: string): UInt64;
-var
-  LCode: Integer;
-begin
-  Val(aValue, Result, LCode);
-end;
-
-function  TGame.StrToFloat(aValue: string): Double;
-var
-  LCode: Integer;
-begin
-  Val(aValue, Result, LCode);
-end;
-
-function TGame.StuffStr(const aText: string; aStart, aLength: Cardinal; const aSubText: string): string;
-begin
-  Result := Copy(aText, 1, aStart - 1) +
-            aSubText +
-            Copy(aText, aStart + aLength, MaxInt);
-end;
-
-function TGame.UpperCase(const S: string): string;
-var
-  I, Len: Integer;
-  DstP, SrcP: PChar;
-  Ch: Char;
-begin
-  Len := Length(S);
-  SetLength(Result, Len);
-  if Len > 0 then
-  begin
-    DstP := PChar(Pointer(Result));
-    SrcP := PChar(Pointer(S));
-    for I := Len downto 1 do
-    begin
-      Ch := SrcP^;
-      case Ch of
-        'a'..'z':
-          Ch := Char(Word(Ch) xor $0020);
-      end;
-      DstP^ := Ch;
-      Inc(DstP);
-      Inc(SrcP);
-    end;
-  end;
-end;
-
-function TGame.SameText(A, B: string): Boolean;
-begin
-  Result := Boolean(UpperCase(A) = UpperCase(B));
-end;
-
-function TGame.LastDelimiter(const aText: string; const Delims: TSysCharSet): Integer;
-var
-  PSt, P: PChar;
-begin
-  PSt := Pointer(aText);
-  if PSt <> nil then
-  begin
-    P := PSt + Length(aText) - 1;
-    while P >= PSt do
-    begin
-      if AnsiChar(P^) in Delims then
-        Exit(P - PSt);
-      Dec(P);
-    end;
-  end;
-  Result := -1;
-end;
-
-function TGame.ChangeFileExt(const aFilename, aExtension: string): string;
-var
-  I: Integer;
-begin
-  I := LastDelimiter(aFilename, ['.', PathDelim , DriveDelim]);
-  writeln(aFilename[I]);
-  if (I < 0) or (aFilename[I+1] <> '.') then
-    Result := aFilename + aExtension
-  else
-  begin
-    SetLength(Result, I + Length(aExtension));
-    Move(aFilename[1], Result[1], I * SizeOf(Char));
-    if Length(aExtension) > 0 then
-      Move(aExtension[1], Result[1 + I], Length(aExtension) * SizeOf(Char));
-  end;
-end;
-
-function  TGame.FileExist(const aFilename: string): Boolean;
-var
-  FFileSandBoxed: Boolean;
-begin
-  Result := False;
-  if aFilename = '' then Exit;
-  FFileSandBoxed := GetFileSandBoxed;
-  if FFileSandBoxed then SetFileSandBoxed(False);
-  Result := al_filename_exists(PAnsiChar(AnsiString(aFilename)));
-  SetFileSandBoxed(FFileSandBoxed);
-end;
-
-function TGame.DirExist(const aDir: string): Boolean;
-var
-  LAttrib: DWORD;
-begin
-  Result := False;
-  LAttrib := GetFileAttributesW(PChar(aDir));
-  if LAttrib = INVALID_FILE_ATTRIBUTES then Exit;
-  Result := (LAttrib and FILE_ATTRIBUTE_DIRECTORY) = FILE_ATTRIBUTE_DIRECTORY;
-end;
-
-function  TGame.GetFiles(const aPath: string; aRecursive: Boolean): TStringArray;
-const
-  CWildCard = '\*';
-var
-  LData: TWIN32FindDataW;
-  LFind: THandle;
-  LCount: Integer;
-  LFilename: string;
-  LPath: string;
-  LSubFiles: TStringArray;
-begin
-  Result := nil;
-  if aPath = '' then Exit;
-  LPath := aPath + CWildCard;
-
-  LFind := FindFirstFileW(PChar(LPath), LData);
-  if LFind = INVALID_HANDLE_VALUE then Exit;
-  LCount := 0;
-  while FindNextFileW(LFind, LData) do
-  begin
-    LFilename := string(LData.cFileName);
-    if LFilename = '..' then continue;
-    if LData.dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY then
-    begin
-      if aRecursive then
-      begin
-        LSubFiles := GetFiles(aPath + '\' + LFilename, aRecursive);
-        for LFilename in LSubFiles do
-        begin
-          Inc(LCount);
-          SetLength(Result, LCount);
-          Result[LCount-1] := LFilename;
-        end;
-        continue;
-      end;
-    end;
-
-    Inc(LCount);
-    SetLength(Result, LCount);
-    Result[LCount-1] := aPath + '\' + LFilename;
-  end;
-
-  FindClose(LFind);
-end;
-
-function TGame.GetBit(const aValue: Cardinal; const Bit: Byte): Boolean;
-begin
-  Result := (aValue and (1 shl Bit)) <> 0;
-end;
-
-function TGame.SetBit(const aValue: Cardinal; const Bit: Byte): Cardinal;
-begin
-  Result := aValue or (1 shl Bit);
-end;
-
-function TGame.ClearBit(const aValue: Cardinal; const Bit: Byte): Cardinal;
-begin
-  Result := aValue and not (1 shl Bit);
-end;
-
-function TGame.EnableBit(const aValue: Cardinal; const Bit: Byte; const Flag: Boolean): Cardinal;
-begin
-  Result := (aValue or (1 shl Bit)) xor (Cardinal(not Flag) shl Bit);
-end;
-
-function TGame.StrScan(const aText: PWideChar; Chr: WideChar): PWideChar;
-begin
-  Result := aText;
-  while Result^ <> #0 do
-  begin
-    if Result^ = Chr then
-      Exit;
-    Inc(Result);
-  end;
-  if Chr <> #0 then
-    Result := nil;
-end;
-
-function TGame.StrEnd(const aText: PWideChar): PWideChar;
-begin
-  Result := aText;
-  while Result^ <> #0 do
-    Inc(Result);
-end;
-
-function TGame.ExtractQuotedStr(var aText: PWideChar; Quote: WideChar): UnicodeString;
-var
-  P, Dest: PWideChar;
-  DropCount: Integer;
-  EndSuffix: Integer;
-begin
-  Result := '';
-  if (aText = nil) or (aText^ <> Quote) then Exit;
-  Inc(aText);
-  DropCount := 1;
-  P := aText;
-  aText := StrScan(aText, Quote);
-  while aText <> nil do   // count adjacent pairs of quote chars
-  begin
-    Inc(aText);
-    if aText^ <> Quote then Break;
-    Inc(aText);
-    Inc(DropCount);
-    aText := StrScan(aText, Quote);
-  end;
-  EndSuffix := Ord(aText = nil); // Has an ending quoatation mark?
-  if aText = nil then aText := StrEnd(P);
-  if (aText - P - 1 + EndSuffix <= 0) or (aText - P - DropCount + EndSuffix <= 0) then Exit;
-  if DropCount = 1 then
-    SetString(Result, P, aText - P - 1 + EndSuffix)
-  else
-  begin
-    SetLength(Result, aText - P - DropCount + EndSuffix);
-    Dest := PWideChar(Result);
-    aText := StrScan(P, Quote);
-    while aText <> nil do
-    begin
-      Inc(aText);
-      if aText^ <> Quote then Break;
-      Move(P^, Dest^, (aText - P) * SizeOf(Char));
-      Inc(Dest, aText - P);
-      Inc(aText);
-      P := aText;
-      aText := StrScan(aText, Quote);
-    end;
-    if aText = nil then aText := StrEnd(P);
-    Move(P^, Dest^, (aText - P - 1 + EndSuffix) * SizeOf(Char));
-  end;
-end;
-
-function TGame.DequotedStr(const aText: string; aQuote: Char): string;
-var
-  LText: PChar;
-begin
-  LText := PChar(aText);
-  Result := ExtractQuotedStr(LText, aQuote);
-  if ((Result = '') or (LText^ = #0)) and
-     (Length(aText) > 0) and ((aText[Low(aText)] <> aQuote) or (aText[High(aText)] <> aQuote)) then
-    Result := aText;
-end;
-
-function  TGame.RemoveQuotes(const aText: string): string;
-var
-  LText: string;
-begin
-  LText := DequotedStr(aText, '"');
-  Result := DequotedStr(LText, '''');
-end;
-
-function  TGame.FormatStr(const aMsg: string; const aArgs: array of const): string;
-var
-  LText: string;
-  LMsg: PChar;
-  LArgIndex: Integer;
-  LArgCount: Integer;
-begin
-  Result := '';
-  if aMsg = '' then Exit;
-  LMsg := PChar(aMsg);
-  LArgCount := High(aArgs)+1;
-  LArgIndex := 0;
-  repeat
-    if (LMsg^ = '#') and  ((LArgCount >= 1) and (LArgIndex <= LArgCount-1))  then
-    begin
-      Inc(LMsg);
-      case LMsg^ of
-        // string
-        's', 'S':
-        begin
-          case aArgs[LArgIndex].VType of
-            vtString       : LText := LText + string(aArgs[LArgIndex].VString);
-            vtWideString   : LText := LText + string(aArgs[LArgIndex].VWideString);
-            vtUnicodeString: LText := LText + string(aArgs[LArgIndex].VUnicodeString);
-          end;
-          Inc(LMsg);
-          Inc(LArgIndex);
-          continue;
-        end;
-        'i', 'I':
-        begin
-          case aArgs[LArgIndex].VType of
-            vtInteger: LText := LText +  NumToStr(aArgs[LArgIndex].VInteger);
-            vtInt64  : LText := LText +  NumToStr(aArgs[LArgIndex].VInt64^);
-          end;
-          Inc(LMsg);
-          Inc(LArgIndex);
-          continue;
-        end;
-        'f', 'F':
-        begin
-          case aArgs[LArgIndex].VType of
-            vtExtended: LText := LText +  NumToStr(aArgs[LArgIndex].VExtended^);
-          end;
-          Inc(LMsg);
-          Inc(LArgIndex);
-          continue;
-        end;
-      end;
-    end;
-
-    LText := LText + LMsg^;
-    Inc(LMsg);
-  until LMsg^ = #0;
-  LText := LText;
-
-  Result := LText;
-end;
-
-function TGame.PadRightStr(aText: string; aTotalWidth: Integer; aPaddingChar: Char): string;
-begin
-  aTotalWidth := aTotalWidth - Length(aText);
-  if aTotalWidth > 0 then
-    Result := aText + System.StringOfChar(aPaddingChar, aTotalWidth)
-  else
-    Result := aText;
-end;
-
-function TGame.ExtractStrings(Separators, WhiteSpace: TSysCharSet; Content: PChar; Strings: TStringList): Integer;
-var
-  Head, Tail: PChar;
-  EOS, InQuote: Boolean;
-  QuoteChar: Char;
-  Item: string;
-begin
-
-  Result := 0;
-  if (Content = nil) or (Content^ = #0) or (Strings = nil) then Exit;
-  Tail := Content;
-  InQuote := False;
-  QuoteChar := #0;
-  Include(WhiteSpace, #13);
-  Include(WhiteSpace, #10);
-
-  Include(Separators, #0);
-  Include(Separators, #13);
-  Include(Separators, #10);
-  Include(Separators, '''');
-  Include(Separators, '"');
-  repeat
-    while (AnsiChar(Tail^) in WhiteSpace) do Inc(Tail);
-    Head := Tail;
-    while True do
-    begin
-      while (InQuote and not ((Tail^ = #0) or (Tail^ = QuoteChar))) or
-        not (AnsiChar(Tail^) in Separators) do
-          Inc(Tail);
-      if (AnsiChar(Tail^) in ['''', '"']) then
-      begin
-        if (QuoteChar <> #0) and (QuoteChar = Tail^) then
-          QuoteChar := #0
-        else if QuoteChar = #0 then
-          QuoteChar := Tail^;
-        InQuote := QuoteChar <> #0;
-        Inc(Tail);
-      end else Break;
-    end;
-    EOS := Tail^ = #0;
-    if (Head <> Tail) and (Head^ <> #0) then
-    begin
-      if Strings <> nil then
-      begin
-        SetString(Item, Head, Tail - Head);
-        Strings.Add(Item);
-      end;
-      Inc(Result);
-    end;
-    Inc(Tail);
-  until EOS;
-end;
-
-procedure TGame.FreeNilObject(aObject: PObject);
-begin
-  if aObject = nil then Exit;
-  if aObject^ = nil then Exit;
-  aObject^.Free;
-  aObject^ := nil;
-end;
-
-// --- Math -----------------------------------------------------------------
 function _RandomRange(const aFrom, aTo: Integer): Integer;
 var
   LFrom: Integer;
@@ -7737,12 +4561,184 @@ begin
     Result := Random(LTo - LFrom) + AFrom;
 end;
 
-function  TGame.RandomRange(aMin, aMax: Integer): Integer;
+{ Routines }
+function Min(const A, B: Int64): Int64;
+begin
+  if A < B then
+    Result := A
+  else
+    Result := B;
+end;
+
+function Min(const A, B: UInt64): UInt64;
+begin
+  if A < B then
+    Result := A
+  else
+    Result := B;
+end;
+
+function Min(const A, B: Double): Double;
+begin
+  if A < B then
+    Result := A
+  else
+    Result := B;
+end;
+
+function Max(const A, B: Int64): Int64;
+begin
+  if A > B then
+    Result := A
+  else
+    Result := B;
+end;
+
+function Max(const A, B: UInt64): UInt64;
+begin
+  if A > B then
+    Result := A
+  else
+    Result := B;
+end;
+
+function Max(const A, B: Double): Double;
+begin
+  if A > B then
+    Result := A
+  else
+    Result := B;
+end;
+
+function Sign(const aValue: Int64): Integer;
+begin
+  Result := 0;
+  if aValue < 0 then
+    Result := -1
+  else if aValue > 0 then
+    Result := 1;
+end;
+
+function Sign(const aValue: Double): Integer;
+begin
+  Result := 0;
+  if aValue < 0 then
+    Result := -1
+  else if aValue > 0 then
+    Result := 1;
+end;
+
+function InRange(const AValue, AMin, AMax: Int64): Boolean;
+var
+  A, B: Boolean;
+begin
+  A := (AValue >= AMin);
+  B := (AValue <= AMax);
+  Result := B and A;
+end;
+
+function InRange(const AValue, AMin, AMax: UInt64): Boolean;
+var
+  A, B: Boolean;
+begin
+  A := (AValue >= AMin);
+  B := (AValue <= AMax);
+  Result := B and A;
+end;
+
+function InRange(const AValue, AMin, AMax: Double): Boolean;
+var
+  A, B: Boolean;
+begin
+  A := (AValue >= AMin);
+  B := (AValue <= AMax);
+  Result := B and A;
+end;
+
+function EnsureRange(const aValue, aMin, aMax: Int64): Int64;
+begin
+  assert(aMin <= aMax);
+  if aValue < aMin then
+    Result := aMin
+  else if aValue > aMax then
+    Result := aMax
+  else
+    Result := aValue;
+end;
+
+function EnsureRange(const aValue, aMin, aMax: UInt64): UInt64;
+begin
+  assert(aMin <= aMax);
+  if aValue < aMin then
+    Result := aMin
+  else if aValue > aMax then
+    Result := aMax
+  else
+    Result := aValue;
+end;
+
+function EnsureRange(const aValue, aMin, aMax: Double): Double;
+begin
+  assert(aMin <= aMax);
+  if aValue < aMin then
+    Result := aMin
+  else if aValue > aMax then
+    Result := aMax
+  else
+    Result := aValue;
+end;
+
+function Floor(const X: Extended): Integer;
+begin
+  Result := Integer(Trunc(X));
+  if Frac(X) < 0 then
+    Dec(Result);
+end;
+
+function IntPower(const Base: Extended; const Exponent: Integer): Extended;
+var
+  Y: Integer;
+  LBase: Extended;
+begin
+  Y := Abs(Exponent);
+  LBase := Base;
+  Result := 1.0;
+  while Y > 0 do
+  begin
+    while not Odd(Y) do
+    begin
+      Y := Y shr 1;
+      LBase := LBase * LBase
+    end;
+    Dec(Y);
+    Result := Result * LBase
+  end;
+  if Exponent < 0 then
+    Result := 1.0 / Result;
+end;
+
+function Power(const Base, Exponent: Extended): Extended;
+begin
+  if Exponent = 0.0 then
+    Result := 1.0               { n**0 = 1 }
+  else if (Base = 0.0) and (Exponent > 0.0) then
+    Result := 0.0               { 0**n = 0, n > 0 }
+  else if (Frac(Exponent) = 0.0) and (Abs(Exponent) <= MaxInt) then
+    Result := IntPower(Base, Integer(Trunc(Exponent)))
+  else if Base < 0 then
+  begin
+    Result := Nan; // Return NaN (not a number) if base is less than zero and Exponent is not natural number
+  end
+  else
+    Result := Exp(Exponent * Ln(Base));
+end;
+
+function  RandomRange(aMin, aMax: Integer): Integer;
 begin
   Result := _RandomRange(aMin, aMax + 1);
 end;
 
-function  TGame.RandomRange(aMin, aMax: Single): Single;
+function  RandomRange(aMin, aMax: Single): Single;
 var
   LNum: Single;
 begin
@@ -7750,36 +4746,36 @@ begin
   Result := aMin + (LNum * (aMax - aMin));
 end;
 
-function  TGame.RandomBool: Boolean;
+function  RandomBool: Boolean;
 begin
   Result := Boolean(_RandomRange(0, 2) = 1);
 end;
 
-function  TGame.GetRandomSeed: Integer;
+function  GetRandomSeed: Integer;
 begin
   Result := System.RandSeed;
 end;
 
-procedure TGame.SetRandomSeed(aValue: Integer);
+procedure SetRandomSeed(aValue: Integer);
 begin
   System.RandSeed := aValue;
 end;
 
-function  TGame.AngleCos(aAngle: Integer): Single;
+function  AngleCos(aAngle: Integer): Single;
 begin
   Result := 0;
   if (aAngle < 0) or (aAngle > 360) then Exit;
-  Result := FCosTable[aAngle];
+  Result := mCosTable[aAngle];
 end;
 
-function  TGame.AngleSin(aAngle: Integer): Single;
+function  AngleSin(aAngle: Integer): Single;
 begin
   Result := 0;
   if (aAngle < 0) or (aAngle > 360) then Exit;
-  Result := FSinTable[aAngle];
+  Result := mSinTable[aAngle];
 end;
 
-function  TGame.AngleDifference(aSrcAngle: Single; aDestAngle: Single): Single;
+function  AngleDifference(aSrcAngle: Single; aDestAngle: Single): Single;
 var
   LC: Single;
 begin
@@ -7793,7 +4789,7 @@ begin
   Result := LC;
 end;
 
-procedure TGame.AngleRotatePos(aAngle: Single; var aX: Single; var aY: Single);
+procedure AngleRotatePos(aAngle: Single; var aX: Single; var aY: Single);
 var
   LNX, LNY: Single;
   LIA: Integer;
@@ -7802,14 +4798,14 @@ begin
 
   LIA := Round(aAngle);
 
-  LNX := aX * FCosTable[LIA] - aY * FSinTable[LIA];
-  LNY := aY * FCosTable[LIA] + aX * FSinTable[LIA];
+  LNX := aX * mCosTable[LIA] - aY * mSinTable[LIA];
+  LNY := aY * mCosTable[LIA] + aX * mSinTable[LIA];
 
   aX := LNX;
   aY := LNY;
 end;
 
-function  TGame.ClipValue(var aValue: Single; aMin: Single; aMax: Single; aWrap: Boolean): Single;
+function  ClipValue(var aValue: Single; aMin: Single; aMax: Single; aWrap: Boolean): Single;
 begin
   if aWrap then
     begin
@@ -7838,7 +4834,7 @@ begin
 
 end;
 
-function  TGame.ClipValue(var aValue: Integer; aMin: Integer; aMax: Integer; aWrap: Boolean): Integer;
+function  ClipValue(var aValue: Integer; aMin: Integer; aMax: Integer; aWrap: Boolean): Integer;
 begin
   if aWrap then
     begin
@@ -7866,7 +4862,7 @@ begin
   Result := aValue;
 end;
 
-function  TGame.SameSign(aValue1: Integer; aValue2: Integer): Boolean;
+function  SameSign(aValue1: Integer; aValue2: Integer): Boolean;
 begin
   if Sign(aValue1) = Sign(aValue2) then
     Result := True
@@ -7874,7 +4870,7 @@ begin
     Result := False;
 end;
 
-function  TGame.SameSign(aValue1: Single; aValue2: Single): Boolean;
+function  SameSign(aValue1: Single; aValue2: Single): Boolean;
 begin
   if Sign(aValue1) = Sign(aValue2) then
     Result := True
@@ -7882,7 +4878,7 @@ begin
     Result := False;
 end;
 
-function  TGame.SameValue(aA: Double; aB: Double; aEpsilon: Double = 0): Boolean;
+function  SameValue(aA: Double; aB: Double; aEpsilon: Double = 0): Boolean;
 const
   cFuzzFactor = 1000;
   cDoubleResolution   = 1E-15 * cFuzzFactor;
@@ -7895,12 +4891,12 @@ begin
     Result := (aB - aA) <= aEpsilon;
 end;
 
-function  TGame.SameValue(aA: Single; aB: Single; aEpsilon: Single = 0): Boolean;
+function  SameValue(aA: Single; aB: Single; aEpsilon: Single = 0): Boolean;
 begin
   Result := SameValue(aA, aB, aEpsilon);
 end;
 
-function  TGame.Vector(aX: Single; aY: Single): TVector;
+function  Vector(aX: Single; aY: Single): TVector;
 begin
   Result.X := aX;
   Result.Y := aY;
@@ -7909,7 +4905,7 @@ begin
   Result.W := 0;
 end;
 
-function  TGame.Rectangle(aX: Single; aY: Single; aWidth: Single; aHeight: Single): TRectangle;
+function  Rectangle(aX: Single; aY: Single; aWidth: Single; aHeight: Single): TRectangle;
 begin
   Result.X := aX;
   Result.Y := aY;
@@ -7917,7 +4913,7 @@ begin
   Result.Height := aHeight;
 end;
 
-procedure TGame.SmoothMove(var aValue: Single; aAmount: Single; aMax: Single; aDrag: Single);
+procedure SmoothMove(var aValue: Single; aAmount: Single; aMax: Single; aDrag: Single);
 var
   LAmt: Single;
 begin
@@ -7949,7 +4945,7 @@ begin
   end;
 end;
 
-function  TGame.Lerp(aFrom: Double; aTo: Double; aTime: Double): Double;
+function  Lerp(aFrom: Double; aTo: Double; aTime: Double): Double;
 begin
   if aTime <= 0.5 then
     Result := aFrom + (aTo - aFrom) * aTime
@@ -7958,7 +4954,7 @@ begin
 end;
 
 // --- Collision --------------------------------------------------------
-function  TGame.PointInRectangle(aPoint: TVector; aRect: TRectangle): Boolean;
+function  PointInRectangle(aPoint: TVector; aRect: TRectangle): Boolean;
 begin
   if ((aPoint.x >= aRect.x) and (aPoint.x <= (aRect.x + aRect.width)) and
     (aPoint.y >= aRect.y) and (aPoint.y <= (aRect.y + aRect.height))) then
@@ -7967,12 +4963,12 @@ begin
     Result := False;
 end;
 
-function  TGame.PointInCircle(aPoint, aCenter: TVector; aRadius: Single): Boolean;
+function  PointInCircle(aPoint, aCenter: TVector; aRadius: Single): Boolean;
 begin
   Result := CirclesOverlap(aPoint, 0, aCenter, aRadius);
 end;
 
-function  TGame.PointInTriangle(aPoint, aP1, aP2, aP3: TVector): Boolean;
+function  PointInTriangle(aPoint, aP1, aP2, aP3: TVector): Boolean;
 var
   LAlpha, LBeta, LGamma: Single;
 begin
@@ -7992,7 +4988,7 @@ begin
     Result := False;
 end;
 
-function  TGame.CirclesOverlap(aCenter1: TVector; aRadius1: Single; aCenter2: TVector; aRadius2: Single): Boolean;
+function  CirclesOverlap(aCenter1: TVector; aRadius1: Single; aCenter2: TVector; aRadius2: Single): Boolean;
 var
   LDX, LDY, LDistance: Single;
 begin
@@ -8007,7 +5003,7 @@ begin
     Result := False;
 end;
 
-function  TGame.CircleInRectangle(aCenter: TVector; aRadius: Single; aRect: TRectangle): Boolean;
+function  CircleInRectangle(aCenter: TVector; aRadius: Single; aRect: TRectangle): Boolean;
 var
   LDX, LDY: Single;
   LCornerDistanceSq: Single;
@@ -8049,7 +5045,7 @@ begin
   Result := Boolean(LCornerDistanceSq <= (aRadius * aRadius));
 end;
 
-function  TGame.RectanglesOverlap(aRect1: TRectangle; aRect2: TRectangle): Boolean;
+function  RectanglesOverlap(aRect1: TRectangle; aRect2: TRectangle): Boolean;
 var
   LDX, LDY: Single;
 begin
@@ -8063,7 +5059,7 @@ begin
     Result := False;
 end;
 
-function  TGame.RectangleIntersection(aRect1, aRect2: TRectangle): TRectangle;
+function  RectangleIntersection(aRect1, aRect2: TRectangle): TRectangle;
 var
   LDXX, LDYY: Single;
 begin
@@ -8133,7 +5129,7 @@ begin
   end;
 end;
 
-function  TGame.LineIntersection(aX1, aY1, aX2, aY2, aX3, aY3, aX4, aY4: Integer; var aX: Integer; var aY: Integer): TLineIntersection;
+function  LineIntersection(aX1, aY1, aX2, aY2, aX3, aY3, aX4, aY4: Integer; var aX: Integer; var aY: Integer): TLineIntersection;
 var
   LAX, LBX, LCX, LAY, LBY, LCY, LD, LE, LF, LNum: Integer;
   LOffset: Integer;
@@ -8248,7 +5244,7 @@ begin
   Result := liTrue;
 end;
 
-function  TGame.RadiusOverlap(aRadius1, aX1, aY1, aRadius2, aX2, aY2, aShrinkFactor: Single): Boolean;
+function  RadiusOverlap(aRadius1, aX1, aY1, aRadius2, aX2, aY2, aShrinkFactor: Single): Boolean;
 var
   LDist: Single;
   LR1, LR2: Single;
@@ -8271,7 +5267,7 @@ begin
 end;
 
 // --- Easing ---------------------------------------------------------------
-function TGame.EaseValue(aCurrentTime: Double; aStartValue: Double; aChangeInValue: Double; aDuration: Double; aEaseType: TEaseType): Double;
+function EaseValue(aCurrentTime: Double; aStartValue: Double; aChangeInValue: Double; aDuration: Double; aEaseType: TEaseType): Double;
 begin
   Result := 0;
   case aEaseType of
@@ -8439,7 +5435,7 @@ begin
   end;
 end;
 
-function TGame.EasePosition(aStartPos: Double; aEndPos: Double; aCurrentPos: Double; aEaseType: TEaseType): Double;
+function EasePosition(aStartPos: Double; aEndPos: Double; aCurrentPos: Double; aEaseType: TEaseType): Double;
 var
   LT, LB, LC, LD: Double;
 begin
@@ -8452,8 +5448,1081 @@ begin
     Result := 100;
 end;
 
-// --- Console --------------------------------------------------------------
-function TGame.IsConsolePresent: Boolean;
+
+procedure Startup;
+var
+  I: Integer;
+begin
+  System.Randomize;
+  for I := 0 to 360 do
+  begin
+    mCosTable[I] := cos((I * PI / 180.0));
+    mSinTable[I] := sin((I * PI / 180.0));
+  end;
+end;
+
+procedure Shutdown;
+begin
+end;
+
+{$ENDREGION}
+
+{$REGION 'Spark.Utils'}
+{ TBaseObject }
+constructor TBaseObject.Create;
+begin
+  inherited;
+end;
+
+destructor TBaseObject.Destroy;
+begin
+  inherited;
+end;
+
+{ TList }
+function TList.OutOfBounds(aIndex: Integer): Boolean;
+begin
+  if (aIndex < 0) or (aIndex > FCount-1) then
+    Result := True
+  else
+    Result := False;
+end;
+
+function TList.GetItem(aIndex: Integer): Pointer;
+begin
+  Result := nil;
+  if OutOfBounds(aIndex) then Exit;
+  Result := FItems[aIndex];
+end;
+
+procedure TList.SetItem(aIndex: Integer; aValue: Pointer);
+begin
+  if OutOfBounds(aIndex) then Exit;
+  FItems[aIndex] := aValue;
+end;
+
+constructor TList.Create;
+begin
+  Init;
+  inherited;
+end;
+
+destructor TList.Destroy;
+begin
+  Clear;
+  inherited;
+end;
+
+procedure TList.Init(aCapacity: Integer);
+begin
+  FItems := nil;
+  FCount := 0;
+  FCapacity := aCapacity;
+end;
+
+procedure TList.Clear;
+begin
+  FItems := nil;
+  FCount := 0;
+end;
+
+function TList.IndexOf(aItem: Pointer): Integer;
+var
+  I : Integer;
+begin
+  for I := 0 to FCount - 1 do
+    if FItems[i] = aItem then
+    begin
+      Result := I;
+      Exit;
+    end;
+  Result := -1;
+end;
+
+function TList.Add(aItem: Pointer): Integer;
+begin
+  if FCount mod FCapacity = 0 then
+    SetLength(FItems, Length(FItems) + FCapacity);
+  FItems[FCount] := aItem;
+  Result := FCount;
+  Inc(FCount);
+end;
+
+function TList.Delete(aIndex: Integer): Pointer;
+begin
+  Result := nil;
+  if OutOfBounds(aIndex) then Exit;
+  Result := FItems[aIndex];
+  Dec(FCount);
+  if aIndex < FCount then
+    Move(FItems[aIndex + 1], FItems[aIndex], (FCount - aIndex) * SizeOf(FItems[0]));
+  if Length(FItems) - FCount > FCapacity then
+    SetLength(FItems, Length(FItems) - FCapacity);
+end;
+
+procedure TList.Insert(aIndex: Integer; aItem: Pointer);
+begin
+  if OutOfBounds(aIndex) then Exit;
+  Add(nil);
+  Move(FItems[aIndex], FItems[aIndex + 1], (FCount - aIndex) * SizeOf(FItems[0]));
+  FItems[aIndex] := aItem;
+end;
+
+procedure TList.Sort(aCompareFunc: TListCompareFunc);
+  procedure SortFragment(L, R: LongInt);
+  var
+    i, j : Integer;
+    P, T : Pointer;
+  begin
+    repeat
+      i := L;
+      j := R;
+      P := FItems[(L + R) div 2];
+      repeat
+        while aCompareFunc(FItems[i], P) < 0 do
+          Inc(i);
+        while aCompareFunc(FItems[j], P) > 0 do
+          Dec(j);
+        if i <= j then
+        begin
+          T := FItems[i];
+          FItems[i] := FItems[j];
+          FItems[j] := T;
+          Inc(i);
+          Dec(j);
+        end;
+      until i > j;
+      if L < j then
+        SortFragment(L, j);
+      L := i;
+    until i >= R;
+  end;
+
+begin
+  if FCount > 1 then
+    SortFragment(0, FCount - 1);
+end;
+
+{ TStringList }
+function TStringList.OutOfBounds(aIndex: Integer): Boolean;
+begin
+  if (aIndex < 0) or (aIndex >= FCount) then
+    Result := True
+  else
+    Result := False;
+end;
+
+function TStringList.GetItem(aIndex: Integer): string;
+begin
+  Result := '';
+  if OutOfBounds(aIndex) then Exit;
+  Result := FItems[aIndex];
+end;
+
+procedure TStringList.SetItem(aIndex: Integer; aValue: string);
+begin
+  if OutOfBounds(aIndex) then Exit;
+  FItems[aIndex] := aValue;
+end;
+
+constructor TStringList.Create;
+begin
+  inherited;
+  Init;
+end;
+
+destructor TStringList.Destroy;
+begin
+  Clear;
+  inherited;
+end;
+
+procedure TStringList.Init(aCapacity: Integer);
+begin
+  FItems := nil;
+  FCount := 0;
+  FCapacity := aCapacity;
+end;
+
+procedure TStringList.Clear;
+begin
+  FItems := nil;
+  FCount := 0;
+end;
+
+function TStringList.IndexOf(aItem: string): Integer;
+var
+  I : Integer;
+begin
+  for I := 0 to FCount - 1 do
+    if FItems[i] = aItem then
+    begin
+      Result := I;
+      Exit;
+    end;
+  Result := -1;
+end;
+
+function TStringList.Add(aItem: string): Integer;
+begin
+  if FCount mod FCapacity = 0 then
+    SetLength(FItems, Length(FItems) + FCapacity);
+  FItems[FCount] := aItem;
+  Result := FCount;
+  Inc(FCount);
+end;
+
+function TStringList.Delete(aIndex: Integer): string;
+begin
+  Result := '';
+  if OutOfBounds(aIndex) then Exit;
+  Result := FItems[aIndex];
+  Finalize(FItems[aIndex]);
+  Dec(FCount);
+  if aIndex < FCount then
+    Move(FItems[aIndex + 1], FItems[aIndex], (FCount - aIndex) * SizeOf(FItems[0]));
+  if Length(FItems) - FCount > FCapacity then
+    SetLength(FItems, Length(FItems) - FCapacity);
+end;
+
+procedure TStringList.Insert(aIndex: Integer; aItem: string);
+begin
+  if OutOfBounds(aIndex) then Exit;
+  Add('');
+  Move(FItems[aIndex], FItems[aIndex + 1], (FCount - aIndex) * SizeOf(FItems[0]));
+  FItems[aIndex] := aItem;
+end;
+
+procedure TStringList.Sort(aCompareFunc: TStringListCompareFunc);
+  procedure SortFragment(L, R: LongInt);
+  var
+    i, j : Integer;
+    P, T : string;
+  begin
+    repeat
+      i := L;
+      j := R;
+      P := FItems[(L + R) div 2];
+      repeat
+        while aCompareFunc(FItems[i], P) < 0 do
+          Inc(i);
+        while aCompareFunc(FItems[j], P) > 0 do
+          Dec(j);
+        if i <= j then
+        begin
+          T := FItems[i];
+          FItems[i] := FItems[j];
+          FItems[j] := T;
+          Inc(i);
+          Dec(j);
+        end;
+      until i > j;
+      if L < j then
+        SortFragment(L, j);
+      L := i;
+    until i >= R;
+  end;
+
+begin
+  if FCount > 1 then
+    SortFragment(0, FCount - 1);
+end;
+
+function TStringList.AddPair(const aName, aValue: string): TStringList;
+begin
+  Add(aName + '=' + aValue);
+  Result := Self;
+end;
+
+function TStringList.GetKey(aIndex: Integer): string;
+var
+  P: Integer;
+begin
+  Result := '';
+  if OutOfBounds(aIndex) then Exit;
+  Result := GetItem(aIndex);
+  P := Pos('=', Result);
+  if P <> 0 then
+    SetLength(Result, P-1);
+end;
+
+function TStringList.GetValue(aIndex: Integer): string;
+var
+  P: Integer;
+begin
+  Result := '';
+  if OutOfBounds(aIndex) then Exit;
+  Result := GetItem(aIndex);
+  P := Pos('=', Result);
+  if P > 0 then
+    System.Delete(Result, 1, P);
+end;
+
+{ TStream }
+procedure TStream.SetPos(aValue: Integer);
+begin
+  FPos := aValue;
+  if FType = stFile then
+    Seek(FFile, FPos);
+end;
+
+constructor TStream.Create;
+begin
+  inherited;
+end;
+
+destructor TStream.Destroy;
+begin
+  if FType = stFile then CloseFile(FFile);
+  inherited;
+end;
+
+function TStream.Open(aMemory: Pointer; aMemSize: Integer): Boolean;
+begin
+  Result := False;
+
+  if not Assigned(aMemory) then Exit;
+  if aMemSize <=0 then Exit;
+
+  FType := stMemory;
+  FMem   := aMemory;
+  FSize := aMemSize;
+  FPos  := 0;
+end;
+
+function TStream.Open(const aFilename: string; aCreate: Boolean = False): Boolean;
+begin
+  Result := False;
+
+  if not aCreate then
+    if not FileExist(aFilename) then Exit;
+
+  AssignFile(FFile, aFilename);
+
+  if aCreate then
+    Rewrite(FFile, 1)
+  else
+    Reset(FFile, 1);
+
+  FType := stFile;
+  FSize := FileSize(FFile);
+  FPos := 0;
+  FMem := nil;
+end;
+
+procedure TStream.Close;
+begin
+  if FType = stFile then
+    CloseFile(FFile);
+  FType := stClosed;
+  FSize := 0;
+  FPos := 0;
+  FMem := nil;
+end;
+
+procedure TStream.CopyFrom(const aStream: TStream);
+var
+  P : Pointer;
+  LPos : LongInt;
+begin
+  P := GetMemory(aStream.Size);
+  LPos := aStream.Pos;
+  aStream.Pos := 0;
+  aStream.Read(P^, aStream.Size);
+  aStream.Pos := LPos;
+  Write(P^, aStream.Size);
+  FreeMemory(P);
+end;
+
+function TStream.Read(out aBuf; aBufSize: Integer): Integer;
+begin
+  if FType = stMemory then
+  begin
+    Result := Min(FPos + aBufSize, FSize) - FPos;
+    Move(FMem^, aBuf, Result);
+  end else
+    BlockRead(FFile, aBuf, aBufSize, Result);
+  Inc(FPos, Result);
+end;
+
+function TStream.Write(const aBuf; aBufSize: Integer): Integer;
+begin
+  if FType = stMemory then
+  begin
+    Result := Min(FPos + aBufSize, FSize) - FPos;
+    Move(aBuf, FMem^, Result);
+  end else
+    BlockWrite(FFile, aBuf, aBufSize, Result);
+  Inc(FPos, Result);
+  Inc(FSize, Max(0, FPos - FSize));
+end;
+
+function TStream.ReadAnsiString: AnsiString;
+var
+  LLen : Integer;
+begin
+  Read(LLen, SizeOf(LLen));
+  if LLen > 0 then
+  begin
+    SetLength(Result, LLen);
+    Read(Result[1], LLen);
+  end else
+    Result := '';
+end;
+
+procedure TStream.WriteAnsiString(const aValue: AnsiString);
+var
+  LLen : Integer;
+begin
+  LLen := Length(aValue);
+  Write(LLen, SizeOf(LLen));
+  if LLen > 0 then
+    Write(aValue[1], LLen);
+end;
+
+function TStream.ReadString: string;
+var
+  LLen : Integer;
+begin
+  Read(LLen, SizeOf(LLen));
+  if LLen > 0 then
+  begin
+    SetLength(Result, LLen);
+    Read(Result[1], LLen * SizeOf(Char));
+  end;
+end;
+
+procedure TStream.WriteString(const aValue: string);
+var
+  LLen : Integer;
+begin
+  LLen := Length(aValue);
+  Write(LLen, SizeOf(LLen));
+  if LLen > 0 then Write(aValue[1], LLen * SizeOf(Char));
+end;
+
+class function TStream.Init(aMemory: Pointer; aMemSize: Integer): TStream;
+begin
+  Result := TStream.Create;
+  Result.Open(aMemory, aMemSize);
+end;
+
+class function TStream.Init(const aFilename: string; aCreate: Boolean): TStream;
+begin
+  Result := TStream.Create;
+  Result.Open(aFilename, aCreate);
+end;
+
+{ Routines }
+procedure FreeNilObject(var aObject);
+var
+  LObject: TObject;
+begin
+  LObject := TObject(aObject);
+  if Assigned(LObject) then LObject.Free;
+  Pointer(aObject) := nil;
+end;
+
+function GetTempPath: string;
+var
+  Tmp: array[0..MAX_PATH] of Char;
+  Len: Integer;
+begin
+  Len := GetTempPathW(MAX_PATH, Tmp);
+  if Len <> 0 then
+  begin
+    Len := GetLongPathNameW(Tmp, nil, 0);
+    SetLength(Result, Len - 1);
+    GetLongPathNameW(Tmp, PChar(Result), Len);
+  end
+  else
+    Result := '';
+end;
+
+function GetTempFileName: string;
+var
+  TempPath: string;
+  ErrCode: UINT;
+begin
+  TempPath := GetTempPath;
+  SetLength(Result, MAX_PATH);
+  ErrCode := GetTempFileNameW(PChar(TempPath), 'tmp', 0, PChar(Result));
+  if ErrCode = 0 then Exit;
+  SetLength(Result, Length(PChar(Result)));
+end;
+
+procedure ProcessMessages;
+var
+  LMsg: TMsg;
+begin
+  while Integer(PeekMessageW(LMsg, 0, 0, 0, PM_REMOVE)) <> 0 do
+  begin
+    TranslateMessage(LMsg);
+    DispatchMessageW(LMsg);
+  end;
+end;
+
+function NumToStr(aValue: Int64): string;
+var
+  LResult: ShortString;
+begin
+  Str(aValue, LResult);
+  Result := string(LResult);
+end;
+
+function  NumToStr(aValue: UInt64): string;
+var
+  LResult: ShortString;
+begin
+  Str(aValue, LResult);
+  Result := string(LResult);
+end;
+
+function  NumToStr(aValue: Double; aWidth: Integer; aDecimals: Integer): string;
+var
+  LResult: ShortString;
+begin
+  if aWidth = 0 then
+    begin
+      Str(aValue:16:aDecimals, LResult);
+      Result := TrimStr(string(LResult));
+      Exit;
+    end
+  else
+    Str(aValue:aWidth:aDecimals, LResult);
+  Result := string(LResult);
+end;
+
+function  NumToStr(aValue: Extended; aWidth: Integer; aDecimals: Integer): string;
+var
+  LResult: ShortString;
+begin
+  if aWidth = 0 then
+    begin
+      Str(aValue:16:aDecimals, LResult);
+      Result := TrimStr(string(LResult));
+      Exit;
+    end
+  else
+    Str(aValue:aWidth:aDecimals, LResult);
+  Result := string(LResult);
+end;
+
+function TrimChars(const aValue: string; Chars: TSysCharSet): string;
+var
+  i, j : LongInt;
+begin
+  j := Length(aValue);
+  i := 1;
+  while (i <= j) and (AnsiChar(aValue[i]) in Chars) do
+    Inc(i);
+  if i <= j then
+  begin
+    while AnsiChar(aValue[j]) in Chars do
+      Dec(j);
+    Result := Copy(aValue, i, j - i + 1);
+  end else
+    Result := '';
+end;
+
+function  TrimStr(aValue: string): string;
+begin
+  Result := TrimChars(aValue, [#9, #10, #13, #32, #34, #39]);
+end;
+
+function DeleteChars(const Str: string; Chars: TSysCharSet): string;
+var
+  i, j : LongInt;
+begin
+  j := 0;
+  SetLength(Result, Length(Str));
+  for i := 1 to Length(Str) do
+    if not (AnsiChar(Str[i]) in Chars) then
+    begin
+      Inc(j);
+      Result[j] := Str[i];
+    end;
+  SetLength(Result, j);
+end;
+
+function  StrToInt(aValue: string): Int64;
+var
+  LCode: Integer;
+begin
+  Val(aValue, Result, LCode);
+end;
+
+function  StrToUInt(aValue: string): UInt64;
+var
+  LCode: Integer;
+begin
+  Val(aValue, Result, LCode);
+end;
+
+function  StrToFloat(aValue: string): Double;
+var
+  LCode: Integer;
+begin
+  Val(aValue, Result, LCode);
+end;
+
+function StuffStr(const aText: string; aStart, aLength: Cardinal; const aSubText: string): string;
+begin
+  Result := Copy(aText, 1, aStart - 1) +
+            aSubText +
+            Copy(aText, aStart + aLength, MaxInt);
+end;
+
+function UpperCase(const S: string): string;
+var
+  I, Len: Integer;
+  DstP, SrcP: PChar;
+  Ch: Char;
+begin
+  Len := Length(S);
+  SetLength(Result, Len);
+  if Len > 0 then
+  begin
+    DstP := PChar(Pointer(Result));
+    SrcP := PChar(Pointer(S));
+    for I := Len downto 1 do
+    begin
+      Ch := SrcP^;
+      case Ch of
+        'a'..'z':
+          Ch := Char(Word(Ch) xor $0020);
+      end;
+      DstP^ := Ch;
+      Inc(DstP);
+      Inc(SrcP);
+    end;
+  end;
+end;
+
+function SameText(A, B: string): Boolean;
+begin
+  Result := Boolean(UpperCase(A) = UpperCase(B));
+end;
+
+function LastDelimiter(const aText: string; const Delims: TSysCharSet): Integer;
+var
+  PSt, P: PChar;
+begin
+  PSt := Pointer(aText);
+  if Assigned(PSt) then
+  begin
+    P := PSt + Length(aText) - 1;
+    while P >= PSt do
+    begin
+      if AnsiChar(P^) in Delims then
+        Exit(P - PSt);
+      Dec(P);
+    end;
+  end;
+  Result := -1;
+end;
+
+function ChangeFileExt(const aFilename, aExtension: string): string;
+var
+  I: Integer;
+begin
+  I := LastDelimiter(aFilename, ['.', PathDelim , DriveDelim]);
+  if (I < 0) or (aFilename[I+1] <> '.') then
+    Result := aFilename + aExtension
+  else
+  begin
+    SetLength(Result, I + Length(aExtension));
+    Move(aFilename[1], Result[1], I * SizeOf(Char));
+    if Length(aExtension) > 0 then
+      Move(aExtension[1], Result[1 + I], Length(aExtension) * SizeOf(Char));
+  end;
+end;
+
+(*
+function  TSysUtils.FileExist(const aFilename: string): Boolean;
+var
+  FFileSandBoxed: Boolean;
+begin
+  Result := False;
+  if aFilename = '' then Exit;
+  FFileSandBoxed := GetFileSandBoxed;
+  if FFileSandBoxed then SetFileSandBoxed(False);
+  Result := al_filename_exists(PAnsiChar(AnsiString(aFilename)));
+  SetFileSandBoxed(FFileSandBoxed);
+end;
+*)
+
+function  FileExist(const aFilename: string): Boolean;
+var
+  LAttrib: DWORD;
+begin
+  Result := False;
+  LAttrib := GetFileAttributesW(PChar(aFilename));
+  if LAttrib = INVALID_FILE_ATTRIBUTES then Exit;
+  if LAttrib = FILE_ATTRIBUTE_DIRECTORY then Exit;
+  Result := True;
+end;
+
+function DirExist(const aDir: string): Boolean;
+var
+  LAttrib: DWORD;
+begin
+  Result := False;
+  LAttrib := GetFileAttributesW(PChar(aDir));
+  if LAttrib = INVALID_FILE_ATTRIBUTES then Exit;
+  Result := (LAttrib and FILE_ATTRIBUTE_DIRECTORY) = FILE_ATTRIBUTE_DIRECTORY;
+end;
+
+function  GetFiles(const aPath: string; aRecursive: Boolean): TStringArray;
+const
+  CWildCard = '\*';
+var
+  LData: TFindDataW;
+  LFind: THandle;
+  LCount: Integer;
+  LFilename: string;
+  LPath: string;
+  LSubFiles: TStringArray;
+begin
+  Result := nil;
+  if aPath = '' then Exit;
+  LPath := aPath + CWildCard;
+  LCount := 0;
+  LFind := FindFirstFileW(PChar(LPath), LData);
+  if LFind = INVALID_HANDLE_VALUE then Exit;
+  if GetLastError = ERROR_FILE_NOT_FOUND then
+  begin
+    FindClose(LFind);
+    Exit;
+  end;
+  repeat
+    LFilename := string(LData.cFileName);
+    if (LFilename = '..') or (LFilename = '.') then continue;
+    if LData.dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY then
+    begin
+      if aRecursive then
+      begin
+        LSubFiles := GetFiles(aPath + '\' + LFilename, aRecursive);
+        for LFilename in LSubFiles do
+        begin
+          Inc(LCount);
+          SetLength(Result, LCount);
+          Result[LCount-1] := LFilename;
+        end;
+        continue;
+      end;
+    end;
+
+    Inc(LCount);
+    SetLength(Result, LCount);
+    Result[LCount-1] := aPath + '\' + LFilename;
+  until not FindNextFileW(LFind, LData);
+
+  FindClose(LFind);
+end;
+
+function  FileCount(const aPath: string; const aMask: string): Int64;
+var
+  LData: TFindDataW;
+  LFind: THandle;
+  LCount: Integer;
+  LFilename: string;
+  LPath: string;
+begin
+  Result := 0;
+  if aPath = '' then Exit;
+  LPath := aPath + '\' + aMask;
+  LCount := 0;
+  LFind := FindFirstFileW(PChar(LPath), LData);
+  if LFind = INVALID_HANDLE_VALUE then Exit;
+  if GetLastError = ERROR_FILE_NOT_FOUND then
+  begin
+    FindClose(LFind);
+    Exit;
+  end;
+  repeat
+    LFilename := string(LData.cFileName);
+    if (LFilename = '..') or (LFilename = '.') then continue;
+    if LData.dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY then
+      continue;
+
+    Inc(LCount);
+  until not FindNextFileW(LFind, LData);
+
+  FindClose(LFind);
+
+  Result := LCount;
+end;
+
+function GetBit(const aValue: Cardinal; const Bit: Byte): Boolean;
+begin
+  Result := (aValue and (1 shl Bit)) <> 0;
+end;
+
+function SetBit(const aValue: Cardinal; const Bit: Byte): Cardinal;
+begin
+  Result := aValue or (1 shl Bit);
+end;
+
+function ClearBit(const aValue: Cardinal; const Bit: Byte): Cardinal;
+begin
+  Result := aValue and not (1 shl Bit);
+end;
+
+function EnableBit(const aValue: Cardinal; const Bit: Byte; const Flag: Boolean): Cardinal;
+begin
+  Result := (aValue or (1 shl Bit)) xor (Cardinal(not Flag) shl Bit);
+end;
+
+function StrScan(const aText: PWideChar; Chr: WideChar): PWideChar;
+begin
+  Result := aText;
+  while Result^ <> #0 do
+  begin
+    if Result^ = Chr then
+      Exit;
+    Inc(Result);
+  end;
+  if Chr <> #0 then
+    Result := nil;
+end;
+
+function StrEnd(const aText: PWideChar): PWideChar;
+begin
+  Result := aText;
+  while Result^ <> #0 do
+    Inc(Result);
+end;
+
+function ExtractQuotedStr(var aText: PWideChar; Quote: WideChar): UnicodeString;
+var
+  P, Dest: PWideChar;
+  DropCount: Integer;
+  EndSuffix: Integer;
+begin
+  Result := '';
+  if (not Assigned(aText)) or (aText^ <> Quote) then Exit;
+  Inc(aText);
+  DropCount := 1;
+  P := aText;
+  aText := StrScan(aText, Quote);
+  while Assigned(aText) do   // count adjacent pairs of quote chars
+  begin
+    Inc(aText);
+    if aText^ <> Quote then Break;
+    Inc(aText);
+    Inc(DropCount);
+    aText := StrScan(aText, Quote);
+  end;
+  EndSuffix := Ord(aText = nil); // Has an ending quoatation mark?
+  if not Assigned(aText) then aText := StrEnd(P);
+  if (aText - P - 1 + EndSuffix <= 0) or (aText - P - DropCount + EndSuffix <= 0) then Exit;
+  if DropCount = 1 then
+    SetString(Result, P, aText - P - 1 + EndSuffix)
+  else
+  begin
+    SetLength(Result, aText - P - DropCount + EndSuffix);
+    Dest := PWideChar(Result);
+    aText := StrScan(P, Quote);
+    while Assigned(aText) do
+    begin
+      Inc(aText);
+      if aText^ <> Quote then Break;
+      Move(P^, Dest^, (aText - P) * SizeOf(Char));
+      Inc(Dest, aText - P);
+      Inc(aText);
+      P := aText;
+      aText := StrScan(aText, Quote);
+    end;
+    if not Assigned(aText) then aText := StrEnd(P);
+    Move(P^, Dest^, (aText - P - 1 + EndSuffix) * SizeOf(Char));
+  end;
+end;
+
+function DequotedStr(const aText: string; aQuote: Char): string;
+var
+  LText: PChar;
+begin
+  LText := PChar(aText);
+  Result := ExtractQuotedStr(LText, aQuote);
+  if ((Result = '') or (LText^ = #0)) and
+     (Length(aText) > 0) and ((aText[Low(aText)] <> aQuote) or (aText[High(aText)] <> aQuote)) then
+    Result := aText;
+end;
+
+function  RemoveQuotes(const aText: string): string;
+var
+  LText: string;
+begin
+  LText := DequotedStr(aText, '"');
+  Result := DequotedStr(LText, '''');
+end;
+
+function  FormatStr(const aMsg: string; const aArgs: array of const): string;
+var
+  LText: string;
+  LMsg: PChar;
+  LArgIndex: Integer;
+  LArgCount: Integer;
+  LChar: Char;
+  LNum: Integer;
+  LStr: string;
+begin
+  Result := '';
+  if aMsg = '' then Exit;
+  LMsg := PChar(aMsg);
+  LArgCount := High(aArgs)+1;
+  LArgIndex := 0;
+  repeat
+    if (LMsg^ = '#') and  ((LArgCount >= 1) and (LArgIndex <= LArgCount-1))  then
+    begin
+      Inc(LMsg);
+      case LMsg^ of
+        // string
+        's', 'S':
+        begin
+          case aArgs[LArgIndex].VType of
+            vtString       : LText := LText + string(aArgs[LArgIndex].VString);
+            vtWideString   : LText := LText + string(aArgs[LArgIndex].VWideString);
+            vtUnicodeString: LText := LText + string(aArgs[LArgIndex].VUnicodeString);
+          end;
+          Inc(LMsg);
+          Inc(LArgIndex);
+          continue;
+        end;
+        'i', 'I':
+        begin
+          // check for leading zeros #I:n where n = leading zero count
+          LNum := 0;
+          LStr := '';
+          Inc(LMsg);
+          LChar := LMsg^;
+          if LChar = ':' then
+            begin
+              Inc(LMsg);
+              LChar := LMsg^;
+              if AnsiChar(LChar) in ['0' .. '9'] then
+              begin
+                LNum := StrToInt(LChar);
+              end;
+            end
+          else
+            Dec(LMsg);
+
+          case aArgs[LArgIndex].VType of
+            vtInteger: LStr := NumToStr(aArgs[LArgIndex].VInteger);
+            vtInt64  : LStr := NumToStr(aArgs[LArgIndex].VInt64^);
+          end;
+
+          LText := LText + PadLeftStr(LStr, LNum, '0');
+
+          Inc(LMsg);
+          Inc(LArgIndex);
+          continue;
+        end;
+        'f', 'F':
+        begin
+          case aArgs[LArgIndex].VType of
+            vtExtended: LText := LText +  NumToStr(aArgs[LArgIndex].VExtended^);
+          end;
+          Inc(LMsg);
+          Inc(LArgIndex);
+          continue;
+        end;
+      end;
+    end;
+
+    LText := LText + LMsg^;
+    Inc(LMsg);
+  until LMsg^ = #0;
+  LText := LText;
+
+  Result := LText;
+end;
+
+function PadRightStr(const aText: string; aTotalWidth: Integer; aPaddingChar: Char): string;
+begin
+  aTotalWidth := aTotalWidth - Length(aText);
+  if aTotalWidth > 0 then
+    Result := aText + System.StringOfChar(aPaddingChar, aTotalWidth)
+  else
+    Result := aText;
+end;
+
+function PadLeftStr(const aText: string; aTotalWidth: Integer; aPaddingChar: Char): string;
+begin
+  aTotalWidth := aTotalWidth - Length(aText);
+  if aTotalWidth > 0 then
+    Result := System.StringOfChar(aPaddingChar, aTotalWidth) + aText
+  else
+    Result := aText;
+end;
+
+function ExtractStrings(Separators, WhiteSpace: TSysCharSet; Content: PChar; Strings: TStringList): Integer;
+var
+  Head, Tail: PChar;
+  EOS, InQuote: Boolean;
+  QuoteChar: Char;
+  Item: string;
+begin
+
+  Result := 0;
+  if (not Assigned(Content)) or (Content^ = #0) or (not Assigned(Strings)) then Exit;
+  Tail := Content;
+  InQuote := False;
+  QuoteChar := #0;
+  Include(WhiteSpace, #13);
+  Include(WhiteSpace, #10);
+
+  Include(Separators, #0);
+  Include(Separators, #13);
+  Include(Separators, #10);
+  Include(Separators, '''');
+  Include(Separators, '"');
+  repeat
+    while (AnsiChar(Tail^) in WhiteSpace) do Inc(Tail);
+    Head := Tail;
+    while True do
+    begin
+      while (InQuote and not ((Tail^ = #0) or (Tail^ = QuoteChar))) or
+        not (AnsiChar(Tail^) in Separators) do
+          Inc(Tail);
+      if (AnsiChar(Tail^) in ['''', '"']) then
+      begin
+        if (QuoteChar <> #0) and (QuoteChar = Tail^) then
+          QuoteChar := #0
+        else if QuoteChar = #0 then
+          QuoteChar := Tail^;
+        InQuote := QuoteChar <> #0;
+        Inc(Tail);
+      end else Break;
+    end;
+    EOS := Tail^ = #0;
+    if (Head <> Tail) and (Head^ <> #0) then
+    begin
+      if Assigned(Strings) then
+      begin
+        SetString(Item, Head, Tail - Head);
+        Strings.Add(Item);
+      end;
+      Inc(Result);
+    end;
+    Inc(Tail);
+  until EOS;
+end;
+
+function  GetFilename(const aPath: string): string;
+var
+  LPath: PALLEGRO_PATH;
+begin
+  Result := '';
+  if aPath ='' then Exit;
+  LPath := al_create_path(PAnsiChar(AnsiString(aPath)));
+  Result := string(al_get_path_filename(LPath));
+  al_destroy_path(LPath);
+end;
+
+function  HasConsoleOutput: Boolean;
 var
   LStdout: THandle;
 begin
@@ -8463,201 +6532,3788 @@ begin
   Result := Boolean(LStdout <> 0);
 end;
 
-// --- Math -----------------------------------------------------------------
-function TGame.InRange(const AValue, AMin, AMax: Int64): Boolean;
+procedure Print(const aMsg: string; const aArgs: array of const);
+begin
+  if not HasConsoleOutput then Exit;
+  Write(FormatStr(aMsg, aArgs));
+end;
+
+procedure PrintLn(const aMsg: string; const aArgs: array of const);
+begin
+  if not HasConsoleOutput then Exit;
+  WriteLn(FormatStr(aMsg, aArgs));
+end;
+
+function ExcludeTrailingPathDelimiter(const S: string): string;
+begin
+  Result := S;
+  if Result[High(Result)] = PathDelim then
+    SetLength(Result, Length(Result)-1);
+end;
+
+function ExpandFileName(const FileName: string): string;
 var
-  A, B: Boolean;
+  FName: PChar;
+  Buffer: array[0..MAX_PATH - 1] of Char;
+  Len: Integer;
 begin
-  A := (AValue >= AMin);
-  B := (AValue <= AMax);
-  Result := B and A;
-end;
-
-function TGame.InRange(const AValue, AMin, AMax: UInt64): Boolean;
-var
-  A, B: Boolean;
-begin
-  A := (AValue >= AMin);
-  B := (AValue <= AMax);
-  Result := B and A;
-end;
-
-function TGame.InRange(const AValue, AMin, AMax: Double): Boolean;
-var
-  A, B: Boolean;
-begin
-  A := (AValue >= AMin);
-  B := (AValue <= AMax);
-  Result := B and A;
-end;
-
-// --- FileSystem -----------------------------------------------------------
-procedure TGame.SetFileSandBoxed(aEnable: Boolean);
-begin
-  al_restore_state(@FFileState[aEnable]);
-end;
-
-function  TGame.GetFileSandBoxed: Boolean;
-begin
-  Result := Boolean(al_get_new_file_interface = FFileInterface[True]);
-end;
-
-procedure TGame.SetFileSandboxWriteDir(aPath: string);
-begin
-  PHYSFS_setWriteDir(PAnsiChar(AnsiString(aPath)));
-end;
-
-function  TGame.GetFileSandboxWriteDir: string;
-begin
-  Result := string(PHYSFS_getWriteDir);
-end;
-
-// --- Math -----------------------------------------------------------------
-function TGame.Min(const A, B: Int64): Int64;
-begin
-  if A < B then
-    Result := A
-  else
-    Result := B;
-end;
-
-function TGame.Min(const A, B: UInt64): UInt64;
-begin
-  if A < B then
-    Result := A
-  else
-    Result := B;
-end;
-
-function TGame.Min(const A, B: Double): Double;
-begin
-  if A < B then
-    Result := A
-  else
-    Result := B;
-end;
-
-function TGame.Max(const A, B: Int64): Int64;
-begin
-  if A > B then
-    Result := A
-  else
-    Result := B;
-end;
-
-function TGame.Max(const A, B: UInt64): UInt64;
-begin
-  if A > B then
-    Result := A
-  else
-    Result := B;
-end;
-
-function TGame.Max(const A, B: Double): Double;
-begin
-  if A > B then
-    Result := A
-  else
-    Result := B;
-end;
-
-function TGame.Sign(const aValue: Int64): Integer;
-begin
-  Result := 0;
-  if aValue < 0 then
-    Result := -1
-  else if aValue > 0 then
-    Result := 1;
-end;
-
-function TGame.Sign(const aValue: Double): Integer;
-begin
-  Result := 0;
-  if aValue < 0 then
-    Result := -1
-  else if aValue > 0 then
-    Result := 1;
-end;
-
-function TGame.EnsureRange(const aValue, aMin, aMax: Int64): Int64;
-begin
-  assert(aMin <= aMax);
-  if aValue < aMin then
-    Result := aMin
-  else if aValue > aMax then
-    Result := aMax
-  else
-    Result := aValue;
-end;
-
-function TGame.EnsureRange(const aValue, aMin, aMax: UInt64): UInt64;
-begin
-  assert(aMin <= aMax);
-  if aValue < aMin then
-    Result := aMin
-  else if aValue > aMax then
-    Result := aMax
-  else
-    Result := aValue;
-end;
-
-function TGame.EnsureRange(const aValue, aMin, aMax: Double): Double;
-begin
-  assert(aMin <= aMax);
-  if aValue < aMin then
-    Result := aMin
-  else if aValue > aMax then
-    Result := aMax
-  else
-    Result := aValue;
-end;
-
-function TGame.Floor(const X: Extended): Integer;
-begin
-  Result := Integer(Trunc(X));
-  if Frac(X) < 0 then
-    Dec(Result);
-end;
-
-function TGame.IntPower(const Base: Extended; const Exponent: Integer): Extended;
-var
-  Y: Integer;
-  LBase: Extended;
-begin
-  Y := Abs(Exponent);
-  LBase := Base;
-  Result := 1.0;
-  while Y > 0 do
+  Len := GetFullPathNameW(PChar(FileName), Length(Buffer), Buffer, FName);
+  if Len <= Length(Buffer) then
+    SetString(Result, Buffer, Len)
+  else if Len > 0 then
   begin
-    while not Odd(Y) do
-    begin
-      Y := Y shr 1;
-      LBase := LBase * LBase
-    end;
-    Dec(Y);
-    Result := Result * LBase
+    SetLength(Result, Len);
+    Len := GetFullPathNameW(PChar(FileName), Len, PChar(Result), FName);
+    if Len < Length(Result) then
+      SetLength(Result, Len);
   end;
-  if Exponent < 0 then
-    Result := 1.0 / Result;
 end;
 
-function TGame.Power(const Base, Exponent: Extended): Extended;
+function ExtractFilePath(const FileName: string): string;
+var
+  I: Integer;
 begin
-  if Exponent = 0.0 then
-    Result := 1.0               { n**0 = 1 }
-  else if (Base = 0.0) and (Exponent > 0.0) then
-    Result := 0.0               { 0**n = 0, n > 0 }
-  else if (Frac(Exponent) = 0.0) and (Abs(Exponent) <= MaxInt) then
-    Result := IntPower(Base, Integer(Trunc(Exponent)))
-  else if Base < 0 then
+  I :=  LastDelimiter(Filename, [PathDelim , DriveDelim]);
+  Result := Copy(FileName, 1, I + 1);
+end;
+
+function CreateDir(const Dir: string): Boolean;
+begin
+  Result := CreateDirectoryW(PChar(Dir), nil);
+end;
+
+function ForceDirectories(Dir: string): Boolean;
+begin
+  Result := True;
+  if Dir = '' then Exit;
+
+  Dir := ExcludeTrailingPathDelimiter(Dir);
+  if DirExist(Dir) then  Exit;
+
+  if (Length(Dir) < 3) or (ExtractFilePath(Dir) = Dir) then
+    Result := CreateDir(Dir)
+  else
+    Result := ForceDirectories(ExtractFilePath(Dir)) and CreateDir(Dir);
+end;
+
+
+{$ENDREGION}
+
+{$REGION 'Spark.System'}
+{ TLog }
+constructor TLog.Create;
+begin
+  inherited;
+  Open;
+end;
+
+destructor TLog.Destroy;
+begin
+  Close;
+  inherited;
+end;
+
+procedure TLog.Open(const aFilename: string; aOverwrite: Boolean);
+var
+  LFilename: string;
+begin
+  LFilename := aFilename;
+  if LFilename = '' then LFilename := ParamStr(0);
+  LFilename := ChangeFileExt(LFilename, cLogExt);
+
+  Close;
+
+  FillChar(FBuffer, SizeOf(FBuffer), 0);
+  FOpen := False;
+  FGlobalWriteToConsole := LogToConsole;
+
+  AssignFile(FText, LFilename);
+  if aOverwrite then
+    ReWrite(FText)
+  else
+    if FileExist(LFilename) then
+      Reset(FText)
+    else
+      ReWrite(FText);
+  SetTextBuf(FText, FBuffer);
+  FOpen := True;
+  FFilename := LFilename;
+end;
+
+procedure TLog.Close;
+begin
+  if not FOpen then Exit;
+  CloseFile(FText);
+  FOpen := False;
+end;
+
+function TLog.Add(const aMsg: string; const aArgs: array of const; aWriteToConsole: Boolean): string;
+var
+  LLine: string;
+begin
+  if not FOpen then Exit;
+
+  // get line
+  LLine := FormatStr(aMsg, aArgs);
+
+  // write to console
+  if FGlobalWriteToConsole then
+    PrintLn(LLine, [])
+  else
+    if aWriteToConsole then
+      PrintLn(LLine, []);
+
+  // write to logfile
+  {$I-}
+  Writeln(FText, LLine);
+  Flush(FText);
+  {$I+}
+end;
+
+{ TConfigFile }
+constructor TConfigFile.Create;
+begin
+  inherited;
+end;
+
+destructor TConfigFile.Destroy;
+begin
+  Close;
+  Clear;
+  inherited;
+end;
+
+procedure TConfigFile.Open(const aFilename: string);
+begin
+  if aFilename = '' then
+    begin
+      FFilename := ParamStr(0);
+      FFilename := ChangeFileExt(FFilename, cIniExt);
+    end
+  else
+    FFilename := aFilename;
+  if FileExist(aFilename) then
+    Load(FFilename);
+end;
+
+procedure TConfigFile.Close;
+begin
+  Save(FFilename);
+end;
+
+procedure TConfigFile.Clear;
+begin
+  FData := nil;
+end;
+
+procedure TConfigFile.Load(const aFilename: string);
+var
+  AnsiText : string;
+  Text, Category, Line : string;
+  CatId : LongInt;
+  Stream : TStream;
+  i, BeginPos : LongInt;
+begin
+  FData := nil;
+  CatId := -1;
+  Stream := TStream.Init(aFilename);
+  SetLength(AnsiText, Stream.Size);
+  Stream.Read(AnsiText[1], Length(AnsiText)*SizeOf(Char));
+  Stream.Free;
+  Text := string(AnsiText);
+  BeginPos := 1;
+  while BeginPos < Length(Text) do
   begin
-    Result := Nan; // Return NaN (not a number) if base is less than zero and Exponent is not natural number
+    for i := BeginPos to Length(Text) do
+      if (Text[i] = #13) or (i = Length(Text)) then
+      begin
+        Line := Copy(Text, BeginPos, i - BeginPos + 1);
+        BeginPos := i + 1;
+        break;
+      end;
+    Line := TrimStr(Line);
+
+    if Line <> '' then
+      if Line[1] <> '[' then
+      begin
+        if (Line[1] <> ';') and (CatId >= 0) then
+        begin
+          SetLength(FData[CatId].Params, Length(FData[CatId].Params) + 1);
+          with FData[CatId], Params[Length(Params) - 1] do
+          begin
+            Name  := TrimStr(Copy(Line, 1, Pos('=', Line) - 1));
+            Value := TrimStr(Copy(Line, Pos('=', Line) + 1, Length(Line)));
+          end;
+        end;
+      end else
+      begin
+        Category := TrimStr(DeleteChars(Line, ['[', ']']));
+        CatId := Length(FData);
+        SetLength(FData, CatId + 1);
+        FData[CatId].Category := Category;
+      end;
+  end;
+end;
+
+procedure TConfigFile.Save(const aFilename: string);
+var
+  LStream : TStream;
+  LText   : string;
+  I, J : Integer;
+begin
+  LText := '';
+  for I := 0 to Length(FData) - 1 do
+  begin
+    LText := LText + '[' + FData[I].Category + ']' + CRLF;
+    for J := 0 to Length(FData[I].Params) - 1 do
+      LText := LText + FData[I].Params[J].Name + ' = ' + FData[I].Params[J].Value + CRLF;
+    LText := LText + CRLF;
+  end;
+  LStream := TStream.Init(aFilename, True);
+  LStream.Write(LText[1], Length(LText)*SizeOf(Char));
+  LStream.Free;
+end;
+
+procedure TConfigFile.Write(const aCategory, aName, aValue: string);
+var
+  i, j : Integer;
+begin
+  for i := 0 to Length(FData) - 1 do
+    if aCategory = FData[i].Category then
+      with FData[i] do
+      begin
+        for j := 0 to Length(Params) - 1 do
+          if Params[j].Name = aName then
+          begin
+            Params[j].Value := aValue;
+            Exit;
+          end;
+      // Add new param
+        SetLength(Params, Length(Params) + 1);
+        Params[Length(Params) - 1].Name  := aName;
+        Params[Length(Params) - 1].Value := aValue;
+        Exit;
+      end;
+// Add new category
+  SetLength(FData, Length(FData) + 1);
+  with FData[Length(FData) - 1] do
+  begin
+    Category := aCategory;
+    SetLength(Params, 1);
+    Params[0].Name  := aName;
+    Params[0].Value := aValue;
+  end;
+end;
+
+procedure TConfigFile.Write(const aCategory, aName: string; aValue: Int64);
+begin
+  Write(aCategory, aName, NumToStr(aValue));
+end;
+
+procedure TConfigFile.Write(const aCategory, aName: string; aValue: Single);
+begin
+  Write(aCategory, aName, NumToStr(aValue));
+end;
+
+procedure TConfigFile.Write(const aCategory, aName: string; aValue: Boolean);
+begin
+  if aValue then
+    Write(aCategory, aName, 'TRUE')
+  else
+    Write(aCategory, aName, 'FALSE');
+end;
+
+function TConfigFile.Read(const aCategory, aName: string; const Default: string): string;
+var
+  I, J : Integer;
+begin
+  Result := Default;
+  for I := 0 to Length(FData) - 1 do
+    if aCategory = FData[I].Category then
+      for J := 0 to Length(FData[I].Params) - 1 do
+        if FData[I].Params[J].Name = aName then
+        begin
+          Result := FData[I].Params[J].Value;
+          Exit;
+        end;
+end;
+
+function TConfigFile.Read(const aCategory, aName: string; aDefault: Int64): Int64;
+var
+  LValue: string;
+begin
+  LValue := Read(aCategory, aName, '');
+  if LValue = '' then
+    Result := aDefault
+  else
+  Result := StrToInt(LValue);
+end;
+
+function TConfigFile.Read(const aCategory, aName: string; aDefault: Single): Single;
+var
+  LValue: string;
+begin
+  LValue := Read(aCategory, aName, '');
+  if LValue = '' then
+    Result := aDefault
+  else
+  Result := StrToInt(LValue);
+end;
+
+function TConfigFile.Read(const aCategory, aName: string; aDefault: Boolean = False): Boolean;
+var
+  LValue: string;
+begin
+  LValue := Read(aCategory, aName, '');
+  if LValue = '' then
+    Result := aDefault
+  else
+    if SameText(LValue, 'TRUE') then
+      Result := True
+    else
+    if SameText(LValue, 'FALSE') then
+      Result := False
+    else
+      Result := aDefault;
+end;
+
+function TConfigFile.CategoryName(aIndex: Integer): string;
+begin
+  if (aIndex >= 0) and (aIndex < Length(FData)) then
+    Result := FData[aIndex].Category
+  else
+    Result := '';
+end;
+
+{ TArchive }
+constructor TArchive.Create;
+begin
+  inherited;
+end;
+
+destructor TArchive.Destroy;
+begin
+  Close;
+  inherited;
+end;
+
+function TArchive.IsOpen: Boolean;
+begin
+  Result := FIsOpen;
+end;
+
+function TArchive.Open(const aPassword: string; const aFilename: string): Boolean;
+begin
+  Result := False;
+  if FIsOpen then Exit;
+  if not FileExist(aFilename) then Exit;
+  Result := Boolean(PHYSFS_mount(PAnsiChar(AnsiString(aFilename)), nil, 1) <> 0);
+  if Result then
+  begin
+    FPassword := aPassword;
+    FFilename := aFilename;
+    FPasswordFilename := '';
+    FIsOpen := True;
+  end;
+end;
+
+function TArchive.Close: Boolean;
+begin
+  Result := False;
+  if not FIsOpen then Exit;
+  Result := Boolean(PHYSFS_unmount(PAnsiChar(AnsiString(FFilename))) <> 0);
+  if Result then
+  begin
+    FIsOpen := False;
+    FFilename := '';
+    FPassword := '';
+    FPasswordFilename := '';
+  end;
+end;
+
+function TArchive.FileInside(const aFilename: string): Boolean;
+var
+  LSandBoxed: Boolean;
+begin
+  LSandBoxed := SGT.GetFileSandBoxed;
+  SGT.SetFileSandBoxed(True);
+  Result := al_filename_exists(PAnsiChar(AnsiString(aFilename)));
+  SGT.SetFileSandBoxed(LSandBoxed);
+end;
+
+function TArchive.GetPasswordFilename(const aFilename: string): PAnsiChar;
+begin
+  if FPassword = '' then
+    FPasswordFilename := aFilename
+  else
+    FPasswordFilename := aFilename + '$' + FPassword;
+  Result := PAnsiChar(AnsiString(FPasswordFilename));
+end;
+
+function TArchive.GetCRC32(aStream: PALLEGRO_FILE): Cardinal;
+var
+  LBytesRead: NativeUInt;
+  LBuffer: array of Byte;
+  LSandboxed: Boolean;
+begin
+  SetLength(LBuffer, 65521);
+  LSandboxed := SGT.GetFileSandBoxed;
+  SGT.SetFileSandBoxed(False);
+
+  Result := Crc32(0, nil, 0);
+  repeat
+    LBytesRead := al_fread(aStream, @LBuffer[0], Length(LBuffer));
+    Result := Crc32(Result, @LBuffer[0], LBytesRead);
+  until al_feof(aStream);
+  SGT.SetFileSandBoxed(LSandboxed);
+
+  LBuffer := nil;
+end;
+
+function TArchive.Build(const aPassword: string; const aFilename: string; const aDirectory: string; aOnProgress: TArchiveBuildProgressEvent): Boolean;
+var
+  LFileList: TStringArray;
+  LFilename: string;
+  LZipFile: zipFile;
+  LZipFileInfo: zip_fileinfo;
+  LFile: PALLEGRO_FILE;
+  LCrc: Cardinal;
+  LBytesRead: Integer;
+  LBuffer: array of Byte;
+  LFileSize: Int64;
+  LProgress: Single;
+  LNewFile: Boolean;
+  LSandboxed: Boolean;
+begin
+  Result := False;
+
+  // check if directory exists
+  if not DirExist(aDirectory) then Exit;
+
+  LSandboxed := SGT.GetFileSandBoxed;
+  SGT.SetFileSandBoxed(False);
+
+  // init variabls
+  SetLength(LBuffer, 1024*4);
+  FillChar(LZipFileInfo, SizeOf(LZipFileInfo), 0);
+
+  // scan folder and build file list
+  //LFileList := TDirectory.GetFiles(aDirectory, '*', TSearchOption.soAllDirectories);
+  LFileList := GetFiles(aDirectory, True);
+
+  // create a zip file
+  LZipFile := zipOpen(PAnsiChar(AnsiString(aFilename)), APPEND_STATUS_CREATE);
+
+  // process zip file
+  if Assigned(LZipFile) then
+  begin
+    // loop through all files in list
+    for LFilename in LFileList do
+    begin
+      // open file
+      //LFile := TFile.OpenRead(LFilename);
+      LFile := al_fopen(PAnsiChar(AnsiString(LFilename)), 'rb');
+
+      // get file size
+      //LFileSize := LFile.Size;
+      LFileSize := al_fsize(LFile);
+
+      // get file crc
+      LCrc := GetCRC32(LFile);
+
+      // open new file in zip
+      if ZipOpenNewFileInZip3(LZipFile, PAnsiChar(AnsiString(LFilename)),
+        @LZipFileInfo, nil, 0, nil, 0, '',  Z_DEFLATED, 9, 0, 15, 9,
+        Z_DEFAULT_STRATEGY, PAnsiChar(AnsiString(aPassword)), LCrc) = Z_OK then
+      begin
+        // make sure we start at star of stream
+        //LFile.Position := 0;
+        al_fseek(LFile, 0, ALLEGRO_SEEK_SET);
+
+        // this is a new file
+        LNewFile := True;
+
+        // read through file
+        repeat
+          // read in a buffer length of file
+          //LBytesRead := LFile.Read(LBuffer[0], Length(LBuffer));
+          LBytesRead := al_fread(LFile, @LBuffer[0], Length(LBuffer));
+
+          // write buffer out to zip file
+          zipWriteInFileInZip(LZipFile, @LBuffer[0], LBytesRead);
+
+          // calc file progress percentage
+          //LProgress := 100.0 * (LFile.Position / LFileSize);
+          LProgress := 100.0 * (al_ftell(LFile) / LFileSize);
+          // show progress
+          if Assigned(aOnProgress) then
+            aOnProgress(LFilename, Round(LProgress), LNewFile);
+
+          // reset new file flag
+          LNewFile := False;
+        until LBytesRead = 0;
+
+        // close file in zip
+        zipCloseFileInZip(LZipFile);
+
+        // free file stream
+        //FreeAndNil(LFile);
+        al_fclose(LFile);
+      end;
+    end;
+
+    // close zip file
+    zipClose(LZipFile, '');
+  end;
+
+  // return true if new zip file exits
+  Result := FileExist(aFilename);
+
+  SGT.SetFileSandBoxed(LSandboxed);
+end;
+
+
+{$ENDREGION}
+
+{$REGION 'Spark.Graphics'}
+const
+  cDefaultFontResName = 'f6eab4cd6d2a41bd986d72e59a3f1942';
+
+{ TColor }
+function TColor.FromByte(aRed: Byte; aGreen: Byte; aBlue: Byte; aAlpha: Byte): TColor;
+var
+  LColor: ALLEGRO_COLOR;
+begin
+  LColor := al_map_rgba(aRed, aGreen, aBlue, aAlpha);
+  Red := LColor.r;
+  Green := LColor.g;
+  Blue := LColor.b;
+  Alpha := LColor.a;
+  Result := Self;
+end;
+
+function TColor.FromFloat(aRed: Single; aGreen: Single; aBlue: Single; aAlpha: Single): TColor;
+var
+  LColor: ALLEGRO_COLOR;
+begin
+  LColor := al_map_rgba_f(aRed, aGreen, aBlue, aAlpha);
+  Red := LColor.r;
+  Green := LColor.g;
+  Blue := LColor.b;
+  Alpha := LColor.a;
+  Result := Self;
+end;
+
+function TColor.FromName(const aName: string): TColor;
+var
+  LColor: ALLEGRO_COLOR absolute Result;
+begin
+  LColor := al_color_name(PAnsiChar(AnsiString(aName)));
+  Red := LColor.r;
+  Green := LColor.g;
+  Blue := LColor.b;
+  Alpha := LColor.a;
+  Result := Self;
+end;
+
+function TColor.Fade(aTo: TColor; aPos: Single): TColor;
+var
+  LColor: TColor;
+begin
+  // clip to ranage 0.0 - 1.0
+  if aPos < 0 then
+    aPos := 0
+  else if aPos > 1.0 then
+    aPos := 1.0;
+
+  // fade colors
+  LColor.Alpha := Alpha + ((aTo.Alpha - Alpha) * aPos);
+  LColor.Blue := Blue + ((aTo.Blue - Blue) * aPos);
+  LColor.Green := Green + ((aTo.Green - Green) * aPos);
+  LColor.Red := Red + ((aTo.Red - Red) * aPos);
+  Result := FromFloat(LColor.Red, LColor.Green, LColor.Blue, LColor.Alpha);
+end;
+
+function TColor.Equal(aColor: TColor): Boolean;
+begin
+  if (Red = aColor.Red) and (Green = aColor.Green) and
+    (Blue = aColor.Blue) and (Alpha = aColor.Alpha) then
+    Result := True
+  else
+    Result := False;
+end;
+
+{ TFont }
+constructor TFont.Create;
+begin
+  inherited;
+  FHandle := nil;
+  FFilename := '';
+  FSize := 0;
+  LoadBuiltIn;
+end;
+
+destructor TFont.Destroy;
+begin
+  Unload;
+  inherited;
+end;
+
+function TFont.LoadBuiltIn: Boolean;
+var
+  LHandle: PALLEGRO_FONT;
+begin
+  Result := False;
+  if Assigned(FHandle) then Exit;
+  al_set_new_bitmap_flags(ALLEGRO_MIN_LINEAR or ALLEGRO_MAG_LINEAR or ALLEGRO_MIPMAP or ALLEGRO_VIDEO_BITMAP);
+  LHandle := al_create_builtin_font;
+  if not Assigned(LHandle) then Exit;
+
+  Unload;
+  FHandle := LHandle;
+  FFilename := '';
+  FSize := 8;
+
+  Result := True;
+end;
+
+function TFont.LoadDefault(aSize: Cardinal): Boolean;
+var
+  LMemFile: PALLEGRO_FILE;
+  LHandle: PALLEGRO_FONT;
+  LHResInfo: THandle;
+  LHGlobal: THandle;
+  LBuff: Pointer;
+  LSize: DWORD;
+begin
+  Result := False;
+  if aSize = 0 then Exit;
+
+  LHResInfo := FindResource(HInstance, cDefaultFontResName, RT_RCDATA);
+  if LHResInfo = 0 then Exit;
+  LHGlobal := LoadResource(HInstance, LHResInfo);
+  if LHGlobal = 0 then Exit;
+  LBuff := LockResource(LHGlobal);
+  LSize := SizeOfResource(HInstance, LHResInfo);
+
+  LMemFile := al_open_memfile(LBuff, LSize, 'rb');
+  if not Assigned(LMemFile) then
+  begin
+    FreeResource(LHGlobal);
+    Exit;
+  end;
+
+  al_set_new_bitmap_flags(ALLEGRO_MIN_LINEAR or ALLEGRO_MAG_LINEAR or ALLEGRO_MIPMAP or ALLEGRO_VIDEO_BITMAP);
+  LHandle := al_load_ttf_font_f(LMemFile, '', -aSize, 0);
+  if not Assigned(LHandle) then
+  begin
+    al_fclose(LMemFile);
+    FreeResource(LHGlobal);
+    Exit;
+  end;
+  FreeResource(LHGlobal);
+
+  Unload;
+  FHandle := LHandle;
+  FFilename := '';
+  FSize := aSize;
+
+end;
+
+function TFont.Load(aArchive: TArchive; aSize: Cardinal; aFilename: string): Boolean;
+var
+  LFilename: string;
+  LHandle: PALLEGRO_FONT;
+  LSandBoxed: Boolean;
+begin
+  Result := False;
+  if not Assigned(FHandle) then Exit;
+  if aFilename = '' then Exit;
+  if aSize = 0 then Exit;
+
+  if Assigned(aArchive) then
+    begin
+      if not aArchive.IsOpen then Exit;
+      if not aArchive.FileInside(aFilename) then
+      begin
+        SGT.Log.Add('Failed to load font file: #s', [aFilename]);
+        Exit;
+      end;
+      LFilename := string(aArchive.GetPasswordFilename(aFilename));
+    end
+  else
+    begin
+      if not FileExist(aFilename) then
+      begin
+        SGT.Log.Add('Failed to load font file: #s', [aFilename]);
+        Exit;
+      end;
+      LFilename := aFilename;
+    end;
+
+  al_set_new_bitmap_flags(ALLEGRO_MIN_LINEAR or ALLEGRO_MAG_LINEAR or ALLEGRO_MIPMAP or ALLEGRO_VIDEO_BITMAP);
+  LSandBoxed := SGT.GetFileSandBoxed;
+  if not Assigned(aArchive) then SGT.SetFileSandBoxed(False);
+  LHandle := al_load_ttf_font(PAnsiChar(AnsiString(LFilename)), -aSize, 0);
+  if not Assigned(aArchive) then SGT.SetFileSandBoxed(LSandBoxed);
+  if not Assigned(LHandle) then
+  begin
+    Exit;
+    SGT.Log.Add('Failed to load font file: #s', [aFilename]);
+  end;
+
+  Unload;
+  SGT.Log.Add('Sucessfully loaded texture file: "#s"', [aFilename]);
+  FHandle := LHandle;
+  FFilename := aFilename;
+  FSize := aSize;
+end;
+
+function TFont.Unload: Boolean;
+begin
+  Result := False;
+  if not Assigned(FHandle) then Exit;
+  al_destroy_font(FHandle);
+  if FFilename <> '' then
+    SGT.Log.Add('Unloaded font file: "#s"', [FFilename]);
+  FHandle := nil;
+  FFilename := '';
+  FSize := 0;
+  Result := True;
+end;
+
+procedure TFont.PrintText(aX: Single; aY: Single; aColor: TColor; aAlign: THAlign; const aMsg: string; const aArgs: array of const);
+var
+  LUstr: PALLEGRO_USTR;
+  LColor: ALLEGRO_COLOR absolute aColor;
+  LText: string;
+begin
+  if not Assigned(FHandle) then Exit;
+  if aMsg = '' then Exit;
+  LText := FormatStr(aMsg, aArgs);
+  LUstr := al_ustr_new_from_utf16(PUInt16(PChar(LText)));
+  //al_draw_ustr(FHandle, LColor, aX, aY, Ord(aAlign) or ALLEGRO_ALIGN_INTEGER, LUstr);
+  al_draw_ustr(FHandle, LColor, aX, aY, Ord(aAlign), LUstr);
+  al_ustr_free(LUstr);
+end;
+
+procedure TFont.PrintText(aX: Single; var aY: Single; aLineSpace: Single; aColor: TColor; aAlign: THAlign; const aMsg: string; const aArgs: array of const);
+begin
+  if not Assigned(FHandle) then Exit;
+  PrintText(aX, aY, aColor, aAlign, aMsg, aArgs);
+  aY := aY + GetLineHeight + aLineSpace;
+end;
+
+procedure TFont.PrintText(aX: Single; aY: Single; aColor: TColor; aAngle: Single; const aMsg: string; const aArgs: array of const);
+var
+  LUstr: PALLEGRO_USTR;
+  LFX, LFY: Single;
+  LTR: ALLEGRO_TRANSFORM;
+  LColor: ALLEGRO_COLOR absolute aColor;
+  LTrans: ALLEGRO_TRANSFORM;
+  LText: string;
+begin
+  if not Assigned(FHandle) then Exit;
+  if aMsg = '' then Exit;
+  LText := FormatStr(aMsg, aArgs);
+  LFX := GetTextWidth(LText, []) / 2;
+  LFY := GetLineHeight / 2;
+  al_identity_transform(@LTR);
+  al_translate_transform(@LTR, -LFX, -LFY);
+  al_rotate_transform(@LTR, aAngle * DEG2RAD);
+  AngleRotatePos(aAngle, LFX, LFY);
+  al_translate_transform(@LTR, aX + LFX, aY + LFY);
+  LTrans := SGT.Window.Transform;
+  al_compose_transform(@LTR, @LTrans);
+  al_use_transform(@LTR);
+  LUstr := al_ustr_new_from_utf16(PUInt16(PChar(LText)));
+  al_draw_ustr(FHandle, LColor, 0, 0, ALLEGRO_ALIGN_LEFT or ALLEGRO_ALIGN_INTEGER, LUstr);
+  al_ustr_free(LUstr);
+  LTrans := SGT.Window.Transform;
+  al_use_transform(@LTrans);
+end;
+
+
+function  TFont.GetTextWidth(const aMsg: string; const aArgs: array of const): Single;
+var
+  LUstr: PALLEGRO_USTR;
+  LText: string;
+begin
+  Result := 0;
+  if not Assigned(FHandle) then Exit;
+  if aMsg = '' then Exit;
+  LText := FormatStr(aMsg, aArgs);
+  LUstr := al_ustr_new_from_utf16(PUInt16(PChar(LText)));
+  Result := al_get_ustr_width(FHandle, LUstr);
+  al_ustr_free(LUstr);
+end;
+
+function  TFont.GetLineHeight: Single;
+begin
+  Result := 0;
+  if not Assigned(FHandle) then Exit;
+  Result := al_get_font_line_height(FHandle);
+end;
+
+{ TTexture }
+constructor TTexture.Create;
+begin
+  inherited;
+end;
+
+destructor TTexture.Destroy;
+begin
+  Unload;
+  inherited;
+end;
+
+function  TTexture.Allocate(aWidth: Integer; aHeight: Integer): Boolean;
+var
+  LHandle: PALLEGRO_BITMAP;
+begin
+  Result := False;
+  al_set_new_bitmap_flags(ALLEGRO_MIN_LINEAR or ALLEGRO_MAG_LINEAR or ALLEGRO_MIPMAP or ALLEGRO_VIDEO_BITMAP);
+  LHandle := al_create_bitmap(aWidth, aHeight);
+  if not Assigned(LHandle) then Exit;
+  Unload;
+  FHandle := LHandle;
+  FWidth := al_get_bitmap_width(FHandle);
+  FHeight := al_get_bitmap_height(FHandle);
+  FFilename := '';
+  SGT.Log.Add('Sucessfully allocated texture (#i:#i)', [Round(FWidth), Round(FHeight)]);
+  Result := True;
+end;
+
+function  TTexture.Load(aArchive: TArchive; const aFilename: string; aColorKey: PColor): Boolean;
+var
+  LHandle: PALLEGRO_BITMAP;
+  LFilename: string;
+  LColorKey: PALLEGRO_COLOR absolute aColorKey;
+  LSandboxed: Boolean;
+begin
+  Result := False;
+  if aFilename = '' then Exit;
+
+  if Assigned(aArchive) then
+    begin
+      if not aArchive.IsOpen then Exit;
+      if not aArchive.FileInside(aFilename) then Exit;
+      LFilename := string(aArchive.GetPasswordFilename(aFilename));
+    end
+  else
+    begin
+      if not FileExist(aFilename) then Exit;
+      LFilename := aFilename;
+    end;
+  LSandBoxed := SGT.GetFileSandBoxed;
+  if not Assigned(aArchive) then SGT.SetFileSandBoxed(False);
+  LHandle := al_load_bitmap(PAnsiChar(AnsiString(LFilename)));
+  if not Assigned(aArchive) then SGT.SetFileSandBoxed(LSandBoxed);
+  if not Assigned(LHandle) then
+  begin
+    SGT.Log.Add('Failed to load texture file: #s', [aFilename]);
+    Exit;
+  end;
+
+  Unload;
+  FHandle := LHandle;
+  FWidth := al_get_bitmap_width(FHandle);
+  FHeight := al_get_bitmap_height(FHandle);
+  FFilename := aFilename;
+
+  if Assigned(aColorKey) then
+    al_convert_mask_to_alpha(FHandle, LColorKey^);
+
+  SGT.Log.Add('Sucessfully loaded texture file: "#s"', [aFilename]);
+
+  Result := True;
+end;
+
+function TTexture.Unload: Boolean;
+begin
+  Result := False;
+  if not Assigned(FHandle) then Exit;
+  al_destroy_bitmap(FHandle);
+  if FFilename = '' then
+    SGT.Log.Add('Unloaded allocated texture (#i:#i)', [Round(FWidth), Round(FHeight)])
+  else
+    SGT.Log.Add('Unloaded texture file: "#s"', [FFilename]);
+  FHandle := nil;
+  FWidth := 0;
+  FHeight := 0;
+  FLocked := False;
+  FFilename := '';
+end;
+
+function TTexture.Lock(aRegion: PRectangle; aData: PTextureData): Boolean;
+var
+  LLock: PALLEGRO_LOCKED_REGION;
+begin
+  Result := False;
+
+  if FLocked then Exit;
+  if not Assigned(FHandle) then Exit;
+
+  LLock := nil;
+  if not FLocked then
+  begin
+    if Assigned(aRegion) then
+      begin
+        LLock := al_lock_bitmap_region(FHandle, Round(aRegion.X), Round(aRegion.Y), Round(aRegion.Width), Round(aRegion.Height), ALLEGRO_PIXEL_FORMAT_ANY, ALLEGRO_LOCK_READWRITE);
+        if not Assigned(LLock) then Exit;
+        FLockedRegion.X := aRegion.X;
+        FLockedRegion.Y := aRegion.Y;
+        FLockedRegion.Width := aRegion.Width;
+        FLockedRegion.Height := aRegion.Height;
+      end
+    else
+      begin
+        LLock := al_lock_bitmap(FHandle, ALLEGRO_PIXEL_FORMAT_ANY, ALLEGRO_LOCK_READWRITE);
+        if not Assigned(LLock) then Exit;
+        FLockedRegion.X := 0;
+        FLockedRegion.Y := 0;
+        FLockedRegion.Width := FWidth;
+        FLockedRegion.Height := FHeight;
+      end;
+    FLocked := True;
+  end;
+
+  if Assigned(LLock) then
+  begin
+    if Assigned(aData) then
+    begin
+      aData.Memory := LLock.data;
+      aData.Format := LLock.format;
+      aData.Pitch := LLock.pitch;
+      aData.PixelSize := LLock.pixel_size;
+    end;
+  end;
+
+  Result := True;
+end;
+
+function TTexture.Unlock: Boolean;
+begin
+  Result := False;
+  if not FLocked then Exit;
+  if not Assigned(FHandle) then Exit;
+
+  al_unlock_bitmap(FHandle);
+  FLocked := False;
+  FLockedRegion.X := 0;
+  FLockedRegion.Y := 0;
+  FLockedRegion.Width := 0;
+  FLockedRegion.Height := 0;
+
+  Result := True;
+end;
+
+function  TTexture.GetPixel(aX: Integer; aY: Integer): TColor;
+var
+  LX,LY: Integer;
+  LResult: ALLEGRO_COLOR absolute Result;
+begin
+  Result := BLANK;
+  if not Assigned(FHandle) then Exit;
+  LX := Round(aX + FLockedRegion.X);
+  LY := Round(aY + FlockedRegion.Y);
+  LResult := al_get_pixel(FHandle, LX, LY);
+end;
+
+procedure TTexture.SetPixel(aX: Integer; aY: Integer; aColor: TColor);
+var
+  LX,LY: Integer;
+  LColor: ALLEGRO_COLOR absolute aColor;
+begin
+  if not Assigned(FHandle) then Exit;
+  LX := Round(aX + FLockedRegion.X);
+  LY := Round(aY + FlockedRegion.Y);
+  al_put_pixel(LX, LY, LColor);
+end;
+
+procedure TTexture.Draw(aX, aY: Single; aRegion: PRectangle; aCenter: PVector;  aScale: PVector; aAngle: Single; aColor: TColor; aHFlip: Boolean; aVFlip: Boolean);
+var
+  LA: Single;
+  LRG: TRectangle;
+  LCP: TVector;
+  LSC: TVector;
+  LC: ALLEGRO_COLOR absolute aColor;
+  LFlags: Integer;
+begin
+  if not Assigned(FHandle) then Exit;
+
+  // angle
+  LA := aAngle * DEG2RAD;
+  LA := EnsureRange(LA, 0, 359);
+
+  // region
+  if Assigned(aRegion) then
+    begin
+      LRG.X := aRegion.X;
+      LRG.Y := aRegion.Y;
+      LRG.Width := aRegion.Width;
+      LRG.Height := aRegion.Height;
+    end
+  else
+    begin
+      LRG.X := 0;
+      LRG.Y := 0;
+      LRG.Width := FWidth;
+      LRG.Height := FHeight;
+    end;
+
+  if LRG.X < 0 then
+    LRG.X := 0;
+  if LRG.X > FWidth - 1 then
+    LRG.X := FWidth - 1;
+
+  if LRG.Y < 0 then
+    LRG.Y := 0;
+  if LRG.Y > FHeight - 1 then
+    LRG.Y := FHeight - 1;
+
+  if LRG.Width < 0 then
+    LRG.Width := 0;
+  if LRG.Width > FWidth then
+    LRG.Width := LRG.Width;
+
+  if LRG.Height < 0 then
+    LRG.Height := 0;
+  if LRG.Height > FHeight then
+    LRG.Height := LRG.Height;
+
+  // center
+  if Assigned(aCenter) then
+    begin
+      LCP.X := (LRG.Width * aCenter.X);
+      LCP.Y := (LRG.Height * aCenter.Y);
+    end
+  else
+    begin
+      LCP.X := 0;
+      LCP.Y := 0;
+    end;
+
+  // scale
+  if Assigned(aScale) then
+    begin
+      LSC.X := aScale.X;
+      LSC.Y := aScale.Y;
+    end
+  else
+    begin
+      LSC.X := 1;
+      LSC.Y := 1;
+    end;
+
+  // flags
+  LFlags := 0;
+  if aHFlip then LFlags := LFlags or ALLEGRO_FLIP_HORIZONTAL;
+  if aVFlip then LFlags := LFlags or ALLEGRO_FLIP_VERTICAL;
+
+  // render
+  al_draw_tinted_scaled_rotated_bitmap_region(FHandle, LRG.X, LRG.Y, LRG.Width, LRG.Height, LC, LCP.X, LCP.Y, aX, aY, LSC.X, LSC.Y, LA, LFlags);
+end;
+
+procedure TTexture.Draw(aX, aY, aScale, aAngle: Single; aColor: TColor; aHAlign: THAlign; aVAlign: TVAlign; aHFlip: Boolean; aVFlip: Boolean);
+var
+  LCenter: TVector;
+  LScale: TVector;
+begin
+  if not Assigned(FHandle) then Exit;
+
+  LCenter.X := 0;
+  LCenter.Y := 0;
+
+  LScale.X := aScale;
+  LScale.Y := aScale;
+
+  case aHAlign of
+    haLeft  : LCenter.X := 0;
+    haCenter: LCenter.X := 0.5;
+    haRight : LCenter.X := 1;
+  end;
+
+  case aVAlign of
+    vaTop   : LCenter.Y := 0;
+    vaCenter: LCenter.Y := 0.5;
+    vaBottom: LCenter.Y := 1;
+  end;
+
+  Draw(aX, aY, nil, @LCenter, @LScale, aAngle, aColor, aHFlip, aVFlip);
+end;
+
+procedure TTexture.DrawTiled(aDeltaX: Single; aDeltaY: Single);
+var
+  LW,LH    : Integer;
+  LOX,LOY  : Integer;
+  LPX,LPY  : Single;
+  LFX,LFY  : Single;
+  LTX,LTY  : Integer;
+  LVP      : TRectangle;
+  LVR,LVB  : Integer;
+  LIX,LIY  : Integer;
+begin
+  if not Assigned(FHandle) then Exit;
+
+  SGT.Window.GetViewportSize(LVP);
+
+  LW := Round(FWidth);
+  LH := Round(FHeight);
+
+  LOX := -LW+1;
+  LOY := -LH+1;
+
+  LPX := aDeltaX;
+  LPY := aDeltaY;
+
+  LFX := LPX-Floor(LPX);
+  LFY := LPY-Floor(LPY);
+
+  LTX := Floor(LPX)-LOX;
+  LTY := Floor(LPY)-LOY;
+
+  if (LTX>=0) then LTX := LTX mod LW + LOX else LTX := LW - -LTX mod LW + LOX;
+  if (LTY>=0) then LTY := LTY mod LH + LOY else LTY := LH - -LTY mod LH + LOY;
+
+  LVR := Round(LVP.Width);
+  LVB := Round(LVP.Height);
+  LIY := LTY;
+
+  while LIY<LVB do
+  begin
+    LIX := LTX;
+    while LIX<LVR do
+    begin
+      al_draw_bitmap(FHandle, LIX+LFX, LIY+LFY, 0);
+      LIX := LIX+LW;
+    end;
+   LIY := LIY+LH;
+  end;
+end;
+
+{ TRenderTarget }
+constructor TRenderTarget.Create;
+begin
+  inherited;
+  FTexture := TTexture.Create;
+end;
+
+destructor TRenderTarget.Destroy;
+begin
+  FreeNilObject(FTexture);
+  inherited;
+end;
+
+procedure TRenderTarget.Init(aX, aY, aWidth, aHeight: Integer);
+begin
+  FTexture.Allocate(aWidth, aHeight);
+  FPosition.Assign(aX, aY);
+  FRegion.Assign(0, 0, FTexture.Width, FTexture.Height);
+  FAngle := 0;
+  FCenter.Assign(0.5, 0.5);
+end;
+
+function  TRenderTarget.GetActive: Boolean;
+begin
+  Result := FActive;
+end;
+
+procedure TRenderTarget.SetActive(aActive: Boolean);
+begin
+  if not Assigned(FTexture.Handle) then Exit;
+  if aActive then
+    begin
+      al_set_target_bitmap(FTexture.Handle);
+      SGT.Window.SetRenderTarget(Self);
+      FActive := True;
+    end
+  else
+    begin
+      al_set_target_backbuffer(SGT.Window.Handle);
+      SGT.Window.SetRenderTarget(nil);
+      FActive := False;
+    end;
+end;
+
+procedure TRenderTarget.SetPosition(aX: Single; aY: Single);
+begin
+  FPosition.Assign(aX, aY);
+end;
+
+procedure TRenderTarget.GetPosition(var aPosition: TVector);
+begin
+  FPosition.Assign(0, 0);
+  if not Assigned(FTexture.Handle) then Exit;
+  aPosition := FPosition;
+end;
+
+procedure TRenderTarget.GetSize(var aSize: TRectangle);
+begin
+  aSize.Assign(0, 0, 0, 0);
+  if not Assigned(FTexture.Handle) then Exit;
+  aSize.Assign(FPosition.X, FPosition.Y, FTexture.Width, FTexture.Height);
+end;
+
+procedure TRenderTarget.SetRegion(aX: Single; aY: Single; aWidth: Single; aHeight: Single);
+begin
+  if not Assigned(FTexture.Handle) then Exit;
+  FRegion.Assign(aX, aY, aWidth, aHeight);
+end;
+
+procedure TRenderTarget.GetRegion(var aRegion: TRectangle);
+begin
+  aRegion.Assign(0, 0, 0, 0);
+  if not Assigned(FTexture.Handle) then Exit;
+  aRegion := FRegion;
+end;
+
+procedure TRenderTarget.SetAngle(aAngle: Single);
+begin
+  FAngle := aAngle;
+  if FAngle > 359 then
+    begin
+      while FAngle > 359 do
+      begin
+        FAngle := FAngle - 359;
+      end;
+    end
+  else
+  if FAngle < 0 then
+    begin
+      while FAngle < 0 do
+      begin
+        FAngle := FAngle + 359;
+      end;
+    end;
+end;
+
+function  TRenderTarget.GetAngle: Single;
+begin
+  Result := FAngle;
+end;
+
+procedure TRenderTarget.Show;
+begin
+  if FActive then
+    al_set_target_backbuffer(SGT.Window.Handle);
+  FTexture.Draw(FPosition.X+(FTexture.Width/2), FPosition.Y+(FTexture.Height/2), @FRegion, @FCenter, nil, FAngle, WHITE);
+  if FActive then
+    al_set_target_bitmap(FTexture.Handle);
+end;
+
+{ TShader }
+constructor TShader.Create;
+begin
+  inherited;
+  FHandle := al_create_shader(ALLEGRO_SHADER_GLSL);
+  Clear;
+end;
+
+destructor TShader.Destroy;
+begin
+  Clear;
+  if Assigned(FHandle) then al_destroy_shader(FHandle);
+  FHandle := nil;
+  inherited;
+end;
+
+procedure TShader.Clear;
+begin
+  if not Assigned(FHandle) then Exit;
+  al_use_shader(nil);
+  al_attach_shader_source(FHandle, ALLEGRO_VERTEX_SHADER, nil);
+  al_attach_shader_source(FHandle, ALLEGRO_PIXEL_SHADER, nil);
+
+  al_attach_shader_source(FHandle, ALLEGRO_VERTEX_SHADER,
+    al_get_default_shader_source(ALLEGRO_SHADER_GLSL, ALLEGRO_VERTEX_SHADER));
+
+  al_attach_shader_source(FHandle, ALLEGRO_PIXEL_SHADER,
+    al_get_default_shader_source(ALLEGRO_SHADER_GLSL, ALLEGRO_PIXEL_SHADER));
+end;
+
+function TShader.Load(aType: TShaderType; const aSource: string): Boolean;
+begin
+  Result := False;
+  if not Assigned(FHandle) then Exit;
+  if aSource = '' then Exit;
+  al_attach_shader_source(FHandle, Ord(aType), nil);
+  Result := al_attach_shader_source(FHandle, Ord(aType), PAnsiChar(AnsiString(aSource)));
+  if Result then
+    SGT.Log.Add('Sucessfully attached shader source', [])
+  else
+    SGT.Log.Add('Failed to attached shader source', []);
+end;
+
+function TShader.Load(aArchive: TArchive; aType: TShaderType; const aFilename: string): Boolean;
+var
+  LSandBoxed: Boolean;
+begin
+  Result := False;
+  if not Assigned(FHandle) then Exit;
+  if aFilename = '' then Exit;
+
+  if Assigned(aArchive) then
+    begin
+      if not aArchive.IsOpen then Exit;
+      if not aArchive.FileInside(aFilename) then Exit;
+      al_attach_shader_source(FHandle, Ord(aType), nil);
+      if not al_attach_shader_source_file(FHandle, Ord(aType), aArchive.GetPasswordFilename(aFilename)) then
+      begin
+        SGT.Log.Add('Failed to attached shader file: #s', [aFilename]);
+        Exit;
+      end;
+    end
+  else
+    begin   //ALLEGRO_PIXEL_SHADER
+      if not FileExist(aFilename) then Exit;
+      LSandBoxed := SGT.GetFileSandBoxed;
+      if not Assigned(aArchive) then SGT.SetFileSandBoxed(False);
+      if not al_attach_shader_source_file(FHandle, Ord(aType), PAnsiChar(AnsiString(aFilename))) then
+      begin
+        SGT.Log.Add('Failed to attached shader file: #s', [aFilename]);
+        Exit;
+      end;
+      if not Assigned(aArchive) then SGT.SetFileSandBoxed(LSandBoxed);
+    end;
+
+  SGT.Log.Add('Sucessfully attached shader file: "#s"', [aFilename]);
+  Result := True;
+end;
+
+function TShader.Build: Boolean;
+begin
+  Result := False;
+  if not Assigned(FHandle) then Exit;
+  Result := al_build_shader(FHandle);
+end;
+
+function TShader.Enable(aEnable: Boolean): Boolean;
+begin
+  Result := False;
+  if not Assigned(FHandle) then Exit;
+  if aEnable then
+    Result := al_use_shader(FHandle)
+  else
+    Result := al_use_shader(nil);
+end;
+
+function TShader.Log: string;
+begin
+  Result := '';
+  if not Assigned(FHandle) then Exit;
+  Result := string(al_get_shader_log(FHandle));
+end;
+
+function TShader.SetIntUniform(const aName: string; aValue: Integer): Boolean;
+begin
+  Result := False;
+  if aName = '' then Exit;
+  if not Assigned(FHandle) then Exit;
+  Result := al_set_shader_int(PAnsiChar(AnsiString(aName)), aValue);
+end;
+
+function TShader.SetIntUniform(const aName: string; aNumComponents: Integer; aValue: PInteger; aNumElements: Integer): Boolean;
+begin
+  Result := False;
+  if aName = '' then Exit;
+  if not Assigned(FHandle) then Exit;
+  Result := al_set_shader_int_vector(PAnsiChar(AnsiString(aName)), aNumComponents, aValue, aNumElements);
+end;
+
+function TShader.SetFloatUniform(const aName: string; aValue: Single): Boolean;
+begin
+  Result := False;
+  if aName = '' then Exit;
+  if not Assigned(FHandle) then Exit;
+  Result := al_set_shader_float(PAnsiChar(AnsiString(aName)), aValue);
+end;
+
+function TShader.SetFloatUniform(const aName: string; aNumComponents: Integer; aValue: System.PSingle; aNumElements: Integer): Boolean;
+begin
+  Result := False;
+  if aName = '' then Exit;
+  if not Assigned(FHandle) then Exit;
+  Result := al_set_shader_float_vector(PAnsiChar(AnsiString(aName)), aNumComponents, aValue, aNumElements);
+end;
+
+function TShader.SetBoolUniform(const aName: string; aValue: Boolean): Boolean;
+begin
+  Result := False;
+  if aName = '' then Exit;
+  if not Assigned(FHandle) then Exit;
+  Result := al_set_shader_bool(PAnsiChar(AnsiString(aName)), aValue);
+end;
+
+function TShader.SetTextureUniform(const aName: string; aTexture: TTexture): Boolean;
+begin
+  Result := False;
+  if aName = '' then Exit;
+  if not Assigned(FHandle) then Exit;
+  if not Assigned(aTexture) then Exit;
+  Result := al_set_shader_sampler(PAnsiChar(AnsiString(aName)), aTexture.Handle, 1);
+end;
+
+function TShader.SetVec2Uniform(const aName: string; aValue: TVector): Boolean;
+var
+  LVec2: array[0..1] of Single;
+begin
+  LVec2[0] := aValue.X;
+  LVec2[1] := aValue.Y;
+  Result := SetFloatUniform(aName, 2, @LVec2, 1);
+end;
+
+function TShader.SetVec2Uniform(const aName: string; aX: Single; aY: Single): Boolean;
+var
+  LVec2: array[0..1] of Single;
+begin
+  LVec2[0] := aX;
+  LVec2[1] := aY;
+  Result := SetFloatUniform(aName, 2, @LVec2, 1);
+end;
+
+{ TCmdConsole }
+function TCmdConsole.ProcessCmd(aName: string; var aWasInternalCmd: Boolean): Boolean;
+var
+  LAction: PAction;
+  LMaxLen: Integer;
+  I: Integer;
+  LList: TStringList;
+begin
+  Result := False;
+
+  FCmdParams.Clear;
+
+  ExtractStrings([#32], [#32], PChar(aName), FCmdParams);
+
+  // check internal commands
+  if SameText('cls', FCmdParams.Items[0]) then
+    begin
+      FTextLines.Clear;
+      aWasInternalCmd := True;
+      Result := True;
+      Exit;
+    end
+  else
+  if SameText('help', FCmdParams.Items[0]) then
+    begin
+      AddTextLine('', []);
+      AddTextLine('Options:', []);
+      LList := TStringList.Create;
+      LList.AddPair('up/down', 'Console history');
+      LList.AddPair('cls', 'Clear console window');
+      LList.AddPair('help', 'Display list of commands');
+
+      for I := 0 to FCmdActionList.Count-1 do
+      begin
+        LAction := FCmdActionList.Items[I];
+        LList.AddPair(LAction.Name, LAction.Discription);
+      end;
+
+      LMaxLen := 0;
+      for I := 0 to LList.Count-1 do
+      begin
+        if Length(LList.GetKey(I)) > LMaxLen then
+          LMaxLen := Length(LList.GetKey(I));
+      end;
+
+      for I := 0 to LList.Count-1 do
+      begin
+        AddTextLine('  #s - #s', [PadRightStr(LList.GetKey(I), LMaxLen, ' '), LList.GetValue(I)]);
+      end;
+
+      FreeNilObject(LList);
+      aWasInternalCmd := True;
+      Result := True;
+      Exit;
+    end;
+
+  // check external commands
+  for I := 0 to FCmdActionList.Count-1 do
+  begin
+    LAction := FCmdActionList.Items[I];
+    if SameText(FCmdParams.Items[0], LAction.Name) then
+    begin
+      if Assigned(LAction.Handler) then
+      begin
+        FCmdParams.Delete(0);
+        LAction.Handler;
+        FCmdParams.Clear;
+        Result := True;
+      end;
+      Break;
+    end;
+  end;
+end;
+
+procedure TCmdConsole.AddTextLine(const aMsg: string; const aArgs: array of const);
+begin
+  if aMsg = '' then Exit;
+
+  FMaxTextLinesCount := Round(FSize.Height / FFontHeight);
+  if FTextLines.Count = FMaxTextLinesCount then
+  begin
+    FTextLines.Delete(0);
+  end;
+
+  FTextLines.Add(FormatStr(aMsg, aArgs));;
+end;
+
+procedure TCmdConsole.Setup;
+begin
+  FActive := False;
+  FState := stInactive;
+  FEnabled := False;
+  FTextLines := TStringList.Create;
+  FCmdHistory := TStringList.Create;
+  FCmdParams := TStringList.Create;
+  FCmdActionList := TList.Create;
+  SGT.Log.Add('Initialized #s Subsystem', ['CmdConsole']);
+end;
+
+procedure TCmdConsole.Shutdown;
+begin
+  Close;
+  FreeNilObject(FCmdActionList);
+  FreeNilObject(FCmdParams);
+  FreeNilObject(FCmdHistory);
+  FreeNilObject(FTextLines);
+  SGT.Log.Add('Shutdown #s Subsystem', ['CmdConsole']);
+end;
+
+procedure TCmdConsole.Open;
+begin
+  FActive := False;
+  FState := stInactive;
+  FFont := TFont.Create;
+  FFont.LoadDefault(18);
+  FFontHeight := FFont.GetLineHeight;
+  FToggleKey :=  KEY_TILDE;
+  FSlideSpeed := cDefaultSlideSpeed;
+  FCmdLine := '';
+  FLastChar := 0;
+  FCmdCurPos := 0;
+  FCurFlashTimer := 0;
+  FCurFlash := True;
+  FTextLines.Clear;
+  FCmdHistory.Clear;
+  FCmdParams.Clear;
+  FCmdHistoryIndex := 0;
+  FMaxCmdHistoryCount := cDefaultMaxCmdHistoryCount;
+  FMaxTextLinesCount := cDefaultMaxTextLinesCount;
+  FEnabled := True;
+  FSlider := 1;
+end;
+
+procedure TCmdConsole.Close;
+begin
+  FreeNilObject(FFont);
+  FTextLines.Clear;
+  FCmdHistory.Clear;
+  FCmdParams.Clear;
+  ClearCommands;
+  FCmdActionList.Clear;
+  FActive := False;
+  FState := stInactive;
+  FEnabled := False;
+end;
+
+procedure TCmdConsole.Render;
+var
+  LPos: TVector;
+  LFormat: string;
+  LIndex: Integer;
+begin
+  //if not FActive then Exit;
+  if not FEnabled then Exit;
+  if FState = stInactive then Exit;
+
+  SGT.Window.DrawFilledRectangle(FPos.X, FPos.Y, FSize.Width, FSize.Height, OVERLAY1);
+  SGT.Window.DrawRectangle(FPos.X, FPos.Y, FSize.Width, FSize.Height, cDefaultFrameWidth, DIMGRAY);
+  SGT.Window.DrawFilledRectangle(FPos.X+(cDefaultFrameWidth div 2), (FPos.Y+(cDefaultFrameWidth div 2)), FSize.Width-cDefaultFrameWidth, FFontHeight, DIMWHITE);
+  FFont.PrintText(FSize.Width/2, (FPos.Y+(cDefaultFrameWidth div 2)-cDefaultMargins), YELLOW, haCenter, '>>> Command Console <<<', []);
+  SGT.Window.DrawFilledRectangle(FPos.X+(cDefaultFrameWidth div 2), (FPos.Y+FSize.Height)-FFontHeight+(cDefaultFrameWidth div 2), FSize.Width-cDefaultFrameWidth, FFontHeight, DIMWHITE);
+
+  // draw input
+  LFormat := '>#s';
+  LPos.X := FPos.X+(cDefaultFrameWidth div 2) + cDefaultMargins;
+  LPos.Y := (FPos.Y+FSize.Height)-FFontHeight+(cDefaultFrameWidth div 2)-2;
+  FFont.PrintText(LPos.X, LPos.Y, WHITE, haLeft, LFormat, [FCmdLine]);
+  LPos.X := LPos.X + FFont.GetTextWidth(LFormat, [FCmdLine]) + cDefaultMargins;
+  if Game.FrameElapsed(FCurFlashTimer, 15) then FCurFlash := not FCurFlash;
+  if FCurFlash then SGT.Window.DrawFilledRectangle(LPos.X, LPos.Y+4, 6, FFontHeight-6, WHITE);
+
+  // draw text line
+  LPos.X := FPos.X+(cDefaultFrameWidth div 2) + cDefaultMargins;
+  LPos.Y := LPos.Y - FFontHeight;
+  for LIndex := FTextLines.Count-1 downto 0 do
+  begin
+    if LPos.Y < (FPos.Y+(cDefaultFrameWidth div 2)+FFontHeight) then continue;
+    FFont.PrintText(LPos.X, LPos.Y, WHITE, haLeft, FTextLines[LIndex], []);
+    LPos.Y := LPos.Y - FFontHeight;
+  end;
+end;
+
+function TCmdConsole.Toggle: Boolean;
+begin
+  Result := False;
+  if FState = stInactive then
+  begin
+    SGT.Window.GetViewportSize(FSize);
+    FSize.Height := FSize.Height * cCmdConsoleViewPrecentage;
+    FPos.X := FSize.X;
+    FPos.Y := FSize.Y - FSize.Height;
+    FState := stSlideDown;
+    FSlider := 1;
+    Result := True;
   end
   else
-    Result := Exp(Exponent * Ln(Base));
+  if FState = stSlideDown then
+  begin
+    FState := stSlideUp;
+    FSlider := 1;
+    SGT.Window.GetViewportSize(FSize);
+    FSize.Height := FSize.Height * cCmdConsoleViewPrecentage;
+    Result := True;
+  end;
+
+  if Result then
+  begin
+    SGT.Input.Clear;
+  end;
 end;
 
-// --- Timer ----------------------------------------------------------------
+procedure TCmdConsole.Update(aDeltaTime: Double);
+var
+  LChar: Integer;
+  LWasInternalCmd: Boolean;
+begin
+  if not FEnabled then Exit;
+
+  if SGT.Input.KeyPressed(FToggleKey) then
+  begin
+    SGT.Input.Clear;
+    if Toggle then Exit;
+  end;
+
+  if FState = stInactive then Exit;
+  FSlider := EasePosition(1, 100, FSlider, etLinearTween);
+  if FState = stSlideDown then
+    begin
+      FPos.Y := (FSize.Y - FSize.Height) + (FSize.Height*(FSlider/100.00));
+      if FPos.Y >= FSize.Y then
+      begin
+        FPos.Y := FSize.Y;
+        if not FActive then SGT.EmitCmdConActiveEvent;
+        if FTextLines.Count = 0 then AddTextLine('Type Help for list of commands', []);
+        FActive := True;
+      end;
+    end
+  else
+  if FState = stSlideUp then
+  begin
+    FPos.Y := FSize.Y - (FSize.Height*(FSlider/100.00));
+    if FPos.Y <= (FSize.Y - FSize.Height) then
+    begin
+      FState := stInactive;
+      FActive := False;
+      SGT.EmitCmdConInactiveEvent;
+      Exit;
+    end;
+  end;
+  FSlider := FSlider + (FSlideSpeed * aDeltaTime);
+
+  // process input
+  LChar := SGT.Input.KeyCode;
+  if not SGT.Input.KeyCodeRepeat then
+  begin
+    if LChar <> FLastChar then
+      FLastChar := LChar
+    else
+      LChar := 0;
+  end;
+
+  // process input
+  if (LChar = 8) then
+    begin
+      if Length(FCmdLine) >= 1 then
+      begin
+        //FCmdLine := FCmdLine.Remove(FCmdLine.Length-1, 1);
+        Delete(FCmdLine,  Length(FCmdLine), 1);
+        FCurFlash := True;
+      end;
+    end
+  else
+  if (LChar = 13) then
+    begin
+      //FCmdLine := FCmdLine.Trim;
+      FCmdLine := TrimStr(FCmdLine);
+
+      if FCmdLine <> '' then
+      begin
+        AddTextLine(FCmdLine, []);
+        LWasInternalCmd := False;
+        if ProcessCmd(FCmdLine, LWasInternalCmd) then
+        begin
+
+          // check to trim to maxium allowed
+          if FCmdHistory.Count = FMaxCmdHistoryCount then
+          begin
+            FCmdHistory.Delete(0);
+          end;
+          FCmdHistory.Add(FCmdLine);
+        end
+        else
+        begin
+          FTextLines.Add('Error: Unknown command!');
+        end;
+
+        FCmdLine := '';
+        FCurFlash := True;
+      end;
+
+    end
+  else
+  //ascii char
+  if (LChar >= 32) and
+     (LChar <= 127) then
+    begin
+      FCmdLine := FCmdLine + Chr(LChar);
+      FCurFlash := True;
+    end
+  else
+  begin
+    // process extended keys
+    if SGT.Input.KeyPressed(KEY_UP) then
+      begin
+        if FCmdHistoryIndex > 0 then
+        begin
+          Dec(FCmdHistoryIndex);
+          FCmdLine := FCmdHistory[FCmdHistoryIndex];
+          FCurFlash := True;
+        end;
+      end
+    else
+    if SGT.Input.KeyPressed(KEY_DOWN) then
+    begin
+      if FCmdHistoryIndex < FCmdHistory.Count-1 then
+      begin
+        Inc(FCmdHistoryIndex);
+        FCmdLine := FCmdHistory[FCmdHistoryIndex];
+        FCurFlash := True;
+      end;
+
+    end;
+  end;
+end;
+
+constructor TCmdConsole.Create;
+begin
+  inherited;
+
+  Setup;
+end;
+
+destructor TCmdConsole.Destroy;
+begin
+  Shutdown;
+
+  inherited;
+end;
+
+function  TCmdConsole.GetActive: Boolean;
+begin
+  Result := FActive;
+end;
+
+procedure TCmdConsole.LoadFont(aArchive: TArchive; aSize: Cardinal; const aFilename: string);
+begin
+  FFont.Load(aArchive, aSize, aFilename);
+  FFontHeight := FFont.GetLineHeight;
+end;
+
+procedure TCmdConsole.SetToggleKey(aKey: Integer);
+begin
+  FToggleKey := aKey;
+  if (FToggleKey < KEY_A) and
+     (FToggleKey >= KEY_MAX) then
+    FToggleKey := KEY_TILDE;
+end;
+
+procedure TCmdConsole.SetSlideSpeed(aSpeed: Single);
+begin
+  FSlideSpeed := aSpeed;
+  if (FSlideSpeed < 0) then
+    FSlideSpeed := cDefaultSlideSpeed;
+end;
+
+procedure TCmdConsole.ClearCommands;
+var
+  LAction: PAction;
+  I: Integer;
+begin
+
+  for I := 0 to FCmdActionList.Count-1 do
+  begin
+    LAction := FCmdActionList.Items[I];
+    Dispose(LAction);
+  end;
+
+  FCmdActionList.Clear;
+end;
+
+procedure TCmdConsole.AddCommand(const aName: string; const aDiscription: string; aAction: TCmdConsoleActionEvent);
+var
+  LAction: PAction;
+  I: Integer;
+begin
+  if aName = '' then Exit;
+  if not Assigned(aAction) then Exit;
+
+  for I := 0 to FCmdActionList.Count-1 do
+  begin
+    LAction := FCmdActionList.Items[I];
+    if SameText(aName, LAction.Name) then Exit;
+  end;
+
+  New(LAction);
+  LAction.Name := aName;
+  LAction.Discription := aDiscription;
+  LAction.Handler := aAction;
+  FCmdActionList.Add(LAction);
+end;
+
+procedure TCmdConsole.Enable(aEnable: Boolean);
+begin
+  FEnabled := aEnable;
+end;
+
+function  TCmdConsole.ParamCount: Integer;
+begin
+  Result := FCmdParams.Count;
+end;
+
+function  TCmdConsole.ParamStr(aIndex: Integer): string;
+begin
+  Result := '';
+  if (aIndex < 0) then Exit;
+  if (aIndex > FCmdParams.Count-1) then Exit;
+  Result := FCmdParams[aIndex];
+end;
+
+{ TVideo }
+procedure TVideo.OnFinished(aHandle: PALLEGRO_VIDEO);
+begin
+  if FHandle <> aHandle then Exit;
+
+  Rewind;
+  if FLoop then
+    begin
+      if not FPaused then
+        SetPlaying(True);
+    end
+  else
+    begin
+      Game.OnVideoState(vsFinished, FFilename);
+    end;
+end;
+procedure TVideo.Play(aLoop: Boolean; aVolume: Single);
+begin
+  if not Assigned(FHandle) then Exit;
+  al_start_video(FHandle, FMixer);
+  al_set_mixer_gain(FMixer, aVolume);
+  al_set_video_playing(FHandle, True);
+  FLoop := aLoop;
+  FPlaying := True;
+  FPaused := False;
+  Game.OnVideoState(vsPlaying, FFilename);
+end;
+
+constructor TVideo.Create;
+begin
+  inherited;
+end;
+
+destructor TVideo.Destroy;
+begin
+  Unload;
+  inherited;
+end;
+
+function  TVideo.Load(aArchive: TArchive; const aFilename: string): Boolean;
+var
+  LFilename: string;
+  LHandle: PALLEGRO_VIDEO;
+  LSandBoxed: Boolean;
+begin
+  Result := False;
+  if aFilename = '' then Exit;
+
+  if Assigned(aArchive) then
+    begin
+      if not aArchive.IsOpen then Exit;
+      if not aArchive.FileInside(aFilename) then
+      begin
+        SGT.Log.Add('Failed to load video file: #s', [aFilename]);
+        Exit;
+      end;
+      LFilename := string(aArchive.GetPasswordFilename(aFilename));
+    end
+  else
+    begin
+      if not FileExist(aFilename) then
+      begin
+        SGT.Log.Add('Failed to load video file: #s', [aFilename]);
+        Exit;
+      end;
+      LFilename := aFilename;
+    end;
+
+  Unload;
+
+  LSandBoxed := SGT.GetFileSandBoxed;
+  if not Assigned(aArchive) then SGT.SetFileSandBoxed(False);
+  LHandle := al_open_video(PAnsiChar(AnsiString(LFilename)));
+  if not Assigned(aArchive) then SGT.SetFileSandBoxed(LSandBoxed);
+
+  if not Assigned(LHandle) then Exit;
+
+  if al_is_audio_installed then
+  begin
+    if not Assigned(FVoice) then
+    begin
+      FVoice := al_create_voice(44100, ALLEGRO_AUDIO_DEPTH_INT16, ALLEGRO_CHANNEL_CONF_2);
+      FMixer := al_create_mixer(44100, ALLEGRO_AUDIO_DEPTH_FLOAT32, ALLEGRO_CHANNEL_CONF_2);
+      al_attach_mixer_to_voice(FMixer, FVoice);
+    end;
+  end;
+
+  al_register_event_source(SGT.Queue, al_get_video_event_source(LHandle));
+  al_set_video_playing(LHandle, False);
+
+  FHandle := LHandle;
+  FFilename := aFilename;
+  FLoop := False;
+  FPlaying := False;
+  FPaused := False;
+  Game.OnVideoState(vsLoad, FFilename);
+  SGT.Log.Add('Sucessfully loaded video: "#s"', [aFilename]);
+  Result := True;
+end;
+
+function  TVideo.Unload: Boolean;
+begin
+  Result := False;
+  if not Assigned(FHandle) then Exit;
+  Game.OnVideoState(vsUnload, FFilename);
+  al_set_video_playing(FHandle, False);
+  al_unregister_event_source(SGT.Queue, al_get_video_event_source(FHandle));
+  al_close_video(FHandle);
+
+  if al_is_audio_installed then
+  begin
+    al_detach_mixer(FMixer);
+    al_destroy_mixer(FMixer);
+    al_destroy_voice(FVoice);
+  end;
+
+  SGT.Log.Add('Unloaded video "#s"', [FFilename]);
+
+  FHandle := nil;
+  FMixer := nil;
+  FVoice := nil;
+  FFilename := '';
+  FLoop := False;
+  FPlaying := False;
+  FPaused := False;
+
+end;
+
+function  TVideo.GetPause: Boolean;
+begin
+  Result := False;
+  if not Assigned(FHandle) then Exit;
+  Result := FPaused;
+end;
+
+procedure TVideo.SetPause(aPause: Boolean);
+begin
+  if not Assigned(FHandle) then Exit;
+
+  // if trying to pause and video is not playing, just exit
+  if (aPause = True) then
+  begin
+    if not al_is_video_playing(FHandle) then
+    Exit;
+  end;
+
+  // if trying to unpause without first being paused, just exit
+  if (aPause = False) then
+  begin
+    if FPaused = False then
+      Exit;
+  end;
+
+  al_set_video_playing(FHandle, not aPause);
+  FPaused := aPause;
+  if FPaused then
+    Game.OnVideoState(vsPaused, FFilename)
+  else
+    Game.OnVideoState(vsPlaying, FFilename);
+end;
+
+function  TVideo.GetLooping:  Boolean;
+begin
+  Result := False;
+  if not Assigned(FHandle) then Exit;
+  Result := FLoop;
+end;
+
+procedure TVideo.SetLoping(aLoop: Boolean);
+begin
+  if not Assigned(FHandle) then Exit;
+  FLoop := aLoop;
+end;
+
+function  TVideo.GetPlaying: Boolean;
+begin
+  Result := False;
+  if not Assigned(FHandle) then Exit;
+  Result := al_is_video_playing(FHandle);
+end;
+
+procedure TVideo.SetPlaying(aPlay: Boolean);
+begin
+  if not Assigned(FHandle) then Exit;
+  if FPaused then Exit;
+  al_set_video_playing(FHandle, aPlay);
+  FPlaying := aPlay;
+  FPaused := False;
+  Game.OnVideoState(vsPlaying, FFilename);
+end;
+
+function  TVideo.GetFilename: string;
+begin
+  Result := '';
+  if not Assigned(FHandle) then Exit;
+  Result := FFilename;
+end;
+
+procedure TVideo.Play(aArchive: TArchive; const aFilename: string; aLoop: Boolean; aVolume: Single);
+begin
+  if not Load(aArchive, aFilename) then Exit;
+  Play(aLoop, aVolume);
+end;
+
+procedure TVideo.Draw(aX: Single; aY: Single; aScale: Single);
+var
+  LFrame: PALLEGRO_BITMAP;
+  LSize: TVector;
+  LScaled: TVector;
+  LViewportSize: TRectangle;
+  LScale: Single;
+begin
+  if not Assigned(FHandle) then Exit;
+  if aScale <= 0 then Exit;
+  LScale := aScale;
+
+  if (not GetPlaying) and (not FPaused) then Exit;
+
+  LFrame := al_get_video_frame(FHandle);
+  if Assigned(LFrame) then
+  begin
+    SGT.Window.GetViewportSize(LViewportSize);
+    LSize.X := al_get_bitmap_width(LFrame);
+    LSize.Y := al_get_bitmap_height(LFrame);
+    LScaled.X := al_get_video_scaled_width(FHandle);
+    LScaled.Y := al_get_video_scaled_height(FHandle);
+
+    al_draw_scaled_bitmap(LFrame, 0, 0,
+      LSize.X,
+      LSize.Y,
+      aX, aY,
+      LScaled.X*LScale,
+      LScaled.Y*LScale,
+      0);
+  end;
+end;
+
+procedure TVideo.GetSize(aWidth: System.PSingle; aHeight: System.PSingle);
+begin
+  if not Assigned(FHandle) then
+  begin
+    if Assigned(aWidth) then
+      aWidth^ := 0;
+    if Assigned(aHeight) then
+      aHeight^ := 0;
+    Exit;
+  end;
+  if Assigned(aWidth) then
+    aWidth^ := al_get_video_scaled_width(FHandle);
+  if Assigned(aHeight) then
+    aHeight^ := al_get_video_scaled_height(FHandle);
+end;
+
+procedure TVideo.Seek(aSeconds: Single);
+begin
+  if not Assigned(FHandle) then Exit;
+  al_seek_video(FHandle, aSeconds);
+end;
+
+procedure TVideo.Rewind;
+begin
+  if not Assigned(FHandle) then Exit;
+  al_seek_video(FHandle, 0);
+end;
+
+{ TAScreenshake }
+constructor TAScreenshake.Create(aDuration: Single; aMagnitude: Single);
+begin
+  inherited Create;
+
+  FActive := True;
+  FDuration := aDuration;
+  FMagnitude := aMagnitude;
+  FTimer := 0;
+  FPos.x := 0;
+  FPos.y := 0;
+end;
+
+destructor TAScreenshake.Destroy;
+begin
+  inherited;
+end;
+
+procedure TAScreenshake.Process(aSpeed: Single; aDeltaTime: Double);
+begin
+  if not FActive then Exit;
+
+  FDuration := FDuration - (aSpeed * aDeltaTime);
+  if FDuration <= 0 then
+  begin
+    SGT.Window.SetTransformPos(-FPos.x, -FPos.y);
+    FActive := False;
+    Exit;
+  end;
+
+  if Round(FDuration) <> Round(FTimer) then
+  begin
+    SGT.Window.SetTransformPos(-FPos.x, -FPos.y);
+
+    FPos.x := Round(RandomRange(-FMagnitude, FMagnitude));
+    FPos.y := Round(RandomRange(-FMagnitude, FMagnitude));
+
+    SGT.Window.SetTransformPos(FPos.x, FPos.y);
+
+    FTimer := FDuration;
+  end;
+end;
+
+{ TScreenshake }
+procedure TScreenshake.Process(aSpeed: Single; aDeltaTime: Double);
+var
+  LShake: TAScreenshake;
+  I: Integer;
+begin
+  // process shakes
+  for I := FList.Count-1 downto 0 do
+  begin
+    LShake := FList.Items[I];
+
+    if LShake.Active then
+      LShake.Process(aSpeed, aDeltaTime)
+    else
+      begin
+        FreeNilObject(LShake);
+        FList.Delete(I);
+      end;
+  end;
+end;
+
+constructor TScreenshake.Create;
+begin
+  inherited;
+  FList := TList.Create;
+  al_identity_transform(@FTrans);
+end;
+
+destructor TScreenshake.Destroy;
+begin
+  Clear;
+  FreeNilObject(FList);
+  inherited;
+end;
+
+procedure TScreenshake.Start(aDuration: Single; aMagnitude: Single);
+var
+  LShake: TAScreenshake;
+begin
+  LShake := TAScreenshake.Create(aDuration, aMagnitude);
+  FList.Add(LShake);
+end;
+
+procedure TScreenshake.Clear;
+var
+  I: Integer;
+  LShake: TAScreenshake;
+begin
+  for I := 0 to FList.Count-1 do
+  begin
+    LShake := FList.Items[I];
+    FreeNilObject(LShake);
+  end;
+
+  FList.Clear;
+end;
+
+function TScreenshake.Active: Boolean;
+begin
+  Result := Boolean(FList.Count > 0);
+end;
+
+{ TScreenshot }
+procedure TScreenshot.Process;
+var
+  LC: Integer;
+  LF, LD, LB: string;
+begin
+  if SGT.Screenshake.Active then Exit;
+  if not FFlag then Exit;
+
+  FFlag := False;
+
+  // directory
+  LD := ExpandFilename(FDir);
+  ForceDirectories(LD);
+
+  // base name
+  LB := FBaseFilename;
+
+  // search file maks
+  LF := LB + '*.png';
+
+  // file count
+  LC := FileCount(LD, LF);
+
+  // screenshot file mask
+  LF := FormatStr('#s\#s (#i:6).png', [LD, LB, LC]);
+  FFilename := LF;
+
+  // save screenshot
+  SGT.Window.Save(LF);
+
+  // call event handler
+  if FileExist(LF) then
+    Game.OnScreenshot(LF);
+end;
+
+constructor TScreenshot.Create;
+begin
+  inherited;
+  Init;
+end;
+
+destructor TScreenshot.Destroy;
+begin
+  inherited;
+end;
+
+procedure TScreenshot.Init(const aDir: string; const aBaseFilename: string);
+begin
+
+  FFilename := '';
+  FFlag := False;
+
+  if aDir = '' then
+    FDir := 'Screenshots'
+  else
+    FDir := aDir;
+
+  if aBaseFilename = '' then
+    FBaseFilename := 'Screen';
+
+  ChangeFileExt(FBaseFilename, '');
+end;
+
+procedure TScreenshot.Take;
+begin
+  FFlag := True;
+end;
+
+{ TStarfield }
+procedure TStarfield.TransformDrawPoint(aX, aY, aZ: Single; aVPX, aVPY, aVPW, aVPH: Integer);
+var
+  LX, LY: Single;
+  LSize: Single;
+  LOOZ: Single;
+  LCV: byte;
+  LColor: TColor;
+
+  function IsVisible(vx, vy, vw, vh: Single): Boolean;
+  begin
+    Result := False;
+    if ((vx - vw) < 0) then Exit;
+    if (vx > (aVPW - 1)) then Exit;
+    if ((vy - vh) < 0) then Exit;
+    if (vy > (aVPH - 1)) then Exit;
+    Result := True;
+  end;
+
+begin
+  FViewScaleRatio := aVPW / aVPH;
+  FCenter.X := (aVPW / 2) + aVPX;
+  FCenter.Y := (aVPH / 2) + aVPY;
+
+  LOOZ := ((1.0 / aZ) * FViewScale);
+  LX := (FCenter.X - aVPX) - (aX * LOOZ) * FViewScaleRatio;
+  LY := (FCenter.Y - aVPY) + (aY * LOOZ) * FViewScaleRatio;
+  LSize := (1.0 * LOOZ);
+  if LSize < 2 then LSize := 2;
+
+  LX := LX - FVirtualPos.X;
+  LY := LY - FVirtualPos.Y;
+  if not IsVisible(LX, LY, LSize, LSize) then Exit;
+
+  LCV := round(255.0 - (((1.0 / FMax.Z) / (1.0 / aZ)) * 255.0));
+  LColor.FromByte(LCV, LCV, LCV, LCV);
+
+  SGT.Window.DrawFilledRectangle(LX, LY, LSize, LSize, LColor);
+end;
+
+constructor TStarfield.Create;
+begin
+  inherited;
+  Init(250, -1000, -1000, 10, 1000, 1000, 1000, 120);
+end;
+
+destructor TStarfield.Destroy;
+begin
+  Done;
+  inherited;
+end;
+
+procedure TStarfield.Init(aStarCount: Cardinal; aMinX, aMinY, aMinZ, aMaxX, aMaxY, aMaxZ, aViewScale: Single);
+var
+  LVPX, LVPY: Integer;
+  LVPW, LVPH: Integer;
+  LI: Integer;
+  LSize: TRectangle;
+begin
+  Done;
+
+  FStarCount := aStarCount;
+  SetLength(FStar, FStarCount);
+  SGT.Window.GetViewportSize(LSize);
+  LVPX := Round(LSize.X);
+  LVPY := Round(LSize.Y);
+  LVPW := Round(LSize.Width);
+  LVPH := Round(LSize.Height);
+
+  FViewScale := aViewScale;
+  FViewScaleRatio := LVPW / LVPH;
+  FCenter.X := (LVPW / 2) + LVPX;
+  FCenter.Y := (LVPH / 2) + LVPY;
+  FCenter.Z := 0;
+
+  FMin.X := aMinX;
+  FMin.Y := aMinY;
+  FMin.Z := aMinZ;
+  FMax.X := aMaxX;
+  FMax.Y := aMaxY;
+  FMax.Z := aMaxZ;
+
+  for LI := 0 to FStarCount - 1 do
+  begin
+    FStar[LI].X := RandomRange(FMin.X, FMax.X);
+    FStar[LI].Y := RandomRange(FMin.Y, FMax.Y);
+    FStar[LI].Z := RandomRange(FMin.Z, FMax.Z);
+  end;
+
+  SetXSpeed(0.0);
+  SetYSpeed(0.0);
+  SetZSpeed(-60*3);
+  SetVirtualPos(0, 0);
+end;
+
+procedure TStarfield.Done;
+begin
+  FStar := nil;
+end;
+
+procedure TStarfield.SetVirtualPos(aX, aY: Single);
+begin
+  FVirtualPos.X := aX;
+  FVirtualPos.Y := aY;
+  FVirtualPos.Z := 0;
+end;
+
+procedure TStarfield.GetVirtualPos(var aX: Single; var aY: Single);
+begin
+  aX := FVirtualPos.X;
+  aY := FVirtualPos.Y;
+end;
+
+procedure TStarfield.SetXSpeed(aSpeed: Single);
+begin
+  FSpeed.X := aSpeed;
+end;
+
+procedure TStarfield.SetYSpeed(aSpeed: Single);
+begin
+  FSpeed.Y := aSpeed;
+end;
+
+procedure TStarfield.SetZSpeed(aSpeed: Single);
+begin
+  FSpeed.Z := aSpeed;
+end;
+
+procedure TStarfield.Update(aDeltaTime: Single);
+var
+  LI: Integer;
+
+  procedure SetRandomPos(aIndex: Integer);
+  begin
+    FStar[aIndex].X := RandomRange(FMin.X, FMax.X);
+    FStar[aIndex].Y := RandomRange(FMin.Y, FMax.Y);
+    FStar[aIndex].Z := RandomRange(FMin.Z, FMax.Z);
+  end;
+
+begin
+
+  for LI := 0 to FStarCount - 1 do
+  begin
+    FStar[LI].X := FStar[LI].X + (FSpeed.X * aDeltaTime);
+    FStar[LI].Y := FStar[LI].Y + (FSpeed.Y * aDeltaTime);
+    FStar[LI].Z := FStar[LI].Z + (FSpeed.Z * aDeltaTime);
+
+    if FStar[LI].X < FMin.X then
+    begin
+      SetRandomPos(LI);
+      FStar[LI].X := FMax.X;
+    end;
+
+    if FStar[LI].X > FMax.X then
+    begin
+      SetRandomPos(LI);
+      FStar[LI].X := FMin.X;
+    end;
+
+    if FStar[LI].Y < FMin.Y then
+    begin
+      SetRandomPos(LI);
+      FStar[LI].Y := FMax.Y;
+    end;
+
+    if FStar[LI].Y > FMax.Y then
+    begin
+      SetRandomPos(LI);
+      FStar[LI].Y := FMin.Y;
+    end;
+
+    if FStar[LI].Z < FMin.Z then
+    begin
+      SetRandomPos(LI);
+      FStar[LI].Z := FMax.Z;
+    end;
+
+    if FStar[LI].Z > FMax.Z then
+    begin
+      SetRandomPos(LI);
+      FStar[LI].Z := FMin.Z;
+    end;
+
+  end;
+end;
+
+procedure TStarfield.Render;
+var
+  LI: Integer;
+  LVPX, LVPY, LVPW, LVPH: Integer;
+  LSize: TRectangle;
+begin
+  SGT.Window.GetViewportSize(LSize);
+  LVPX := Round(LSize.X);
+  LVPY := Round(LSize.Y);
+  LVPW := Round(LSize.Width);
+  LVPH := Round(LSize.Height);
+  for LI := 0 to FStarCount - 1 do
+  begin
+    TransformDrawPoint(FStar[LI].X, FStar[LI].Y, FStar[LI].Z, LVPX, LVPY, LVPW, LVPH);
+  end;
+end;
+
+{$ENDREGION}
+
+{$REGION 'Spark.Window'}
+{ TWindow }
+procedure TWindow.ScaleWindowToDPI;
+var
+  LDpi: Integer;
+  LSX,LSY: Integer;
+  LWX,LWY: Integer;
+  LDW,LDH: Integer;
+begin
+  if not Assigned(FHandle) then Exit;
+
+  LDW := al_get_display_width(FHandle);
+  LDH := al_get_display_height(FHandle);
+
+  al_identity_transform(@FTransform);
+  al_use_transform(@FTransform);
+  al_set_clipping_rectangle(0, 0, LDW, LDH);
+
+  LDpi := al_get_monitor_dpi(al_get_new_display_adapter);
+  LSX := MulDiv(Round(FWidth), LDPI, DISPLAY_DEFAULT_DPI);
+  LSY := MulDiv(Round(FHeight), LDpi, DISPLAY_DEFAULT_DPI);
+
+  LWX := (GetSystemMetrics(SM_CXFULLSCREEN) - LSX) div 2;
+  LWY := (GetSystemMetrics(SM_CYFULLSCREEN) - LSY) div 2;
+  al_set_window_position(FHandle, LWX, LWY);
+  al_resize_display(FHandle, LSX, LSY);
+
+  FScale := Min(LSX / FWidth, LSY / FHeight);
+  al_set_clipping_rectangle(0, 0, LSX, LSY);
+  al_build_transform(@FTransform, 0, 0, FScale, FScale, 0);
+  al_use_transform(@FTransform);
+
+  al_set_window_constraints(FHandle, LSX, LSY, LSX, LSY);
+  al_apply_window_constraints(FHandle, True);
+end;
+
+constructor TWindow.Create;
+begin
+  inherited;
+end;
+
+destructor TWindow.Destroy;
+begin
+  Close;
+  inherited;
+end;
+
+procedure TWindow.Open(aWidth, aHeight: Integer; const aTitle: string);
+var
+  LHandle: PALLEGRO_DISPLAY;
+  LHWnd: HWND;
+begin
+  if Assigned(FHandle) then Exit;
+  if al_get_num_video_adapters < 1 then Exit;
+  al_set_new_display_adapter(0);
+  al_set_new_display_flags(ALLEGRO_OPENGL_3_0 or ALLEGRO_RESIZABLE or ALLEGRO_PROGRAMMABLE_PIPELINE);
+  al_set_new_display_option(ALLEGRO_COMPATIBLE_DISPLAY, 1, ALLEGRO_REQUIRE);
+  al_set_new_display_option(ALLEGRO_VSYNC, 2, ALLEGRO_SUGGEST);
+  al_set_new_display_option(ALLEGRO_CAN_DRAW_INTO_BITMAP, 1, ALLEGRO_REQUIRE);
+  al_set_new_display_option(ALLEGRO_SAMPLE_BUFFERS, 1, ALLEGRO_SUGGEST);
+  al_set_new_display_option(ALLEGRO_SAMPLES, 8, ALLEGRO_SUGGEST);
+  al_set_new_window_title(PAnsiChar(AnsiString(aTitle)));
+  LHandle := al_create_display(aWidth, aHeight);
+  if not Assigned(LHandle) then Exit;
+  LHWnd := al_get_win_window_handle(FHandle);
+  SetWindowLongPtrW(LHwnd, GWL_STYLE, GetWindowLongPtrW(LHWnd, GWL_STYLE) and (not WS_MAXIMIZEBOX));
+  FHandle := LHandle;
+  FHWnd := LHWnd;
+  FWidth := aWidth;
+  FHeight := aHeight;
+  FScale := 1;
+  FDpi := al_get_monitor_dpi(al_get_new_display_adapter);
+  FRenderTarget := nil;
+  al_register_event_source(SGT.Queue, al_get_display_event_source(FHandle));
+  ScaleWindowToDPI;
+end;
+
+procedure TWindow.Close;
+begin
+  if not Assigned(FHandle) then Exit;
+  if al_is_event_source_registered(SGT.Queue, al_get_display_event_source(FHandle)) then
+    al_unregister_event_source(SGT.Queue, al_get_display_event_source(FHandle));
+  al_destroy_display(FHandle);
+  FHandle := nil;
+end;
+
+procedure TWindow.SetTitle(aTitle: string);
+begin
+  if not Assigned(FHandle) then Exit;
+  al_set_window_title(FHandle, PAnsiChar(AnsiString(aTitle)));
+end;
+
+function  TWindow.IsOpen: Boolean;
+begin
+  Result := Assigned(FHandle);
+end;
+
+procedure TWindow.Clear(aColor: TColor);
+var
+  LColor: ALLEGRO_COLOR absolute aColor;
+begin
+  if not Assigned(FHandle) then Exit;
+  al_clear_to_color(LColor);
+end;
+
+procedure TWindow.Show;
+begin
+  if not Assigned(FHandle) then Exit;
+  al_flip_display;
+end;
+
+procedure TWindow.ResetTransform;
+begin
+  if not Assigned(FHandle) then Exit;
+  al_use_transform(@FTransform);
+end;
+
+procedure TWindow.Save(const aFilename: string);
+var
+  LBackbuffer: PALLEGRO_BITMAP;
+  LScreenshot: PALLEGRO_BITMAP;
+  LVX, LVY, LVW, LVH: Integer;
+  LFilename: string;
+  LSize: TRectangle;
+begin
+  if not Assigned(FHandle) then Exit;
+
+  // get viewport size
+  GetViewportSize(LSize);
+  LVX := Round(LSize.X);
+  LVY := Round(LSize.Y);
+  LVW := Round(LSize.Width*FScale);
+  LVH := Round(LSize.Height*FScale);
+
+  // create LScreenshot bitmpat
+  al_set_new_bitmap_flags(ALLEGRO_MIN_LINEAR or ALLEGRO_MAG_LINEAR);
+  LScreenshot := al_create_bitmap(LVW, LVH);
+
+  // exit if failed to create LScreenshot bitmap
+  if not Assigned(LScreenshot) then Exit;
+
+  // get LBackbuffer
+  LBackbuffer := al_get_backbuffer(FHandle);
+
+  // set target to LScreenshot bitmap
+  al_set_target_bitmap(LScreenshot);
+
+  // draw viewport area of LBackbuffer to LScreenshot bitmap
+  al_draw_bitmap_region(LBackbuffer, LVX, LVY, LVW, LVH, 0, 0, 0);
+
+  // restore LBackbuffer target
+  al_set_target_bitmap(LBackbuffer);
+
+  // make sure filename is a PNG file
+  LFilename := aFilename;
+  LFilename := ChangeFileExt(LFilename, cPngExt);
+
+  // save screen bitmap to PNG filename
+  SGT.SetFileSandBoxed(False);
+  if not al_save_bitmap(PAnsiChar(AnsiString(LFilename)), LScreenshot) then
+  SGT.SetFileSandBoxed(True);
+
+  // destroy LScreenshot bitmap
+  al_destroy_bitmap(LScreenshot);
+end;
+
+procedure TWindow.GetViewportSize(var aSize: TRectangle);
+begin
+  if not Assigned(FRenderTarget) then
+    aSize.Assign(0, 0, FWidth, FHeight)
+  else
+    FRenderTarget.GetSize(aSize);
+end;
+
+procedure  TWindow.SetRenderTarget(aRenderTarget: TRenderTarget);
+begin
+  FRenderTarget := aRenderTarget;
+end;
+
+procedure TWindow.SetTransformPos(aX: Single; aY: Single);
+var
+  LTransform: ALLEGRO_TRANSFORM;
+begin
+  if not Assigned(FHandle) then Exit;
+   al_copy_transform(@LTransform,  al_get_current_transform);
+   al_translate_transform(@LTransform, aX, aY);
+   al_use_transform(@LTransform);
+end;
+
+// --- Blending -------------------------------------------------------------
+procedure TWindow.SetBlender(aOperation: Integer; aSource: Integer; aDestination: Integer);
+begin
+  if not Assigned(FHandle) then Exit;
+  al_set_blender(aOperation, aSource, aDestination);
+end;
+
+procedure TWindow.GetBlender(aOperation: PInteger; aSource: PInteger; aDestination: PInteger);
+begin
+  if not Assigned(FHandle) then Exit;
+  al_get_blender(aOperation, aSource, aDestination);
+end;
+
+procedure TWindow.SetBlendColor(aColor: TColor);
+var
+  LColor: ALLEGRO_COLOR absolute aColor;
+begin
+  if not Assigned(FHandle) then Exit;
+  al_set_blend_color(LColor);
+end;
+
+function  TWindow.GetBlendColor: TColor;
+var
+  LResult: ALLEGRO_COLOR absolute Result;
+begin
+  Result := BLANK;
+  if not Assigned(FHandle) then Exit;
+  LResult := al_get_blend_color;
+end;
+
+procedure TWindow.SetBlendMode(aMode: TBlendMode);
+begin
+  if not Assigned(FHandle) then Exit;
+  case aMode of
+    bmPreMultipliedAlpha:
+      begin
+        al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_INVERSE_ALPHA);
+      end;
+    bmNonPreMultipliedAlpha:
+      begin
+        al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
+      end;
+    bmAdditiveAlpha:
+      begin
+        al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ONE);
+      end;
+    bmCopySrcToDest:
+      begin
+        al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ZERO);
+      end;
+    bmMultiplySrcAndDest:
+      begin
+        al_set_blender(ALLEGRO_ADD, ALLEGRO_DEST_COLOR, ALLEGRO_ZERO);
+      end;
+  end;
+end;
+
+procedure TWindow.SetBlendModeColor(aMode: TBlendModeColor; aColor: TColor);
+begin
+  if not Assigned(FHandle) then Exit;
+  case aMode of
+    bmcNormal:
+      begin
+        al_set_blender(ALLEGRO_ADD, ALLEGRO_CONST_COLOR, ALLEGRO_ONE);
+        al_set_blend_color(al_map_rgba_f(aColor.red, aColor.green, aColor.blue, aColor.alpha));
+      end;
+    bmcAvgSrcDest:
+      begin
+        al_set_blender(ALLEGRO_ADD, ALLEGRO_CONST_COLOR, ALLEGRO_CONST_COLOR);
+        al_set_blend_color(al_map_rgba_f(aColor.red, aColor.green, aColor.blue, aColor.alpha));
+      end;
+  end;
+end;
+
+procedure TWindow.RestoreDefaultBlendMode;
+begin
+  if not Assigned(FHandle) then Exit;
+  al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_INVERSE_ALPHA);
+  al_set_blend_color(al_map_rgba(255, 255, 255, 255));
+end;
+
+// --- Primitives -----------------------------------------------------------
+procedure TWindow.DrawLine(aX1, aY1, aX2, aY2, aThickness: Single; aColor: TColor);
+var
+  LColor: ALLEGRO_COLOR absolute aColor;
+begin
+  if not Assigned(FHandle) then Exit;
+  al_draw_line(aX1, aY1, aX2, aY2, LColor, aThickness);
+end;
+
+procedure TWindow.DrawRectangle(aX, aY, aWidth, aHeight, aThickness: Single; aColor: TColor);
+var
+  LColor: ALLEGRO_COLOR absolute aColor;
+begin
+  if not Assigned(FHandle) then Exit;
+  al_draw_rectangle(aX, aY, aX + (aWidth-1), aY + (aHeight-1), LColor, aThickness);
+end;
+
+procedure TWindow.DrawFilledRectangle(aX, aY, aWidth, aHeight: Single; aColor: TColor);
+var
+  LColor: ALLEGRO_COLOR absolute aColor;
+begin
+  if not Assigned(FHandle) then Exit;
+  al_draw_filled_rectangle(aX, aY, aX + (aWidth-1), aY + (aHeight-1), LColor);
+end;
+
+procedure TWindow.DrawCircle(aX, aY, aRadius, aThickness: Single; aColor: TColor);
+var
+  LColor: ALLEGRO_COLOR absolute aColor;
+begin
+  if not Assigned(FHandle) then Exit;
+  al_draw_circle(aX, aY, aRadius, LColor, aThickness);
+end;
+
+procedure TWindow.DrawFilledCircle(aX, aY, aRadius: Single; aColor: TColor);
+var
+  LColor: ALLEGRO_COLOR absolute aColor;
+begin
+  if not Assigned(FHandle) then Exit;
+  al_draw_filled_circle(aX, aY, aRadius, LColor);
+end;
+
+procedure TWindow.DrawTriangle(aX1, aY1, aX2, aY2, aX3, aY3, aThickness: Single; aColor: TColor);
+var
+  LColor: ALLEGRO_COLOR absolute aColor;
+begin
+  if not Assigned(FHandle) then Exit;
+  al_draw_triangle(aX1, aY1, aX2, aY2, aX3, aY3, LColor, aThickness);
+end;
+
+procedure TWindow.DrawFilledTriangle(aX1, aY1, aX2, aY2, aX3, aY3: Single; aColor: TColor);
+var
+  LColor: ALLEGRO_COLOR absolute aColor;
+begin
+  if not Assigned(FHandle) then Exit;
+  al_draw_filled_triangle(aX1, aY1, aX2, aY2, aX3, aY3, LColor);
+end;
+
+procedure TWindow.DrawPolygon(aVertices: System.PSingle; aVertexCount: Integer; aThickness: Single; aColor: TColor);
+var
+  LColor: ALLEGRO_COLOR absolute aColor;
+begin
+  if not Assigned(FHandle) then Exit;
+  al_draw_polygon(aVertices, aVertexCount, ALLEGRO_LINE_JOIN_ROUND, LColor, aThickness, 1.0);
+end;
+
+procedure TWindow.DrawFilledPolygon(aVertices: System.PSingle; aVertexCount: Integer; aColor: TColor);
+var
+  LColor: ALLEGRO_COLOR absolute aColor;
+begin
+  if not Assigned(FHandle) then Exit;
+  al_draw_filled_polygon(aVertices, aVertexCount, LColor);
+end;
+
+{ TJoystick }
+procedure TJoystick.Setup(aNum: Integer);
+var
+  LJoyCount: Integer;
+  LJoy: PALLEGRO_JOYSTICK;
+  LJoyState: ALLEGRO_JOYSTICK_STATE;
+  LI, LJ: Integer;
+begin
+  LJoyCount := al_get_num_joysticks;
+  if (aNum < 0) or (aNum > LJoyCount - 1) then
+    Exit;
+
+  LJoy := al_get_joystick(aNum);
+  if not Assigned(LJoy) then
+  begin
+    Sticks := 0;
+    Buttons := 0;
+    Exit;
+  end;
+
+  Name := string(al_get_joystick_name(LJoy));
+
+  al_get_joystick_state(LJoy, @LJoyState);
+
+  Sticks := al_get_joystick_num_sticks(LJoy);
+  if (Sticks > MAX_STICKS) then
+    Sticks := MAX_STICKS;
+
+  for LI := 0 to Sticks - 1 do
+  begin
+    StickName[LI] := string(al_get_joystick_stick_name(LJoy, LI));
+    Axes[LI] := al_get_joystick_num_axes(LJoy, LI);
+    for LJ := 0 to Axes[LI] - 1 do
+    begin
+      Pos[LI, LJ] := LJoyState.stick[LI].axis[LJ];
+      AxesName[LI, LJ] := string(al_get_joystick_axis_name(LJoy, LI, LJ));
+    end;
+  end;
+
+  Buttons := al_get_joystick_num_buttons(LJoy);
+  if (Buttons > MAX_BUTTONS) then
+    Buttons := MAX_BUTTONS;
+
+  for LI := 0 to Buttons - 1 do
+  begin
+    ButtonName[LI] := string(al_get_joystick_button_name(LJoy, LI));
+    Button[0, LI] := Boolean(LJoyState.Button[LI] >= 16384);
+  end
+end;
+
+function TJoystick.GetPos(aStick: Integer; aAxes: Integer): Single;
+begin
+  Result := Pos[aStick, aAxes];
+end;
+
+function TJoystick.GetButton(aButton: Integer): Boolean;
+begin
+  Result := Button[0, aButton];
+end;
+
+procedure TJoystick.Clear;
+begin
+  FillChar(Button, SizeOf(Button), False);
+  FillChar(Pos, SizeOf(Pos), 0);
+end;
+
+{ TInput }
+constructor TInput.Create;
+begin
+  inherited;
+  Clear;
+  FJoyStick.Setup(0);
+end;
+
+destructor TInput.Destroy;
+begin
+  inherited;
+end;
+
+procedure TInput.Clear;
+begin
+  FKeyCode := 0;
+  FKeyCodeRepeat := False;
+  FillChar(FMouseButtons, SizeOf(FMouseButtons), False);
+  FillChar(FKeyButtons, SizeOf(FKeyButtons), False);
+  FJoystick.Clear;
+
+  if Assigned(SGT.Window.Handle) then
+  begin
+    al_clear_keyboard_state(SGT.Window.Handle);
+  end;
+end;
+
+procedure TInput.Update;
+begin
+  FKeyCode := 0;
+
+  case SGT.Event.type_ of
+    ALLEGRO_EVENT_KEY_CHAR:
+    begin
+      FKeyCode := SGT.Event.keyboard.unichar;
+      FKeyCodeRepeat := SGT.Event.keyboard.repeat_;
+    end;
+
+    ALLEGRO_EVENT_JOYSTICK_AXIS:
+    begin
+      if (SGT.Event.Joystick.stick < MAX_STICKS) and
+        (SGT.Event.Joystick.axis < MAX_AXES) then
+      begin
+        FJoystick.Pos[SGT.Event.Joystick.stick][SGT.Event.Joystick.axis] :=
+          SGT.Event.Joystick.Pos;
+      end;
+    end;
+
+    ALLEGRO_EVENT_KEY_DOWN:
+    begin
+      FKeyButtons[0, SGT.Event.keyboard.keycode] := True;
+    end;
+
+    ALLEGRO_EVENT_KEY_UP:
+    begin
+      FKeyButtons[0, SGT.Event.keyboard.keycode] := False;
+    end;
+
+    ALLEGRO_EVENT_MOUSE_BUTTON_DOWN:
+    begin
+      FMouseButtons[0, SGT.Event.mouse.button] := True;
+    end;
+
+    ALLEGRO_EVENT_MOUSE_BUTTON_UP:
+    begin
+      FMouseButtons[0, SGT.Event.mouse.button] := False;
+    end;
+
+    ALLEGRO_EVENT_MOUSE_AXES:
+    begin
+      FMouse.Postion.X := Round(SGT.Event.mouse.x / SGT.Window.Scale);
+      FMouse.Postion.Y := Round(SGT.Event.mouse.y / SGT.Window.Scale);
+      FMouse.Postion.Z := SGT.Event.mouse.z;
+      FMouse.Postion.W := SGT.Event.mouse.w;
+
+      FMouse.Delta.X := SGT.Event.mouse.dx;
+      FMouse.Delta.Y := SGT.Event.mouse.dy;
+      FMouse.Delta.Z := SGT.Event.mouse.dz;
+      FMouse.Delta.W := SGT.Event.mouse.dw;
+
+      FMouse.Pressure := SGT.Event.mouse.pressure;
+    end;
+
+    ALLEGRO_EVENT_JOYSTICK_BUTTON_DOWN:
+    begin
+      FJoystick.Button[0, SGT.Event.Joystick.Button] := True;
+    end;
+
+    ALLEGRO_EVENT_JOYSTICK_BUTTON_UP:
+    begin
+      FJoystick.Button[0, SGT.Event.Joystick.Button] := False;
+    end;
+
+    ALLEGRO_EVENT_JOYSTICK_CONFIGURATION:
+    begin
+      al_reconfigure_joysticks;
+      FJoystick.Setup(0);
+    end;
+  end;
+end;
+function  TInput.KeyDown(aKey: Cardinal): Boolean;
+begin
+  Result := False;
+  if not InRange(aKey, 0, 255) then  Exit;
+  Result := FKeyButtons[0, aKey];
+end;
+
+function  TInput.KeyPressed(aKey: Cardinal): Boolean;
+begin
+  Result := False;
+  if not InRange(aKey, 0, 255) then  Exit;
+  if KeyDown(aKey) and (not FKeyButtons[1, aKey]) then
+  begin
+    FKeyButtons[1, aKey] := True;
+    Result := True;
+  end
+  else if (not KeyDown(aKey)) and (FKeyButtons[1, aKey]) then
+  begin
+    FKeyButtons[1, aKey] := False;
+    Result := False;
+  end;
+end;
+
+function  TInput.KeyReleased(aKey: Cardinal): Boolean;
+begin
+  Result := False;
+  if not InRange(aKey, 0, 255) then Exit;
+  if KeyDown(aKey) and (not FKeyButtons[1, aKey]) then
+  begin
+    FKeyButtons[1, aKey] := True;
+    Result := False;
+  end
+  else if (not KeyDown(aKey)) and (FKeyButtons[1, aKey]) then
+  begin
+    FKeyButtons[1, aKey] := False;
+    Result := True;
+  end;
+end;
+
+function  TInput.MouseDown(aButton: Cardinal): Boolean;
+begin
+  Result := False;
+  if not InRange(aButton, MOUSE_BUTTON_LEFT, MOUSE_BUTTON_MIDDLE) then Exit;
+  Result := FMouseButtons[0, aButton];
+end;
+
+function  TInput.MousePressed(aButton: Cardinal): Boolean;
+begin
+  Result := False;
+  if not InRange(aButton, MOUSE_BUTTON_LEFT, MOUSE_BUTTON_MIDDLE) then Exit;
+
+  if MouseDown(aButton) and (not FMouseButtons[1, aButton]) then
+  begin
+    FMouseButtons[1, aButton] := True;
+    Result := True;
+  end
+  else if (not MouseDown(aButton)) and (FMouseButtons[1, aButton]) then
+  begin
+    FMouseButtons[1, aButton] := False;
+    Result := False;
+  end;
+end;
+
+function  TInput.MouseReleased(aButton: Cardinal): Boolean;
+begin
+  Result := False;
+  if not InRange(aButton, MOUSE_BUTTON_LEFT, MOUSE_BUTTON_MIDDLE) then Exit;
+
+  if MouseDown(aButton) and (not FMouseButtons[1, aButton]) then
+  begin
+    FMouseButtons[1, aButton] := True;
+    Result := False;
+  end
+  else if (not MouseDown(aButton)) and (FMouseButtons[1, aButton]) then
+  begin
+    FMouseButtons[1, aButton] := False;
+    Result := True;
+  end;
+end;
+
+procedure TInput.MouseSetPos(aX: Integer; aY: Integer);
+var
+  LX, LY: Integer;
+begin
+  LX := Round(aX * SGT.Window.Scale);
+  LY := Round(aY * SGT.Window.Scale);
+  al_set_mouse_xy(SGT.Window.Handle, LX, LY);
+end;
+
+procedure TInput.GetMouseInfo(aPosition: PVector; aDelta: PVector; aPressure: System.PSingle);
+begin
+  if Assigned(aPosition) then
+    aPosition^ := FMouse.Postion;
+  if Assigned(aDelta) then
+    aDelta^ := FMouse.Delta;
+  if Assigned(aPressure) then
+    aPressure^ := FMouse.Pressure;
+end;
+
+function  TInput.JoystickDown(aButton: Cardinal): Boolean;
+begin
+  Result := False;
+  if not InRange(aButton, 0, MAX_BUTTONS-1) then Exit;
+  Result := FJoystick.Button[0, aButton];
+end;
+
+function  TInput.JoystickPressed(aButton: Cardinal): Boolean;
+begin
+  Result := False;
+  if not InRange(aButton, 0, MAX_BUTTONS-1) then Exit;
+
+  if JoystickDown(aButton) and (not FJoystick.Button[1, aButton]) then
+  begin
+    FJoystick.Button[1, aButton] := True;
+    Result := True;
+  end
+  else if (not JoystickDown(aButton)) and (FJoystick.Button[1, aButton]) then
+  begin
+    FJoystick.Button[1, aButton] := False;
+    Result := False;
+  end;
+end;
+
+function  TInput.JoystickReleased(aButton: Cardinal): Boolean;
+begin
+  Result := False;
+  if not InRange(aButton, 0, MAX_BUTTONS-1) then Exit;
+
+  if JoystickDown(aButton) and (not FJoystick.Button[1, aButton]) then
+  begin
+    FJoystick.Button[1, aButton] := True;
+    Result := False;
+  end
+  else if (not JoystickDown(aButton)) and (FJoystick.Button[1, aButton]) then
+  begin
+    FJoystick.Button[1, aButton] := False;
+    Result := True;
+  end;
+end;
+
+function  TInput.JoystickPosition(aStick: Integer; aAxes: Integer): Single;
+begin
+  Result := 0;
+  if not InRange(aStick, 0, MAX_STICKS-1) then Exit;
+  if not InRange(aAxes, 0, MAX_AXES-1) then Exit;
+  Result := FJoystick.Pos[aStick, aAxes];
+end;
+
+{$ENDREGION}
+
+{$REGION 'Spark.Audio'}
+{ TAudio }
+constructor TAudio.Create;
+begin
+  inherited;
+end;
+
+destructor TAudio.Destroy;
+begin
+  inherited;
+end;
+
+procedure TAudio.Pause(aPause: Boolean);
+begin
+  if not al_is_audio_installed then Exit;
+  al_set_mixer_playing(SGT.Mixer, not aPause);
+end;
+
+procedure TAudio.Clear;
+begin
+  UnloadMusic;
+  StopAllSamples;
+end;
+
+procedure TAudio.LoadMusic(aArchive: TArchive; const aFilename: string);
+var
+  LSandBoxed: Boolean;
+  LFilename: string;
+  LHandle: PALLEGRO_AUDIO_STREAM;
+begin
+  if not al_is_audio_installed then Exit;
+  if aFilename = '' then Exit;
+
+  if Assigned(aArchive) then
+    begin
+      if not aArchive.IsOpen then Exit;
+      if not aArchive.FileInside(aFilename) then Exit;
+      LFilename := string(aArchive.GetPasswordFilename(aFilename));
+    end
+  else
+    begin
+      if not FileExist(aFilename) then Exit;
+      LFilename := aFilename;
+    end;
+
+  LSandBoxed := SGT.GetFileSandBoxed;
+  if not Assigned(aArchive) then SGT.SetFileSandBoxed(False);
+  LHandle := al_load_audio_stream(PAnsiChar(AnsiString(LFilename)), 4, 2048);
+  if not Assigned(aArchive) then SGT.SetFileSandBoxed(LSandBoxed);
+  if not Assigned(LHandle) then
+  begin
+    SGT.Log.Add('Failed to load music file: #s', [aFilename]);
+    Exit;
+  end;
+
+  UnloadMusic;
+  al_set_audio_stream_playmode(LHandle, ALLEGRO_PLAYMODE_ONCE);
+  al_attach_audio_stream_to_mixer(LHandle, SGT.Mixer);
+  al_set_audio_stream_playing(LHandle, False);
+  FMusic := LHandle;
+  FMusicFilename := aFilename;
+  SGT.Log.Add('Loaded music file: #s', [aFilename]);
+end;
+
+procedure TAudio.UnloadMusic;
+begin
+  if not al_is_audio_installed then Exit;
+  if Assigned(FMusic) then
+  begin
+    al_set_audio_stream_playing(FMusic, False);
+    al_drain_audio_stream(FMusic);
+    al_detach_audio_stream(FMusic);
+    al_destroy_audio_stream(FMusic);
+    SGT.Log.Add('Unloaded music file: #s', [FMusicFilename]);
+    FMusic := nil;
+    FMusicFilename := '';
+  end;
+end;
+
+procedure TAudio.PlayMusic(aVolume: Single; aLoop: Boolean);
+begin
+  if not al_is_audio_installed then Exit;
+  if not Assigned(FMusic) then Exit;
+  StopMusic;
+  SetMusicLooping(aLoop);
+  SetMusicVolume(aVolume);
+  al_rewind_audio_stream(FMusic);
+  SetMusicPlaying(True);
+end;
+
+procedure TAudio.PlayMusic(aArchive: TArchive; const aFilename: string; aVolume: Single; aLoop: Boolean);
+begin
+  if not al_is_audio_installed then Exit;
+  LoadMusic(aArchive, aFilename);
+  PlayMusic(aVolume, aLoop);
+end;
+
+procedure TAudio.StopMusic;
+begin
+  if not al_is_audio_installed then Exit;
+  if not Assigned(FMusic) then Exit;
+  al_set_audio_stream_playing(FMusic, False);
+  al_rewind_audio_stream(FMusic);
+end;
+
+function  TAudio.GetMusicLooping: Boolean;
+var
+  LMode: ALLEGRO_PLAYMODE;
+begin
+  Result := False;
+  if not al_is_audio_installed then Exit;
+  if not Assigned(FMusic) then Exit;
+
+  LMode := al_get_audio_stream_playmode(FMusic);
+  if (LMode = ALLEGRO_PLAYMODE_LOOP) or
+     (LMode = _ALLEGRO_PLAYMODE_STREAM_ONEDIR) then
+  begin
+    Result := True;
+  end;
+end;
+
+procedure TAudio.SetMusicLooping(aLoop: Boolean);
+var
+  LMode: ALLEGRO_PLAYMODE;
+begin
+  if not al_is_audio_installed then Exit;
+  if aLoop then
+    LMode := ALLEGRO_PLAYMODE_LOOP
+  else
+    LMode := ALLEGRO_PLAYMODE_ONCE;
+  al_set_audio_stream_playmode(FMusic, LMode);
+end;
+
+function  TAudio.GetMusicPlaying: Boolean;
+begin
+  Result := False;
+  if not al_is_audio_installed then Exit;
+  Result := al_get_audio_stream_playing(FMusic);
+end;
+
+procedure TAudio.SetMusicPlaying(aPlay: Boolean);
+begin
+  if not al_is_audio_installed then Exit;
+  if not Assigned(FMusic) then Exit;
+  al_set_audio_stream_playing(FMusic, aPlay);
+end;
+
+procedure TAudio.SetMusicVolume(aVolume: Single);
+begin
+  if not al_is_audio_installed then Exit;
+  if not Assigned(FMusic) then Exit;
+  al_set_audio_stream_gain(FMusic, aVolume);
+end;
+
+function  TAudio.GetMusicVolume: Single;
+begin
+  Result := 0;
+  if not al_is_audio_installed then Exit;
+  if not Assigned(FMusic) then Exit;
+  Result := al_get_audio_stream_gain(FMusic);
+end;
+
+procedure TAudio.SeekMusic(aTime: Single);
+begin
+  if not Assigned(FMusic) then Exit;
+  if not al_is_audio_installed then Exit;
+  al_seek_audio_stream_secs(FMusic, aTime);
+end;
+
+procedure TAudio.RewindMusic(aTime: Single);
+begin
+  if not Assigned(FMusic) then Exit;
+  if not al_is_audio_installed then Exit;
+  al_rewind_audio_stream(FMusic);
+end;
+
+function  TAudio.ReserveSampleChannels(aCount: Integer): Boolean;
+begin
+  Result := al_reserve_samples(aCount);
+end;
+
+function  TAudio.LoadSample(aArchive: TArchive; const aFilename: string): TSample;
+var
+  LSandBoxed: Boolean;
+  LFilename: string;
+  LSample: TSample;
+begin
+  Result := nil;
+  if not al_is_audio_installed then Exit;
+  if aFilename = '' then Exit;
+
+  if Assigned(aArchive) then
+    begin
+      if not aArchive.IsOpen then Exit;
+      if not aArchive.FileInside(aFilename) then Exit;
+      LFilename := string(aArchive.GetPasswordFilename(aFilename));
+    end
+  else
+    begin
+      if not FileExist(aFilename) then Exit;
+      LFilename := aFilename;
+    end;
+
+  LSandBoxed := SGT.GetFileSandBoxed;
+  if not Assigned(aArchive) then SGT.SetFileSandBoxed(False);
+  LSample := al_load_sample(PAnsiChar(AnsiString(LFilename)));
+  if not Assigned(aArchive) then SGT.SetFileSandBoxed(LSandBoxed);
+  if not Assigned(LSample) then
+  begin
+    SGT.Log.Add('Failed to load sample file: #s', [aFilename]);
+    Exit;
+  end;
+  Result := LSample;
+  SGT.Log.Add('Loaded sample file: #s', [aFilename]);
+end;
+
+procedure TAudio.UnloadSample(var aSample: TSample);
+begin
+  if not al_is_audio_installed then Exit;
+  al_destroy_sample(aSample);
+  aSample := nil;
+end;
+
+procedure TAudio.PlaySample(aSample: TSample; aVolume: Single; aPan: Single; aSpeed: Single; aLoop: Boolean; aId: PSampleID);
+var
+  LMode: ALLEGRO_PLAYMODE;
+  LID: ALLEGRO_SAMPLE_ID;
+begin
+  if not Assigned(aSample) then Exit;
+
+  if Assigned(aId) then
+  begin
+    aId.Index := -1;
+    aId.Id := -1;
+  end;
+
+  if aLoop then
+    LMode := ALLEGRO_PLAYMODE_LOOP
+  else
+    LMode := ALLEGRO_PLAYMODE_ONCE;
+
+  if al_play_sample(aSample, aVolume, aPan, aSpeed, LMode, @LID) then
+  begin
+    if Assigned(aId) then
+    begin
+      aId.Index := LID._index;
+      aId.Id := LID._id;
+    end;
+  end;
+end;
+
+procedure TAudio.StopSample(aID: TSampleID);
+var
+  LID: ALLEGRO_SAMPLE_ID;
+begin
+  if GetSamplePlaying(aID) then
+  begin
+    LID._index := aID.Index;
+    LID._id := aID.Id;
+    al_stop_sample(@LID);
+  end;
+end;
+
+procedure TAudio.StopAllSamples;
+begin
+  al_stop_samples;
+end;
+
+function  TAudio.GetSamplePlaying(aID: TSampleID): Boolean;
+var
+  LInstance: PALLEGRO_SAMPLE_INSTANCE;
+  LID: ALLEGRO_SAMPLE_ID;
+begin
+  Result := False;
+  LID._index := aID.Index;
+  LID._id := aID.Id;
+  LInstance := al_lock_sample_id(@LID);
+  if Assigned(LInstance) then
+  begin
+    Result := al_get_sample_instance_playing(LInstance);
+    al_unlock_sample_id(@LID);
+  end;
+end;
+
+
+{$ENDREGION}
+
+{$REGION 'Spark.Game'}
+procedure RunGame(aGame: TCustomGameClass);
+var
+  LGame: TCustomGame;
+begin
+  if Assigned(SGT) then Exit;
+  SGT := TSGT.Create;
+  LGame := aGame.Create;
+  LGame.OnInit;
+  LGame.OnRun;
+  LGame.OnDone;
+  LGame.Free;
+  FreeNilObject(SGT);
+end;
+
+constructor TCustomGame.Create;
+begin
+  inherited;
+end;
+
+destructor TCustomGame.Destroy;
+begin
+  inherited;
+end;
+
+procedure TCustomGame.OnInit;
+begin
+end;
+
+procedure TCustomGame.OnDone;
+begin
+end;
+
+procedure TCustomGame.OnRun;
+begin
+end;
+
+{ TGame }
+constructor TGame.Create;
+begin
+  inherited;
+  Game := Self;
+  ResetTiming(60.0, 1.0);
+end;
+
+destructor TGame.Destroy;
+begin
+  Game := nil;
+  inherited;
+end;
+
+procedure TGame.OnInit;
+begin
+  inherited;
+end;
+
+procedure TGame.OnDone;
+begin
+  inherited;
+end;
+
+procedure TGame.OnStartup;
+begin
+  inherited;
+end;
+
+procedure TGame.OnShutdown;
+begin
+  inherited;
+end;
+
+procedure TGame.OnSetSettings(var aSettings: TGameSettings);
+begin
+  // Window
+  aSettings.WindowWidth := 960;
+  aSettings.WindowHeight := 540;
+  aSettings.WindowTitle := 'Spark Game Toolkit';
+  aSettings.WindowClearColor := DARKSLATEBROWN;
+
+  // ConfigFile
+  aSettings.ConfigFilename := '';
+
+  // Archive
+  aSettings.ArchivePassword := '';
+  aSettings.ArchiveFilename := '';
+
+  // Font
+  aSettings.FontSize := 16;
+  aSettings.FontFilename := '';
+
+  // Hud
+  aSettings.HudTextItemPadWidth := 10;
+  aSettings.HudPosX := 3;
+  aSettings.HudPosY := 3;
+  aSettings.HudLineSpace := 0;
+end;
+
+procedure TGame.OnApplySettings;
+begin
+  // ConfigFile
+  FConfigFile := TConfigFile.Create;
+  FConfigFile.Open(FSettings.ConfigFilename);
+
+  // Window
+  SGT.Window.Open(FSettings.WindowWidth, FSettings.WindowHeight, FSettings.WindowTitle);
+
+  // Archive
+  FArchive := TArchive.Create;
+  if FileExist(FSettings.ArchiveFilename) then
+  begin
+    FArchive.Open(FSettings.ArchivePassword, FSettings.ArchiveFilename);
+  end;
+
+  // Font
+  FFont := TFont.Create;
+  if FArchive.IsOpen and (FSettings.FontFilename <> '') then
+    FFont.Load(FArchive, FSettings.FontSize, FSettings.FontFilename)
+  else
+    if FileExist(FSettings.FontFilename) then
+      FFont.Load(nil, FSettings.FontSize, FSettings.FontFilename)
+    else
+      FFont.LoadDefault(FSettings.FontSize);
+
+  // Hud
+  SetHudPos(FSettings.HudPosX, FSettings.HudPosY);
+  SetHudLineSpace(FSettings.HudLineSpace);
+  SetHudTextItemPadWidth(FSettings.HudTextItemPadWidth);
+end;
+
+procedure TGame.OnUnapplySettings;
+begin
+  FreeNilObject(FFont);
+  FreeNilObject(FArchive);
+  SGT.Window.Close;;
+  FreeNilObject(FConfigFile);
+end;
+
+procedure TGame.OnRun;
+var
+  LCurrentTransform: ALLEGRO_TRANSFORM;
+begin
+  inherited;
+
+  SGT.Log.Add('Entering game loop', []);
+
+  SGT.Log.Add('Get settings...', []);
+  OnSetSettings(FSettings);
+
+  SGT.Log.Add('Apply settings...', []);
+  OnApplySettings;
+
+  SGT.Log.Add('Starting up...', []);
+  OnStartup;
+
+  SGT.Input.Clear;
+  SGT.CmdConsole.Open;
+  FTerminate := False;
+  FReady := True;
+
+  SGT.Log.Add('Processing gameloop...', []);
+
+  while not FTerminate do
+  begin
+    repeat
+      Sleep(0);
+      ProcessMessages;
+      if al_get_next_event(SGT.Queue, @SGT.Event) then
+      begin
+
+        case SGT.Event.type_ of
+          EVENT_CMDCON_ACTIVE:
+          begin
+            SGT.Audio.Pause(True);
+            SGT.Video.SetPause(True);
+            OnCmdConsoleState(ccOpen);
+          end;
+
+          EVENT_CMDCON_INACTIVE:
+          begin
+            SGT.Audio.Pause(False);
+            SGT.Video.SetPause(False);
+            OnCmdConsoleState(ccClose);
+          end;
+
+          ALLEGRO_EVENT_DISPLAY_CLOSE:
+          begin
+            FTerminate := True;
+          end;
+
+          ALLEGRO_EVENT_DISPLAY_RESIZE:
+          begin
+          end;
+
+          ALLEGRO_EVENT_DISPLAY_DISCONNECTED,
+          ALLEGRO_EVENT_DISPLAY_HALT_DRAWING,
+          ALLEGRO_EVENT_DISPLAY_LOST,
+          ALLEGRO_EVENT_DISPLAY_SWITCH_OUT:
+          begin
+            if not SGT.CmdConsole.GetActive then
+            begin
+              if SGT.Event.type_ = ALLEGRO_EVENT_DISPLAY_SWITCH_OUT then SGT.Input.Clear;;
+              SGT.Audio.Pause(True);
+              SGT.Video.SetPause(True);
+              FReady := False;
+              OnReady(FReady);
+            end;
+          end;
+
+          ALLEGRO_EVENT_DISPLAY_CONNECTED,
+          ALLEGRO_EVENT_DISPLAY_RESUME_DRAWING,
+          ALLEGRO_EVENT_DISPLAY_FOUND,
+          ALLEGRO_EVENT_DISPLAY_SWITCH_IN:
+          begin
+            if not SGT.CmdConsole.GetActive then
+            begin
+              ResetTiming;
+              SGT.Audio.Pause(False);
+              SGT.Video.SetPause(False);
+              FReady := True;
+              OnReady(FReady);
+            end;
+          end;
+
+          ALLEGRO_EVENT_VIDEO_FINISHED:
+          begin
+            SGT.Video.OnFinished(PALLEGRO_VIDEO(SGT.Event.user.data1));
+          end;
+        end;
+
+        SGT.Input.Update;
+        SGT.Input.GetMouseInfo(@FMousePos, @FMouseDelta, @FMousePressure);
+      end;
+
+    until  al_is_event_queue_empty(SGT.Queue);
+
+    if FReady then
+      begin
+        //Async.Process;
+        UpdateTiming;
+        OnClearWindow;
+        OnRender;
+        LCurrentTransform := al_get_current_transform^;
+        SGT.Window.ResetTransform;
+        OnRenderHUD;
+        SGT.CmdConsole.Render;
+        al_use_transform(@LCurrentTransform);
+        SGT.Screenshot.Process;
+        OnPreShowWindow;
+        OnShowWindow;
+        OnPostShowWindow;
+      end
+    else
+      begin
+        Sleep(1);
+      end;
+  end;
+
+  SGT.CmdConsole.Close;
+
+  SGT.Log.Add('Shutting down...', []);
+  OnShutdown;
+
+  SGT.Log.Add('Unapply settings...', []);
+  OnUnapplySettings;
+
+  SGT.Log.Add('Exting game loop', []);
+end;
+
+procedure TGame.OnReady(aReady: Boolean);
+begin
+end;
+
+procedure TGame.OnUpdate(aDeltaTime: Double);
+begin
+  if SGT.Input.KeyPressed(KEY_ESCAPE) then
+    Terminate := True;
+end;
+
+procedure TGame.OnFixedUpdate;
+begin
+end;
+
+procedure TGame.OnClearWindow;
+begin
+  SGT.Window.Clear(FSettings.WindowClearColor);
+end;
+
+procedure TGame.OnShowWindow;
+begin
+  SGT.Window.Show;
+end;
+
+procedure TGame.OnRender;
+begin
+end;
+
+procedure TGame.OnRenderHUD;
+begin
+  ResetHudPos;
+  HudText(FFont, WHITE, haLeft, 'fps #I', [GetFrameRate]);
+  HudText(FFont, GREEN, haLeft, HudTextItem('ESC', 'Quit'), []);
+end;
+
+procedure TGame.OnPreShowWindow;
+begin
+end;
+
+procedure TGame.OnPostShowWindow;
+begin
+end;
+
+procedure TGame.OnCmdConsoleState(aState: TCmdConsoleState);
+begin
+end;
+
+procedure TGame.OnVideoState(aState: TVideoState; aFilename: string);
+begin
+end;
+
+procedure TGame.OnScreenshot(const aFilename: string);
+begin
+end;
+
 procedure TGame.UpdateTiming;
 begin
   FTimer.LNow := GetTime;
@@ -8679,10 +10335,10 @@ begin
   while (FTimer.Accumulator >= FTimer.DeltaTime) do
   begin
     // update only if command console is not active
-    if not FCmdConsole.GetActive then
+    if not SGT.CmdConsole.GetActive then
     begin
       // process screen shakes
-      //GV.Screenshake.Process(FTimer.UpdateSpeed, FTimer.DeltaTime);
+      SGT.Screenshake.Process(FTimer.UpdateSpeed, FTimer.DeltaTime);
 
       // call herited update frame
       OnUpdate(FTimer.DeltaTime);
@@ -8692,7 +10348,7 @@ begin
     end;
 
     // update command console
-    FCmdConsole.Update(FTimer.DeltaTime);
+    SGT.CmdConsole.Update(FTimer.DeltaTime);
 
     // update accumulator
     FTimer.Accumulator := FTimer.Accumulator - FTimer.DeltaTime;
@@ -8785,570 +10441,6 @@ begin
   end;
 end;
 
-// --- Window ---------------------------------------------------------------
-function TGame.OpenWindow: Boolean;
-begin
-  Result := False;
-  if FWindow.Handle <> nil then Exit;
-  al_set_new_display_flags(ALLEGRO_OPENGL_3_0 or ALLEGRO_RESIZABLE or ALLEGRO_PROGRAMMABLE_PIPELINE);
-  al_set_new_display_option(ALLEGRO_COMPATIBLE_DISPLAY, 1, ALLEGRO_REQUIRE);
-  al_set_new_display_option(ALLEGRO_VSYNC, 2, ALLEGRO_SUGGEST);
-  al_set_new_display_option(ALLEGRO_CAN_DRAW_INTO_BITMAP, 1, ALLEGRO_REQUIRE);
-  al_set_new_display_option(ALLEGRO_SAMPLE_BUFFERS, 1, ALLEGRO_SUGGEST);
-  al_set_new_display_option(ALLEGRO_SAMPLES, 8, ALLEGRO_SUGGEST);
-  al_set_new_window_title(PAnsiChar(AnsiString(FSettings.WindowTitle)));
-  FWindow.Handle := al_create_display(FSettings.WindowWidth, FSettings.WindowHeight);
-  if FWindow.Handle = nil then Exit;
-  FWindow.HWnd := al_get_win_window_handle(FWindow.Handle);
-  SetWindowLongPtrW(FWindow.Hwnd, GWL_STYLE, GetWindowLongPtrW(FWindow.HWnd, GWL_STYLE) and (not WS_MAXIMIZEBOX));
-  FWindow.Width := FSettings.WindowWidth;
-  FWindow.Height := FSettings.WindowHeight;
-  FWindow.Scale := 1;
-  FWindow.Dpi := GetDpiForWindow(al_get_win_window_handle(FWindow.Handle));
-  FWindow.RenderTarget := nil;
-  al_register_event_source(FQueue, al_get_display_event_source(FWindow.Handle));
-  ScaleWindowToDPI;
-  Result := True;
-end;
-
-procedure TGame.CloseWindow;
-begin
-  if FWindow.Handle = nil then Exit;
-  if al_is_event_source_registered(FQueue, al_get_display_event_source(FWindow.Handle)) then
-    al_unregister_event_source(FQueue, al_get_display_event_source(FWindow.Handle));
-  al_destroy_display(FWindow.Handle);
-  FWindow.Handle := nil;
-end;
-
-procedure TGame.ScaleWindowToDPI;
-var
-  LDpi: Integer;
-  LSX,LSY: Integer;
-  LWX,LWY: Integer;
-  LDW,LDH: Integer;
-begin
-  if FWindow.Handle = nil then Exit;
-
-  LDW := al_get_display_width(FWindow.Handle);
-  LDH := al_get_display_height(FWindow.Handle);
-
-  al_identity_transform(@FWindow.Transform);
-  al_use_transform(@FWindow.Transform);
-  al_set_clipping_rectangle(0, 0, LDW, LDH);
-
-  LDpi:= GetDpiForWindow(al_get_win_window_handle(FWindow.Handle));
-  LSX := MulDiv(Round(FWindow.Width), LDPI, DISPLAY_DEFAULT_DPI);
-  LSY := MulDiv(Round(FWindow.Height), LDpi, DISPLAY_DEFAULT_DPI);
-
-  LWX := (GetSystemMetrics(SM_CXFULLSCREEN) - LSX) div 2;
-  LWY := (GetSystemMetrics(SM_CYFULLSCREEN) - LSY) div 2;
-  al_set_window_position(FWindow.Handle, LWX, LWY);
-  al_resize_display(FWindow.Handle, LSX, LSY);
-
-  FWindow.Scale := min(LSX / FWindow.Width, LSY / FWindow.Height);
-  al_set_clipping_rectangle(0, 0, LSX, LSY);
-  al_build_transform(@FWindow.Transform, 0, 0, FWindow.Scale, FWindow.Scale, 0);
-  al_use_transform(@FWindow.Transform);
-
-  al_set_window_constraints(FWindow.Handle, LSX, LSY, LSX, LSY);
-  al_apply_window_constraints(FWindow.Handle, True);
-end;
-
-procedure TGame.SetWindowTitle(aTitle: string);
-begin
-  if FWindow.Handle = nil then Exit;
-  al_set_window_title(FWindow.Handle, PAnsiChar(AnsiString(aTitle)));
-end;
-
-function  TGame.IsWindowOpen: Boolean;
-begin
-  Result := Boolean(FWindow.Handle <> nil);
-end;
-
-procedure TGame.ClearWindow(aColor: TColor);
-var
-  LColor: ALLEGRO_COLOR absolute aColor;
-begin
-  if FWindow.Handle = nil then Exit;
-  al_clear_to_color(LColor);
-end;
-
-procedure TGame.ResetWindowTransform;
-begin
-  if FWindow.Handle = nil then Exit;
-  al_use_transform(@FWindow.Transform);
-end;
-
-procedure TGame.ShowWindow;
-begin
-  if FWindow.Handle = nil then Exit;
-  al_flip_display;
-end;
-
-procedure TGame.SaveWidow(const aFilename: string);
-var
-  LBackbuffer: PALLEGRO_BITMAP;
-  LScreenshot: PALLEGRO_BITMAP;
-  LVX, LVY, LVW, LVH: Integer;
-  LFilename: string;
-  LSize: TRectangle;
-begin
-  if FWindow.Handle = nil then Exit;
-
-  // get viewport size
-  GetWindowViewportSize(LSize);
-  LVX := Round(LSize.X);
-  LVY := Round(LSize.Y);
-  LVW := Round(LSize.Width);
-  LVH := Round(LSize.Height);
-
-  // create LScreenshot bitmpat
-  al_set_new_bitmap_flags(ALLEGRO_MIN_LINEAR or ALLEGRO_MAG_LINEAR);
-  LScreenshot := al_create_bitmap(LVW, LVH);
-
-  // exit if failed to create LScreenshot bitmap
-  if LScreenshot = nil then Exit;
-
-  // get LBackbuffer
-  LBackbuffer := al_get_backbuffer(FWindow.Handle);
-
-  // set target to LScreenshot bitmap
-  al_set_target_bitmap(LScreenshot);
-
-  // draw viewport area of LBackbuffer to LScreenshot bitmap
-  al_draw_bitmap_region(LBackbuffer, LVX, LVY, LVW, LVH, 0, 0, 0);
-
-  // restore LBackbuffer target
-  al_set_target_bitmap(LBackbuffer);
-
-  // make sure filename is a PNG file
-  LFilename := aFilename;
-  LFilename := ChangeFileExt(LFilename, FILEEXT_PNG);
-
-  // save screen bitmap to PNG filename
-  SetFileSandBoxed(False);
-  if not al_save_bitmap(PAnsiChar(AnsiString(LFilename)), LScreenshot) then
-  SetFileSandBoxed(True);
-
-  // destroy LScreenshot bitmap
-  al_destroy_bitmap(LScreenshot);
-end;
-
-procedure TGame.GetWindowViewportSize(var aSize: TRectangle);
-begin
-  if FWindow.RenderTarget = nil then
-    aSize.Assign(0, 0, FWindow.Width, FWindow.Height)
-  else
-    FWindow.RenderTarget.GetSize(aSize);
-end;
-
-procedure TGame.SetWindowRenderTarget(aRenderTarget: TRenderTarget);
-begin
-  FWindow.RenderTarget := aRenderTarget;
-end;
-
-// --- Blending -------------------------------------------------------------
-procedure TGame.SetBlender(aOperation: Integer; aSource: Integer; aDestination: Integer);
-begin
-  if FWindow.Handle = nil then Exit;
-  al_set_blender(aOperation, aSource, aDestination);
-end;
-
-procedure TGame.GetBlender(aOperation: PInteger; aSource: PInteger; aDestination: PInteger);
-begin
-  if FWindow.Handle = nil then Exit;
-  al_get_blender(aOperation, aSource, aDestination);
-end;
-
-procedure TGame.SetBlendColor(aColor: TColor);
-var
-  LColor: ALLEGRO_COLOR absolute aColor;
-begin
-  if FWindow.Handle = nil then Exit;
-  al_set_blend_color(LColor);
-end;
-
-function  TGame.GetBlendColor: TColor;
-var
-  LResult: ALLEGRO_COLOR absolute Result;
-begin
-  Result := BLANK;
-  if FWindow.Handle = nil then Exit;
-  LResult := al_get_blend_color;
-end;
-
-procedure TGame.SetBlendMode(aMode: TBlendMode);
-begin
-  if FWindow.Handle = nil then Exit;
-  case aMode of
-    bmPreMultipliedAlpha:
-      begin
-        al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_INVERSE_ALPHA);
-      end;
-    bmNonPreMultipliedAlpha:
-      begin
-        al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
-      end;
-    bmAdditiveAlpha:
-      begin
-        al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ONE);
-      end;
-    bmCopySrcToDest:
-      begin
-        al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ZERO);
-      end;
-    bmMultiplySrcAndDest:
-      begin
-        al_set_blender(ALLEGRO_ADD, ALLEGRO_DEST_COLOR, ALLEGRO_ZERO);
-      end;
-  end;
-end;
-
-procedure TGame.SetBlendModeColor(aMode: TBlendModeColor; aColor: TColor);
-begin
-  if FWindow.Handle = nil then Exit;
-  case aMode of
-    bmcNormal:
-      begin
-        al_set_blender(ALLEGRO_ADD, ALLEGRO_CONST_COLOR, ALLEGRO_ONE);
-        al_set_blend_color(al_map_rgba_f(aColor.red, aColor.green, aColor.blue, aColor.alpha));
-      end;
-    bmcAvgSrcDest:
-      begin
-        al_set_blender(ALLEGRO_ADD, ALLEGRO_CONST_COLOR, ALLEGRO_CONST_COLOR);
-        al_set_blend_color(al_map_rgba_f(aColor.red, aColor.green, aColor.blue, aColor.alpha));
-      end;
-  end;
-end;
-
-procedure TGame.RestoreDefaultBlendMode;
-begin
-  if FWindow.Handle = nil then Exit;
-  al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_INVERSE_ALPHA);
-  al_set_blend_color(al_map_rgba(255, 255, 255, 255));
-end;
-
-// --- Primitives -----------------------------------------------------------
-procedure TGame.DrawLine(aX1, aY1, aX2, aY2, aThickness: Single; aColor: TColor);
-var
-  LColor: ALLEGRO_COLOR absolute aColor;
-begin
-  if not IsWindowOpen then Exit;
-  al_draw_line(aX1, aY1, aX2, aY2, LColor, aThickness);
-end;
-
-procedure TGame.DrawRectangle(aX, aY, aWidth, aHeight, aThickness: Single; aColor: TColor);
-var
-  LColor: ALLEGRO_COLOR absolute aColor;
-begin
-  if not IsWindowOpen then Exit;
-  al_draw_rectangle(aX, aY, aX + (aWidth-1), aY + (aHeight-1), LColor, aThickness);
-end;
-
-procedure TGame.DrawFilledRectangle(aX, aY, aWidth, aHeight: Single; aColor: TColor);
-var
-  LColor: ALLEGRO_COLOR absolute aColor;
-begin
-  if not IsWindowOpen then Exit;
-  al_draw_filled_rectangle(aX, aY, aX + (aWidth-1), aY + (aHeight-1), LColor);
-end;
-
-procedure TGame.DrawCircle(aX, aY, aRadius, aThickness: Single; aColor: TColor);
-var
-  LColor: ALLEGRO_COLOR absolute aColor;
-begin
-  if not IsWindowOpen then Exit;
-  al_draw_circle(aX, aY, aRadius, LColor, aThickness);
-end;
-
-procedure TGame.DrawFilledCircle(aX, aY, aRadius: Single; aColor: TColor);
-var
-  LColor: ALLEGRO_COLOR absolute aColor;
-begin
-  if not IsWindowOpen then Exit;
-  al_draw_filled_circle(aX, aY, aRadius, LColor);
-end;
-
-procedure TGame.DrawTriangle(aX1, aY1, aX2, aY2, aX3, aY3, aThickness: Single; aColor: TColor);
-var
-  LColor: ALLEGRO_COLOR absolute aColor;
-begin
-  if not IsWindowOpen then Exit;
-  al_draw_triangle(aX1, aY1, aX2, aY2, aX3, aY3, LColor, aThickness);
-end;
-
-procedure TGame.DrawFilledTriangle(aX1, aY1, aX2, aY2, aX3, aY3: Single; aColor: TColor);
-var
-  LColor: ALLEGRO_COLOR absolute aColor;
-begin
-  if not IsWindowOpen then Exit;
-  al_draw_filled_triangle(aX1, aY1, aX2, aY2, aX3, aY3, LColor);
-end;
-
-procedure TGame.DrawPolygon(aVertices: System.PSingle; aVertexCount: Integer; aThickness: Single; aColor: TColor);
-var
-  LColor: ALLEGRO_COLOR absolute aColor;
-begin
-  if not IsWindowOpen then Exit;
-  al_draw_polygon(aVertices, aVertexCount, ALLEGRO_LINE_JOIN_ROUND, LColor, aThickness, 1.0);
-end;
-
-procedure TGame.DrawFilledPolygon(aVertices: System.PSingle; aVertexCount: Integer; aColor: TColor);
-var
-  LColor: ALLEGRO_COLOR absolute aColor;
-begin
-  if not IsWindowOpen then Exit;
-  al_draw_filled_polygon(aVertices, aVertexCount, LColor);
-end;
-
-// --- Input ----------------------------------------------------------------
-function TGame.KeyCode: Integer;
-begin
-  Result := FInput.KeyCode;
-end;
-
-function TGame.KeyCodeRepeat: Boolean;
-begin
-  Result := FInput.KeyCodeRepeat;
-end;
-
-procedure TGame.ClearInput;
-begin
-  FInput.KeyCode := 0;
-  FInput.KeyCodeRepeat := False;
-  FillChar(FInput.MouseButtons, SizeOf(FInput.MouseButtons), False);
-  FillChar(FInput.KeyButtons, SizeOf(FInput.KeyButtons), False);
-  FInput.Joystick.Clear;
-
-  if FWindow.Handle <> nil then
-  begin
-    al_clear_keyboard_state(FWindow.Handle);
-  end;
-end;
-
-procedure TGame.UpdateInput;
-begin
-  FInput.KeyCode := 0;
-
-  case FEvent.type_ of
-    ALLEGRO_EVENT_KEY_CHAR:
-    begin
-      FInput.KeyCode := FEvent.keyboard.unichar;
-      FInput.KeyCodeRepeat := FEvent.keyboard.repeat_;
-    end;
-
-    ALLEGRO_EVENT_JOYSTICK_AXIS:
-    begin
-      if (FEvent.Joystick.stick < MAX_STICKS) and
-        (FEvent.Joystick.axis < MAX_AXES) then
-      begin
-        FInput.Joystick.Pos[FEvent.Joystick.stick][FEvent.Joystick.axis] :=
-          FEvent.Joystick.Pos;
-      end;
-    end;
-
-    ALLEGRO_EVENT_KEY_DOWN:
-    begin
-      FInput.KeyButtons[0, FEvent.keyboard.keycode] := True;
-    end;
-
-    ALLEGRO_EVENT_KEY_UP:
-    begin
-      FInput.KeyButtons[0, FEvent.keyboard.keycode] := False;
-    end;
-
-    ALLEGRO_EVENT_MOUSE_BUTTON_DOWN:
-    begin
-      FInput.MouseButtons[0, FEvent.mouse.button] := True;
-    end;
-
-    ALLEGRO_EVENT_MOUSE_BUTTON_UP:
-    begin
-      FInput.MouseButtons[0, FEvent.mouse.button] := False;
-    end;
-
-    ALLEGRO_EVENT_MOUSE_AXES:
-    begin
-      FInput.Mouse.Postion.X := Round(FEvent.mouse.x / FWindow.Scale);
-      FInput.Mouse.Postion.Y := Round(FEvent.mouse.y / FWindow.Scale);
-      FInput.Mouse.Postion.Z := FEvent.mouse.z;
-      FInput.Mouse.Postion.W := FEvent.mouse.w;
-
-      FInput.Mouse.Delta.X := FEvent.mouse.dx;
-      FInput.Mouse.Delta.Y := FEvent.mouse.dy;
-      FInput.Mouse.Delta.Z := FEvent.mouse.dz;
-      FInput.Mouse.Delta.W := FEvent.mouse.dw;
-
-      FInput.Mouse.Pressure := FEvent.mouse.pressure;
-    end;
-
-    ALLEGRO_EVENT_JOYSTICK_BUTTON_DOWN:
-    begin
-      FInput.Joystick.Button[0, FEvent.Joystick.Button] := True;
-    end;
-
-    ALLEGRO_EVENT_JOYSTICK_BUTTON_UP:
-    begin
-      FInput.Joystick.Button[0, FEvent.Joystick.Button] := False;
-    end;
-
-    ALLEGRO_EVENT_JOYSTICK_CONFIGURATION:
-    begin
-      al_reconfigure_joysticks;
-      FInput.Joystick.Setup(0);
-    end;
-  end;
-end;
-
-function  TGame.KeyDown(aKey: Cardinal): Boolean;
-begin
-  Result := False;
-  if not InRange(aKey, 0, 255) then  Exit;
-  Result := FInput.KeyButtons[0, aKey];
-end;
-
-function  TGame.KeyPressed(aKey: Cardinal): Boolean;
-begin
-  Result := False;
-  if not InRange(aKey, 0, 255) then  Exit;
-  if KeyDown(aKey) and (not FInput.KeyButtons[1, aKey]) then
-  begin
-    FInput.KeyButtons[1, aKey] := True;
-    Result := True;
-  end
-  else if (not KeyDown(aKey)) and (FInput.KeyButtons[1, aKey]) then
-  begin
-    FInput.KeyButtons[1, aKey] := False;
-    Result := False;
-  end;
-end;
-
-function  TGame.KeyReleased(aKey: Cardinal): Boolean;
-begin
-  Result := False;
-  if not InRange(aKey, 0, 255) then Exit;
-  if KeyDown(aKey) and (not FInput.KeyButtons[1, aKey]) then
-  begin
-    FInput.KeyButtons[1, aKey] := True;
-    Result := False;
-  end
-  else if (not KeyDown(aKey)) and (FInput.KeyButtons[1, aKey]) then
-  begin
-    FInput.KeyButtons[1, aKey] := False;
-    Result := True;
-  end;
-end;
-
-function  TGame.MouseDown(aButton: Cardinal): Boolean;
-begin
-  Result := False;
-  if not InRange(aButton, MOUSE_BUTTON_LEFT, MOUSE_BUTTON_MIDDLE) then Exit;
-  Result := FInput.MouseButtons[0, aButton];
-end;
-
-function  TGame.MousePressed(aButton: Cardinal): Boolean;
-begin
-  Result := False;
-  if not InRange(aButton, MOUSE_BUTTON_LEFT, MOUSE_BUTTON_MIDDLE) then Exit;
-
-  if MouseDown(aButton) and (not FInput.MouseButtons[1, aButton]) then
-  begin
-    FInput.MouseButtons[1, aButton] := True;
-    Result := True;
-  end
-  else if (not MouseDown(aButton)) and (FInput.MouseButtons[1, aButton]) then
-  begin
-    FInput.MouseButtons[1, aButton] := False;
-    Result := False;
-  end;
-end;
-
-function  TGame.MouseReleased(aButton: Cardinal): Boolean;
-begin
-  Result := False;
-  if not InRange(aButton, MOUSE_BUTTON_LEFT, MOUSE_BUTTON_MIDDLE) then Exit;
-
-  if MouseDown(aButton) and (not FInput.MouseButtons[1, aButton]) then
-  begin
-    FInput.MouseButtons[1, aButton] := True;
-    Result := False;
-  end
-  else if (not MouseDown(aButton)) and (FInput.MouseButtons[1, aButton]) then
-  begin
-    FInput.MouseButtons[1, aButton] := False;
-    Result := True;
-  end;
-end;
-
-procedure TGame.MouseSetPos(aX: Integer; aY: Integer);
-var
-  LX, LY: Integer;
-begin
-  LX := Round(aX * FWindow.Scale);
-  LY := Round(aY * FWindow.Scale);
-  al_set_mouse_xy(FWindow.Handle, LX, LY);
-end;
-
-procedure TGame.GetMouseInfo(aPosition: PVector; aDelta: PVector; aPressure: System.PSingle);
-begin
-  if aPosition <> nil then
-    aPosition^ := FInput.Mouse.Postion;
-  if aDelta <> nil then
-    aDelta^ := FInput.Mouse.Delta;
-  if aPressure <> nil then
-    aPressure^ := FInput.Mouse.Pressure;
-end;
-
-function  TGame.JoystickDown(aButton: Cardinal): Boolean;
-begin
-  Result := False;
-  if not InRange(aButton, 0, MAX_BUTTONS-1) then Exit;
-  Result := FInput.Joystick.Button[0, aButton];
-end;
-
-function  TGame.JoystickPressed(aButton: Cardinal): Boolean;
-begin
-  Result := False;
-  if not InRange(aButton, 0, MAX_BUTTONS-1) then Exit;
-
-  if JoystickDown(aButton) and (not FInput.Joystick.Button[1, aButton]) then
-  begin
-    FInput.Joystick.Button[1, aButton] := True;
-    Result := True;
-  end
-  else if (not JoystickDown(aButton)) and (FInput.Joystick.Button[1, aButton]) then
-  begin
-    FInput.Joystick.Button[1, aButton] := False;
-    Result := False;
-  end;
-end;
-
-function  TGame.JoystickReleased(aButton: Cardinal): Boolean;
-begin
-  Result := False;
-  if not InRange(aButton, 0, MAX_BUTTONS-1) then Exit;
-
-  if JoystickDown(aButton) and (not FInput.Joystick.Button[1, aButton]) then
-  begin
-    FInput.Joystick.Button[1, aButton] := True;
-    Result := False;
-  end
-  else if (not JoystickDown(aButton)) and (FInput.Joystick.Button[1, aButton]) then
-  begin
-    FInput.Joystick.Button[1, aButton] := False;
-    Result := True;
-  end;
-end;
-
-function  TGame.JoystickPosition(aStick: Integer; aAxes: Integer): Single;
-begin
-  Result := 0;
-  if not InRange(aStick, 0, MAX_STICKS-1) then Exit;
-  if not InRange(aAxes, 0, MAX_AXES-1) then Exit;
-  Result := FInput.Joystick.Pos[aStick, aAxes];
-end;
-
-// --- Hud --------------------------------------------------------------
 procedure TGame.ResetHudPos;
 begin
   SetHudPos(FSettings.HudPosX, FSettings.HudPosY);
@@ -9379,776 +10471,286 @@ begin
   Result := FormatStr('#S #S #S', [PadRightStr(aKey, FHud.TextItemPadWidth, ' '), aSeperator, aValue]);
 end;
 
-// --- Audio ----------------------------------------------------------------
-procedure TGame.PauseAudio(aPause: Boolean);
-begin
-  if not al_is_audio_installed then Exit;
-  al_set_mixer_playing(FMixer, not aPause);
-end;
+{$ENDREGION}
 
-procedure TGame.ClearAudio;
-begin
-  UnloadMusic;
-  StopAllSamples;
-end;
+{$REGION 'Spark.Core'}
+{$R Spark.res}
 
-procedure TGame.LoadMusic(aArchive: TArchive; const aFilename: string);
+{ TSGT }
+procedure TSGT.Startup;
 var
-  LSandBoxed: Boolean;
-  LFilename: string;
-  LHandle: PALLEGRO_AUDIO_STREAM;
+  LOk: Boolean;
 begin
-  if not al_is_audio_installed then Exit;
-  if aFilename = '' then Exit;
+  if al_is_system_installed then Exit;
 
-  if aArchive <> nil then
-    begin
-      if not aArchive.IsOpen then Exit;
-      if not aArchive.FileExist(aFilename) then Exit;
-      LFilename := string(aArchive.GetPasswordFilename(aFilename));
-    end
-  else
-    begin
-      if not Game.FileExist(aFilename) then Exit;
-      LFilename := aFilename;
-    end;
+  // init allegro
+  LOk := al_install_system(ALLEGRO_VERSION_INT, nil);
+  if LOk then SGT.Log.Add('Initialized Allegro v#s', [ALLEGRO_VERSION_STR]) else SGT.Log.Add('Failed to initialize Allegro', []);
 
-  LSandBoxed := Game.GetFileSandBoxed;
-  if aArchive = nil then Game.SetFileSandBoxed(False);
-  LHandle := al_load_audio_stream(PAnsiChar(AnsiString(LFilename)), 4, 2048);
-  if aArchive = nil then Game.SetFileSandBoxed(LSandBoxed);
-  if LHandle = nil then
-  begin
-    //GV.Logger.Log('Failed to load texture file: %s', [aFilename]);
-    Exit;
-  end;
+  // init devices
+  LOk := al_install_joystick;
+  if LOk then SGT.Log.Add('Initialized Allegro joystick support', []) else SGT.Log.Add('Failed to initialize Allegro joystick support', []);
 
-  UnloadMusic;
-  al_set_audio_stream_playmode(LHandle, ALLEGRO_PLAYMODE_ONCE);
-  al_attach_audio_stream_to_mixer(LHandle, FMixer);
-  al_set_audio_stream_playing(LHandle, False);
-  FMusic := LHandle;
-end;
+  LOk := al_install_keyboard;
+  if LOk then SGT.Log.Add('Initialized Allegro keyboard support', []) else SGT.Log.Add('Failed to initialize Allegro keyboard', []);
 
-procedure TGame.UnloadMusic;
-begin
-  if not al_is_audio_installed then Exit;
-  if FMusic <> nil then
-  begin
-    al_set_audio_stream_playing(FMusic, False);
-    al_drain_audio_stream(FMusic);
-    al_detach_audio_stream(FMusic);
-    al_destroy_audio_stream(FMusic);
-    FMusic := nil;
-  end;
-end;
+  LOk := al_install_mouse;
+  if LOk then SGT.Log.Add('Initialized Allegro mouse support', []) else SGT.Log.Add('Failed to initialize Allegro mouse support', []);
 
-procedure TGame.PlayMusic(aVolume: Single; aLoop: Boolean);
-begin
-  if not al_is_audio_installed then Exit;
-  if FMusic = nil then Exit;
-  StopMusic;
-  SetMusicLooping(aLoop);
-  SetMusicVolume(aVolume);
-  al_rewind_audio_stream(FMusic);
-  SetMusicPlaying(True);
-end;
+  LOk := al_install_touch_input;
+  if LOk then SGT.Log.Add('Initialized Allegro touch input', []) else SGT.Log.Add('Failed to initialize Allegro touch input support', []);
 
-procedure TGame.PlayMusic(aArchive: TArchive; const aFilename: string; aVolume: Single; aLoop: Boolean);
-begin
-  if not al_is_audio_installed then Exit;
-  LoadMusic(aArchive, aFilename);
-  PlayMusic(aVolume, aLoop);
-end;
+  LOk := al_install_audio;
+  if LOk then SGT.Log.Add('Initialized Allegro audio support', []) else SGT.Log.Add('Failed to initialize Allegro audio support', []);
 
-procedure TGame.StopMusic;
-begin
-  if not al_is_audio_installed then Exit;
-  if FMusic = nil then Exit;
-  al_set_audio_stream_playing(FMusic, False);
-  al_rewind_audio_stream(FMusic);
-end;
+  // init addons
+  LOk := al_init_acodec_addon;
+  if LOk then SGT.Log.Add('Initialized Allegro audio codecs', []) else SGT.Log.Add('Failed to initialize Allegro audio codecs', []);
 
-function  TGame.GetMusicLooping: Boolean;
-var
-  LMode: ALLEGRO_PLAYMODE;
-begin
-  Result := False;
-  if not al_is_audio_installed then Exit;
-  if FMusic = nil then Exit;
+  LOk := al_init_font_addon;
+  if LOk then SGT.Log.Add('Initialized Allegro font support', []) else SGT.Log.Add('Failed to initialize Allegro font support', []);
 
-  LMode := al_get_audio_stream_playmode(FMusic);
-  if (LMode = ALLEGRO_PLAYMODE_LOOP) or
-     (LMode = _ALLEGRO_PLAYMODE_STREAM_ONEDIR) then
-  begin
-    Result := True;
-  end;
-end;
+  LOk := al_init_image_addon;
+  if LOk then SGT.Log.Add('Initialized Allegro image support', []) else SGT.Log.Add('Failed to initialize Allegro image support', []);
 
-procedure TGame.SetMusicLooping(aLoop: Boolean);
-var
-  LMode: ALLEGRO_PLAYMODE;
-begin
-  if not al_is_audio_installed then Exit;
-  if aLoop then
-    LMode := ALLEGRO_PLAYMODE_LOOP
-  else
-    LMode := ALLEGRO_PLAYMODE_ONCE;
-  al_set_audio_stream_playmode(FMusic, LMode);
-end;
+  LOk := al_init_native_dialog_addon;
+  if LOk then SGT.Log.Add('Initialized Allegro native dialog support', []) else SGT.Log.Add('Failed to initialize Allegro native dialog support', []);
 
-function  TGame.GetMusicPlaying: Boolean;
-begin
-  Result := False;
-  if not al_is_audio_installed then Exit;
-  Result := al_get_audio_stream_playing(FMusic);
-end;
+  LOk := al_init_primitives_addon;
+  if LOk then SGT.Log.Add('Initialized Allegro primitives', []) else SGT.Log.Add('Failed to initialize Allegro primitives', []);
 
-procedure TGame.SetMusicPlaying(aPlay: Boolean);
-begin
-  if not al_is_audio_installed then Exit;
-  if FMusic = nil then Exit;
-  al_set_audio_stream_playing(FMusic, aPlay);
-end;
+  LOk := al_init_ttf_addon;
+  if LOk then SGT.Log.Add('Initialized Allegro ttf support', []) else SGT.Log.Add('Failed to initialize Allegro ttf support', []);
 
-procedure TGame.SetMusicVolume(aVolume: Single);
-begin
-  if not al_is_audio_installed then Exit;
-  if FMusic = nil then Exit;
-  al_set_audio_stream_gain(FMusic, aVolume);
-end;
+  LOk := al_init_video_addon;
+  if LOk then SGT.Log.Add('Initialized Allegro video support', []) else SGT.Log.Add('Failed to initialize Allegro video support', []);
 
-function  TGame.GetMusicVolume: Single;
-begin
-  Result := 0;
-  if not al_is_audio_installed then Exit;
-  if FMusic = nil then Exit;
-  Result := al_get_audio_stream_gain(FMusic);
-end;
+  // int user event source
+  al_init_user_event_source(@FUserEventSrc);
 
-procedure TGame.SeekMusic(aTime: Single);
-begin
-  if FMusic = nil then Exit;
-  if not al_is_audio_installed then Exit;
-  al_seek_audio_stream_secs(FMusic, aTime);
-end;
+  // init event queues
+  FQueue := al_create_event_queue;
+  al_register_event_source(FQueue, al_get_joystick_event_source);
+  al_register_event_source(FQueue, al_get_keyboard_event_source);
+  al_register_event_source(FQueue, al_get_mouse_event_source);
+  al_register_event_source(FQueue, al_get_touch_input_event_source);
+  al_register_event_source(FQueue, al_get_touch_input_mouse_emulation_event_source);
+  al_register_event_source(FQueue , @FUserEventSrc);
+  SGT.Log.Add('Initialized Allegro event queues', []);
 
-procedure TGame.RewindMusic(aTime: Single);
-begin
-  if FMusic = nil then Exit;
-  if not al_is_audio_installed then Exit;
-  al_rewind_audio_stream(FMusic);
-end;
+  FCmdConActive.type_ := EVENT_CMDCON_ACTIVE;
+  FCmdConInactive.type_ := EVENT_CMDCON_INACTIVE;
 
-function  TGame.ReserveSampleChannels(aCount: Integer): Boolean;
-begin
-  Result := al_reserve_samples(aCount);
-end;
-
-function  TGame.LoadSample(aArchive: TArchive; const aFilename: string): TSample;
-var
-  LSandBoxed: Boolean;
-  LFilename: string;
-  LSample: TSample;
-begin
-  Result := nil;
-  if not al_is_audio_installed then Exit;
-  if aFilename = '' then Exit;
-
-  if aArchive <> nil then
-    begin
-      if not aArchive.IsOpen then Exit;
-      if not aArchive.FileExist(aFilename) then Exit;
-      LFilename := string(aArchive.GetPasswordFilename(aFilename));
-    end
-  else
-    begin
-      if not Game.FileExist(aFilename) then Exit;
-      LFilename := aFilename;
-    end;
-
-  LSandBoxed := Game.GetFileSandBoxed;
-  if aArchive = nil then Game.SetFileSandBoxed(False);
-  LSample := al_load_sample(PAnsiChar(AnsiString(LFilename)));
-  if aArchive = nil then Game.SetFileSandBoxed(LSandBoxed);
-  if LSample = nil then
-  begin
-    //GV.Logger.Log('Failed to load texture file: %s', [aFilename]);
-    Exit;
-  end;
-  Result := LSample;
-end;
-
-procedure TGame.UnloadSample(var aSample: TSample);
-begin
-  if not al_is_audio_installed then Exit;
-  al_destroy_sample(aSample);
-  aSample := nil;
-end;
-
-procedure TGame.PlaySample(aSample: TSample; aVolume: Single; aPan: Single; aSpeed: Single; aLoop: Boolean; aId: PSampleID);
-var
-  LMode: ALLEGRO_PLAYMODE;
-  LID: ALLEGRO_SAMPLE_ID;
-begin
-  if aSample = nil then Exit;
-
-  if aId <> nil then
-  begin
-    aId.Index := -1;
-    aId.Id := -1;
-  end;
-
-  if aLoop then
-    LMode := ALLEGRO_PLAYMODE_LOOP
-  else
-    LMode := ALLEGRO_PLAYMODE_ONCE;
-
-  if al_play_sample(aSample, aVolume, aPan, aSpeed, LMode, @LID) then
-  begin
-    if aId <> nil then
-    begin
-      aId.Index := LID._index;
-      aId.Id := LID._id;
-    end;
-  end;
-end;
-
-procedure TGame.StopSample(aID: TSampleID);
-var
-  LID: ALLEGRO_SAMPLE_ID;
-begin
-  if GetSamplePlaying(aID) then
-  begin
-    LID._index := aID.Index;
-    LID._id := aID.Id;
-    al_stop_sample(@LID);
-  end;
-end;
-
-procedure TGame.StopAllSamples;
-begin
-  al_stop_samples;
-end;
-
-function  TGame.GetSamplePlaying(aID: TSampleID): Boolean;
-var
-  LInstance: PALLEGRO_SAMPLE_INSTANCE;
-  LID: ALLEGRO_SAMPLE_ID;
-begin
-  Result := False;
-  LID._index := aID.Index;
-  LID._id := aID.Id;
-  LInstance := al_lock_sample_id(@LID);
-  if LInstance <> nil then
-  begin
-    Result := al_get_sample_instance_playing(LInstance);
-    al_unlock_sample_id(@LID);
-  end;
-end;
-
-// --- Video ------------------------------------------------------------
-procedure TGame.OnVideoFinished(aHandle: PALLEGRO_VIDEO);
-begin
-  if FVideo.Handle <> aHandle then Exit;
-
-  RewindVideo;
-  if FVideo.Loop then
-    begin
-      if not FVideo.Paused then
-        SetVideoPlaying(True);
-    end
-  else
-    begin
-      OnVideoState(vsFinished, FVideo.Filename);
-    end;
-end;
-
-procedure TGame.PlayVideo(aLoop: Boolean; aVolume: Single);
-begin
-  if FVideo.Handle = nil then Exit;
-  al_start_video(FVideo.Handle, FVideo.Mixer);
-  al_set_mixer_gain(FVideo.Mixer, aVolume);
-  al_set_video_playing(FVideo.Handle, True);
-  FVideo.Loop := aLoop;
-  FVideo.Playing := True;
-  FVideo.Paused := False;
-  OnVideoState(vsPlaying, FVideo.Filename);
-end;
-
-function  TGame.LoadVideo(aArchive: TArchive; const aFilename: string): Boolean;
-var
-  LFilename: string;
-  LHandle: PALLEGRO_VIDEO;
-  LSandBoxed: Boolean;
-begin
-  Result := False;
-  if aFilename = '' then Exit;
-
-  if aArchive <> nil then
-    begin
-      if not aArchive.IsOpen then Exit;
-      if not aArchive.FileExist(aFilename) then
-      begin
-        //GV.Logger.Log('Failed to load video file: %s', [aFilename]);
-        Exit;
-      end;
-      LFilename := string(aArchive.GetPasswordFilename(aFilename));
-    end
-  else
-    begin
-      if not FileExist(aFilename) then
-      begin
-        //GV.Logger.Log('Failed to load video file: %s', [aFilename]);
-        Exit;
-      end;
-      LFilename := aFilename;
-    end;
-
-  UnloadVideo;
-  LSandBoxed := Game.GetFileSandBoxed;
-  if aArchive = nil then Game.SetFileSandBoxed(False);
-  LHandle := al_open_video(PAnsiChar(AnsiString(LFilename)));
-  if aArchive = nil then Game.SetFileSandBoxed(LSandBoxed);
-
-  if LHandle = nil then Exit;
-
+  // init audio
   if al_is_audio_installed then
   begin
-    if FVideo.Voice = nil then
-    begin
-      FVideo.Voice := al_create_voice(44100, ALLEGRO_AUDIO_DEPTH_INT16, ALLEGRO_CHANNEL_CONF_2);
-      FVideo.Mixer := al_create_mixer(44100, ALLEGRO_AUDIO_DEPTH_FLOAT32, ALLEGRO_CHANNEL_CONF_2);
-      al_attach_mixer_to_voice(FVideo.Mixer, FVideo.Voice);
-    end;
+    FVoice := al_create_voice(44100, ALLEGRO_AUDIO_DEPTH_INT16,  ALLEGRO_CHANNEL_CONF_2);
+    FMixer := al_create_mixer(44100, ALLEGRO_AUDIO_DEPTH_FLOAT32,  ALLEGRO_CHANNEL_CONF_2);
+    al_set_default_mixer(FMixer);
+    al_attach_mixer_to_voice(FMixer, FVoice);
+    al_reserve_samples(AUDIO_CHANNEL_COUNT);
+    SGT.Log.Add('Setup Allegro audio', []);
   end;
 
-  al_register_event_source(FQueue, al_get_video_event_source(LHandle));
-  al_set_video_playing(LHandle, False);
+  // init physfs
+  FFileInterface[False] := al_get_new_file_interface;
+  al_store_state(@FFileState[False], ALLEGRO_STATE_NEW_FILE_INTERFACE);
+  LOk := Boolean(PHYSFS_init(nil) <> 0);
+  if LOk then SGT.Log.Add('Initialized Allegro PHYSFS support', []) else SGT.Log.Add('Failed to initialize Allegro PHYSFS support', []);
 
-  FVideo.Handle := LHandle;
-  FVideo.Filename := aFilename;
-  FVideo.Loop := False;
-  FVideo.Playing := False;
-  FVideo.Paused := False;
-  OnVideoState(vsLoad, FVideo.Filename);
-  //GV.Logger.Log('Sucessfully loaded video: "%s"', [aFilename]);
-  Result := True;
+  al_set_physfs_file_interface;
+  FFileInterface[True] := al_get_new_file_interface;
+  al_store_state(@FFileState[True], ALLEGRO_STATE_NEW_FILE_INTERFACE);
 end;
 
-function  TGame.UnloadVideo: Boolean;
+procedure TSGT.Shutdown;
+var
+  LOk: Boolean;
 begin
-  Result := False;
-  if FVideo.Handle = nil then Exit;
-  OnVideoState(vsUnload, FVideo.Filename);
-  al_set_video_playing(FVideo.Handle, False);
-  al_unregister_event_source(FQueue, al_get_video_event_source(FVideo.Handle));
-  al_close_video(FVideo.Handle);
+  if not al_is_system_installed then Exit;
 
+  // shutdown physfs
+  al_set_standard_file_interface;
+  LOk :=  Boolean(PHYSFS_deinit <> 0);
+  if LOk then SGT.Log.Add('Shutdown Allegro PHYSFS support', []) else SGT.Log.Add('Failed to shutdown Allegro PHYSFS support', []);
+
+  // shutdown audio
   if al_is_audio_installed then
   begin
-    al_detach_mixer(FVideo.Mixer);
-    al_destroy_mixer(FVideo.Mixer);
-    al_destroy_voice(FVideo.Voice);
+    al_stop_samples;
+    al_detach_mixer(FMixer);
+    al_destroy_mixer(FMixer);
+    al_destroy_voice(FVoice);
+    al_uninstall_audio;
+    SGT.Log.Add('Shutdown Allegro audio support', []);
   end;
 
-  //GV.Logger.Log('Unloaded video "%s"', [FFilename]);
+  // shutdown event queues
+  al_destroy_event_queue(FQueue);
+  SGT.Log.Add('Shutdown Allegro event queues', []);
 
-  FVideo.Handle := nil;
-  FVideo.Mixer := nil;
-  FVideo.Voice := nil;
-  FVideo.Filename := '';
-  FVideo.Loop := False;
-  FVideo.Playing := False;
-  FVideo.Paused := False;
-
-end;
-
-function  TGame.GetVideoPause: Boolean;
-begin
-  Result := False;
-  if FVideo.Handle = nil then Exit;
-  Result := FVideo.Paused;
-end;
-
-procedure TGame.SetVideoPause(aPause: Boolean);
-begin
-  if FVideo.Handle = nil then Exit;
-
-  // if trying to pause and video is not playing, just exit
-  if (aPause = True) then
+  // shutdown addon
+  if al_is_video_addon_initialized then
   begin
-    if not al_is_video_playing(FVideo.Handle) then
-    Exit;
+    al_shutdown_video_addon;
+    SGT.Log.Add('Shutdown Allegro video addon', []);
   end;
 
-  // if trying to unpause without first being paused, just exit
-  if (aPause = False) then
+  if al_is_ttf_addon_initialized then
   begin
-    if FVideo.Paused = False then
-      Exit;
+    al_shutdown_ttf_addon;
+    SGT.Log.Add('Shutdown Allegro ttf addon', []);
   end;
 
-  al_set_video_playing(FVideo.Handle, not aPause);
-  FVideo.Paused := aPause;
-  if FVideo.Paused then
-    OnVideoState(vsPaused, FVideo.Filename)
-  else
-    OnVideoState(vsPlaying, FVideo.Filename);
+  if al_is_primitives_addon_initialized then
+  begin
+    al_shutdown_primitives_addon;
+    SGT.Log.Add('Shutdown Allegro primitives addon', []);
+  end;
+
+  if al_is_native_dialog_addon_initialized then
+  begin
+    al_shutdown_native_dialog_addon;
+    SGT.Log.Add('Shutdown Allegro native dialog addon', []);
+  end;
+
+  if al_is_image_addon_initialized then
+  begin
+    al_shutdown_image_addon;
+    SGT.Log.Add('Shutdown Allegro image addon', []);
+  end;
+
+  if al_is_font_addon_initialized then
+  begin
+    al_shutdown_font_addon;
+    SGT.Log.Add('Shutdown Allegro font addon', []);
+  end;
+
+  if al_is_acodec_addon_initialized then
+  begin
+    //
+    SGT.Log.Add('Shutdown Allegro acodec addon', []);
+  end;
+
+  // shutdown devices
+  if al_is_touch_input_installed then
+  begin
+    al_uninstall_touch_input;
+    SGT.Log.Add('Uinstalled Allegro touch input support', []);
+  end;
+
+  if al_is_mouse_installed then
+  begin
+    al_uninstall_mouse;
+    SGT.Log.Add('Uinstalled Allegro mouse support', []);
+  end;
+
+  if al_is_keyboard_installed then
+  begin
+    al_uninstall_keyboard;
+    SGT.Log.Add('Uinstalled Allegro keyboard support', []);
+  end;
+
+  if al_is_joystick_installed then
+  begin
+    al_uninstall_joystick;
+    SGT.Log.Add('Uinstalled Allegro joystick support', []);
+  end;
+
+  if al_is_system_installed then
+  begin
+    al_uninstall_system;
+    SGT.Log.Add('Uinstalled Allegro', []);
+  end;
 end;
 
-function  TGame.GetVideoLooping:  Boolean;
+constructor TSGT.Create;
 begin
-  Result := False;
-  if FVideo.Handle = nil then Exit;
-  Result := FVideo.Loop;
+  inherited;
+  SGT := Self;
+  FCodePage := GetConsoleOutputCP;
+  SetConsoleOutputCP(CP_UTF8);
+  FLog := TLog.Create;
+  FLog.Add('Starting up Spark Game Toolkit v#s', [SPARK_VERSION]);
+  Startup;
+  FWindow := TWindow.Create;
+  FInput := TInput.Create;
+  FCmdConsole := TCmdConsole.Create;
+  FAudio := TAudio.Create;
+  FVideo := TVideo.Create;
+  FScreenshake := TScreenshake.Create;
+  FScreenshot := TScreenshot.Create;
+  FLog.Add('Spark Game Toolkit ready!', [SPARK_VERSION]);
 end;
 
-procedure TGame.SetVideoLoping(aLoop: Boolean);
+destructor TSGT.Destroy;
 begin
-  if FVideo.Handle = nil then Exit;
-  FVideo.Loop := aLoop;
+  FreeNilObject(FScreenshot);
+  FreeNilObject(FScreenshake);
+  FreeNilObject(FVideo);
+  FreeNilObject(FAudio);
+  FreeNilObject(FCmdConsole);
+  FreeNilObject(FInput);
+  FreeNilObject(FWindow);
+  Shutdown;
+  FLog.Add('Shutdown Spark Game Toolkit', []);
+  FreeNilObject(FLog);
+  SetConsoleOutputCP(FCodePage);
+  SGT := nil;
+  inherited;
 end;
 
-function  TGame.GetVideoPlaying: Boolean;
+procedure TSGT.SetFileSandBoxed(aEnable: Boolean);
 begin
-  Result := False;
-  if FVideo.Handle = nil then Exit;
-  Result := al_is_video_playing(FVideo.Handle);
+  al_restore_state(@FFileState[aEnable]);
 end;
 
-procedure TGame.SetVideoPlaying(aPlay: Boolean);
+function  TSGT.GetFileSandBoxed: Boolean;
 begin
-  if FVideo.Handle = nil then Exit;
-  if FVideo.Paused then Exit;
-  al_set_video_playing(FVideo.Handle, aPlay);
-  FVideo.Playing := aPlay;
-  FVideo.Paused := False;
-  OnVideoState(vsPlaying, FVideo.Filename);
+  Result := Boolean(al_get_new_file_interface = FFileInterface[True]);
 end;
 
-function  TGame.GetVideoFilename: string;
+procedure TSGT.SetFileSandboxWriteDir(aPath: string);
 begin
-  Result := '';
-  if FVideo.Handle = nil then Exit;
-  Result := FVideo.Filename;
+  PHYSFS_setWriteDir(PAnsiChar(AnsiString(aPath)));
 end;
 
-procedure TGame.PlayVideo(aArchive: TArchive; const aFilename: string; aLoop: Boolean; aVolume: Single);
+function  TSGT.GetFileSandboxWriteDir: string;
 begin
-  if not LoadVideo(aArchive, aFilename) then Exit;
-  PlayVideo(aLoop, aVolume);
+  Result := string(PHYSFS_getWriteDir);
 end;
 
-procedure TGame.DrawVideo(aX: Single; aY: Single; aScale: Single);
+procedure TSGT.EmitCmdConInactiveEvent;
+begin
+  al_emit_user_event(@FUserEventSrc , @FCmdConInactive , nil);
+end;
+
+procedure TSGT.EmitCmdConActiveEvent;
+begin
+  al_emit_user_event(@FUserEventSrc , @FCmdConActive , nil);
+end;
+
+procedure TSGT.RunGame(aGame: TCustomGameClass);
 var
-  LFrame: PALLEGRO_BITMAP;
-  LSize: TVector;
-  LScaled: TVector;
-  LViewportSize: TRectangle;
-  LScale: Single;
+  LGame: TCustomGame;
 begin
-  if FVideo.Handle = nil then Exit;
-  if aScale <= 0 then Exit;
-  LScale := aScale;
-
-  if (not GetVideoPlaying) and (not FVideo.Paused) then Exit;
-
-  LFrame := al_get_video_frame(FVideo.Handle);
-  if LFrame <> nil then
-  begin
-
-    GetWindowViewportSize(LViewportSize);
-    LSize.X := al_get_bitmap_width(LFrame);
-    LSize.Y := al_get_bitmap_height(LFrame);
-    LScaled.X := al_get_video_scaled_width(FVideo.Handle);
-    LScaled.Y := al_get_video_scaled_height(FVideo.Handle);
-
-    al_draw_scaled_bitmap(LFrame, 0, 0,
-      LSize.X,
-      LSize.Y,
-      aX, aY,
-      LScaled.X*LScale,
-      LScaled.Y*LScale,
-      0);
-  end;
+  if not Assigned(SGT) then Exit;
+  LGame := aGame.Create;
+  LGame.OnInit;
+  LGame.OnRun;
+  LGame.OnDone;
+  FreeNilObject(LGame);
 end;
 
-procedure TGame.GetVideoSize(aWidth: System.PSingle; aHeight: System.PSingle);
-begin
-  if FVideo.Handle = nil then
-  begin
-    if aWidth <> nil then
-      aWidth^ := 0;
-    if aHeight <> nil then
-      aHeight^ := 0;
-    Exit;
-  end;
-  if aWidth <> nil then
-    aWidth^ := al_get_video_scaled_width(FVideo.Handle);
-  if aHeight <> nil then
-    aHeight^ := al_get_video_scaled_height(FVideo.Handle);
-end;
-
-procedure TGame.SeekVideo(aSeconds: Single);
-begin
-  if FVideo.Handle = nil then Exit;
-  al_seek_video(FVideo.Handle, aSeconds);
-end;
-
-procedure TGame.RewindVideo;
-begin
-  if FVideo.Handle = nil then Exit;
-  al_seek_video(FVideo.Handle, 0);
-end;
-
-// Callbacks ----------------------------------------------------------------
-procedure TGame.OnSetSettings(var aSettings: TGameSettings);
-begin
-  // Window
-  aSettings.WindowWidth := 960;
-  aSettings.WindowHeight := 540;
-  aSettings.WindowTitle := 'Spark Game Toolkit';
-  aSettings.WindowClearColor := DARKSLATEBROWN;
-
-  // Archive
-  aSettings.ArchivePassword := '';
-  aSettings.ArchiveFilename := '';
-
-  // Font
-  aSettings.FontSize := 16;
-  aSettings.FontFilename := '';
-
-  // Hud
-  aSettings.HudTextItemPadWidth := 10;
-  aSettings.HudPosX := 3;
-  aSettings.HudPosY := 3;
-  aSettings.HudLineSpace := 0;
-end;
-
-function TGame.OnStartup: Boolean;
-begin
-  Result := True;
-end;
-
-procedure TGame.OnShutdown;
-begin
-end;
-
-procedure TGame.OnUpdate(aDeltaTime: Double);
-begin
-  if KeyReleased(KEY_ESCAPE) then
-    Terminated := True;
-end;
-
-procedure TGame.OnFixedUpdate;
-begin
-end;
-
-procedure TGame.OnRender;
-begin
-end;
-
-procedure TGame.OnRenderHUD;
-begin
-  ResetHudPos;
-  HudText(FFont, WHITE, haLeft, 'fps #I', [GetFrameRate]);
-  HudText(FFont, GREEN, haLeft, HudTextItem('ESC', 'Quit'), []);
-end;
-
-procedure TGame.OnReady(aReady: Boolean);
-begin
-end;
-
-procedure TGame.OnVideoState(aState: TVideoState; const aFilename: string);
-begin
-end;
-
-procedure TGame.OnOpenCmdConsole;
-begin
-end;
-
-procedure TGame.OnCloseCmdConsole;
-begin
-end;
-
-function TGame.Run: Boolean;
-var
-  LCurrentTransform: ALLEGRO_TRANSFORM;
-begin
-  Result := False;
-
-  // Set settings
-  OnSetSettings(FSettings);
-
-  // Apply settings
-  if not ApplySettings then Exit;
-
-  // Do startup
-  if not OnStartup then Exit;
-
-  ClearInput;
-  FCmdConsole.Open;
-  ResetTiming;
-  FTerminated := False;
-  FReady := True;
-
-  // Run gameloop
-  while not FTerminated do
-  begin
-    repeat
-      Sleep(0);
-      ProcessMessages;
-      if al_get_next_event(FQueue, @FEvent) then
-      begin
-
-        case FEvent.type_ of
-          EVENT_CMDCON_ACTIVE:
-          begin
-            // pause audio
-            PauseAudio(True);
-
-            // pause speech
-            // TODO: pause speech
-
-            // pause Video
-            SetVideoPause(True);
-
-            OnOpenCmdConsole;
-          end;
-
-          EVENT_CMDCON_INACTIVE:
-          begin
-            // unpause audio
-            PauseAudio(False);
-
-            // pause speech
-            // TODO: pause speech
-
-            // unpause Video
-            SetVideoPause(False);
-
-            OnOpenCmdConsole;
-          end;
-
-          ALLEGRO_EVENT_DISPLAY_CLOSE:
-          begin
-            FTerminated := True;
-          end;
-
-          ALLEGRO_EVENT_DISPLAY_RESIZE:
-          begin
-          end;
-
-          ALLEGRO_EVENT_DISPLAY_DISCONNECTED,
-          ALLEGRO_EVENT_DISPLAY_HALT_DRAWING,
-          ALLEGRO_EVENT_DISPLAY_LOST,
-          ALLEGRO_EVENT_DISPLAY_SWITCH_OUT:
-          begin
-            if not FCmdConsole.GetActive then
-            begin
-
-            // clear input
-            if FEvent.type_ = ALLEGRO_EVENT_DISPLAY_SWITCH_OUT then
-            begin
-              ClearInput;
-            end;
-
-            // pause audio
-            PauseAudio(True);
-
-
-            // pause speech
-            // TODO: pause speech
-
-            // pause Video
-            // TODO: pause speech
-
-            SetVideoPause(True);
-
-            // display not ready
-            FReady := False;
-            OnReady(FReady);
-            end;
-          end;
-
-          ALLEGRO_EVENT_DISPLAY_CONNECTED,
-          ALLEGRO_EVENT_DISPLAY_RESUME_DRAWING,
-          ALLEGRO_EVENT_DISPLAY_FOUND,
-          ALLEGRO_EVENT_DISPLAY_SWITCH_IN:
-          begin
-            if not FCmdConsole.GetActive then
-            begin
-
-            // reset timing
-            ResetTiming;
-
-            // unpause speech
-            // TODO: resume speech
-
-            // unpause audio
-            PauseAudio(False);
-
-            // unpause video
-            // TODO: resume vidoe
-            SetVideoPause(False);
-
-            // display ready
-            FReady := True;
-            OnReady(FReady);
-            end;
-          end;
-
-          ALLEGRO_EVENT_VIDEO_FINISHED:
-          begin
-            OnVideoFinished(PALLEGRO_VIDEO(FEvent.user.data1));
-          end;
-        end;
-
-        // process input
-        UpdateInput;
-        GetMouseInfo(@FMousePos, @FMouseDelta, @FMousePressure);
-      end;
-
-    until  al_is_event_queue_empty(FQueue);
-
-    if FReady then
-      begin
-        //GV.Async.Process;
-        UpdateTiming;
-        ClearWindow(FSettings.WindowClearColor);
-        OnRender;
-        LCurrentTransform := al_get_current_transform^;
-        ResetWindowTransform;
-        OnRenderHUD;
-        FCmdConsole.Render;
-        al_use_transform(@LCurrentTransform);
-        //GV.Screenshot.Process;
-        ShowWindow;
-      end
-    else
-      begin
-        Sleep(1);
-      end;
-  end;
-
-  FCmdConsole.Close;
-
-  // Do shutdown
-  OnShutdown;
-
-  UnloadVideo;
-  ClearAudio;
-
-  // Unapply settings
-  UnapplySettings;
-
-  Result := True;
-end;
-
-initialization
-  JITEnable := 2;
 
 {$ENDREGION}
+
+
+initialization
+  ReportMemoryLeaksOnShutdown := True;
+  Startup;
+
+finalization
+  Shutdown;
 
 end.
